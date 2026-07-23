@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
-import App from '@/App'
+import { LandingPage } from '@/routes/landing-page'
 import { TablePage } from '@/routes/table-page'
 import { NotFoundPage } from '@/routes/not-found-page'
 
@@ -15,7 +15,7 @@ const DashboardPage = lazy(() =>
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <LandingPage />,
   },
   {
     // Reached by scanning a table QR code.

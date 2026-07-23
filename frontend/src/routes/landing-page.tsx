@@ -3,6 +3,7 @@ import { ArrowRight, QrCode, SplitSquareHorizontal, Star } from 'lucide-react'
 import { SiteHeader } from '@/components/layout/site-header'
 import { Reveal } from '@/components/motion/reveal'
 import { Parallax } from '@/components/motion/parallax'
+import { HeroScene } from '@/components/three/hero-scene'
 import { Button } from '@/components/ui/button'
 
 const FEATURES = [
@@ -45,30 +46,35 @@ export function LandingPage() {
       <SiteHeader />
 
       {/* Hero — light */}
-      <section className="mx-auto flex min-h-svh max-w-6xl flex-col justify-center px-6 pb-24 pt-32">
-        <Reveal>
-          <p className="mb-6 text-sm font-medium uppercase tracking-widest text-muted-foreground">
-            Restoranlar üçün QR ödəniş
-          </p>
-          <h1 className="max-w-4xl text-[clamp(2.5rem,6vw,4.5rem)] font-normal leading-[1.05] tracking-tight">
-            Vaxt qazandıran və 5 dəfə çox Google rəyi gətirən ödəniş təcrübəsi.
-          </h1>
-          <p className="mt-8 max-w-xl text-lg text-muted-foreground">
-            Müştəri masadakı QR kodu skan edir, hesabı görür, bölür, bəxşiş
-            əlavə edir və saniyələr içində ödəyir.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Button variant="success" size="lg" asChild>
-              <a href="#demo">
-                Demo istə
-                <ArrowRight />
-              </a>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <a href="#how">Necə işləyir</a>
-            </Button>
-          </div>
-        </Reveal>
+      <section className="mx-auto flex min-h-svh max-w-6xl items-center px-6 pb-24 pt-32">
+        <div className="grid w-full items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
+          <Reveal>
+            <p className="mb-6 text-sm font-medium uppercase tracking-widest text-muted-foreground">
+              Restoranlar üçün QR ödəniş
+            </p>
+            <h1 className="max-w-4xl text-[clamp(2.5rem,6vw,4.5rem)] font-normal leading-[1.05] tracking-tight">
+              Vaxt qazandıran və 5 dəfə çox Google rəyi gətirən ödəniş
+              təcrübəsi.
+            </h1>
+            <p className="mt-8 max-w-xl text-lg text-muted-foreground">
+              Müştəri masadakı QR kodu skan edir, hesabı görür, bölür, bəxşiş
+              əlavə edir və saniyələr içində ödəyir.
+            </p>
+            <div className="mt-10 flex flex-wrap items-center gap-4">
+              <Button variant="success" size="lg" asChild>
+                <a href="#demo">
+                  Demo istə
+                  <ArrowRight />
+                </a>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <a href="#how">Necə işləyir</a>
+              </Button>
+            </div>
+          </Reveal>
+
+          <HeroScene className="hidden h-[440px] w-full lg:block" />
+        </div>
       </section>
 
       {/* Product — dark, feature grid with green icons */}

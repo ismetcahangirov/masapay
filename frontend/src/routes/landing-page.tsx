@@ -46,7 +46,10 @@ export function LandingPage() {
       <SiteHeader />
 
       {/* Hero — light */}
-      <section className="mx-auto flex min-h-svh max-w-6xl items-center px-6 pb-24 pt-32">
+      <section
+        data-section-tone="light"
+        className="mx-auto flex min-h-svh max-w-6xl items-center px-6 pb-24 pt-32"
+      >
         <div className="grid w-full items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <Reveal>
             <p className="mb-6 text-sm font-medium uppercase tracking-widest text-muted-foreground">
@@ -78,7 +81,11 @@ export function LandingPage() {
       </section>
 
       {/* Product — dark, feature grid with green icons */}
-      <section id="product" className="bg-brand-near-black text-brand-white">
+      <section
+        id="product"
+        data-section-tone="dark"
+        className="bg-brand-near-black text-brand-white"
+      >
         <div className="mx-auto max-w-6xl px-6 py-28">
           <Parallax speed={0.25}>
             <Reveal>
@@ -102,7 +109,7 @@ export function LandingPage() {
       </section>
 
       {/* Stats / trust — light */}
-      <section className="bg-background">
+      <section data-section-tone="light" className="bg-background">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-28 sm:grid-cols-3">
           {STATS.map((stat, index) => (
             <Reveal key={stat.label} delay={index * 0.08}>
@@ -118,7 +125,11 @@ export function LandingPage() {
       </section>
 
       {/* How — dark, numbered steps */}
-      <section id="how" className="bg-brand-near-black text-brand-white">
+      <section
+        id="how"
+        data-section-tone="dark"
+        className="bg-brand-near-black text-brand-white"
+      >
         <div className="mx-auto max-w-6xl px-6 py-28">
           <Reveal>
             <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
@@ -142,7 +153,7 @@ export function LandingPage() {
       </section>
 
       {/* CTA — light */}
-      <section id="pricing" className="bg-background">
+      <section id="pricing" data-section-tone="light" className="bg-background">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-6 py-28">
           <Parallax speed={0.2}>
             <Reveal>
@@ -167,9 +178,15 @@ export function LandingPage() {
       </section>
 
       {/* Footer — dark */}
-      <footer className="bg-brand-near-black text-brand-white">
+      <footer
+        data-section-tone="dark"
+        className="bg-brand-near-black text-brand-white"
+      >
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-lg font-medium tracking-tight">masapay</span>
+          <span className="flex items-center gap-2 text-lg font-medium tracking-tight">
+            <img className="w-9 lg:w-11" src="/masapay.svg" alt="masapay" />
+            masapay
+          </span>
           <nav className="flex flex-wrap gap-8 text-sm text-white/60">
             <a
               href="#product"

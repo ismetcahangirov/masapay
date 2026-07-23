@@ -1,4 +1,10 @@
-import { motion, useReducedMotion } from 'framer-motion'
+import { useRef, useState } from 'react'
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+} from 'framer-motion'
 import { useScrollDirection } from '@/hooks/use-scroll-direction'
 import { useUnderHeaderTone } from '@/hooks/use-under-header-tone'
 import { LiquidButton } from '@/components/ui/liquid-glass-button'
@@ -60,21 +66,64 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <LiquidButton
-          size="sm"
-          onClick={() =>
-            document
-              .getElementById('demo')
-              ?.scrollIntoView({ behavior: 'smooth' })
-          }
-          className={cn(
-            'rounded-full font-medium',
-            onDark ? 'dark text-white' : 'text-black',
-          )}
-        >
-          Demo istə
-        </LiquidButton>
+        <GlassCta onDark={onDark} />
       </div>
     </motion.header>
+  )
+}
+
+// Liquid-glass CTA with a pointer-reactive brand-green light: while hovering,
+// a soft green blob follows the cursor behind the glass, and the glass
+// displacement refracts it — the reference video's effect, on hover, using only
+// the signature green (no gradients or purple). Clipped to the button footprint
+// and disabled under prefers-reduced-motion.
+function GlassCta({ onDark }: { onDark: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const reduceMotion = useReducedMotion()
+  const mx = useMotionValue(0)
+  const my = useMotionValue(0)
+  const x = useSpring(mx, { stiffness: 260, damping: 26, mass: 0.4 })
+  const y = useSpring(my, { stiffness: 260, damping: 26, mass: 0.4 })
+  const [active, setActive] = useState(false)
+
+  function handleMove(event: React.MouseEvent<HTMLDivElement>) {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    mx.set(event.clientX - rect.left)
+    my.set(event.clientY - rect.top)
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setActive(true)}
+      onMouseLeave={() => setActive(false)}
+      onMouseMove={handleMove}
+    >
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-full">
+        <motion.span
+          className="absolute left-0 top-0 -ml-7 -mt-7 size-14 rounded-full bg-brand-green blur-[13px]"
+          style={reduceMotion ? undefined : { x, y }}
+          animate={{ opacity: active && !reduceMotion ? 0.85 : 0 }}
+          transition={{ duration: 0.3 }}
+        />
+      </div>
+      <LiquidButton
+        size="sm"
+        onClick={() =>
+          document
+            .getElementById('demo')
+            ?.scrollIntoView({ behavior: 'smooth' })
+        }
+        className={cn(
+          'rounded-full font-medium',
+          onDark ? 'dark text-white' : 'text-black',
+        )}
+      >
+        Demo istə
+      </LiquidButton>
+    </div>
   )
 }

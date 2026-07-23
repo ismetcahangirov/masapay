@@ -6,6 +6,10 @@ import { Parallax } from '@/components/motion/parallax'
 import { HeroScene } from '@/components/three/hero-scene'
 import { Button } from '@/components/ui/button'
 
+// Shared heading style: oversized, weight 400, tight leading and very tight
+// tracking, matching the reference design language.
+const HEADING = 'font-normal leading-[0.98] tracking-[-0.045em]'
+
 const FEATURES = [
   {
     icon: <QrCode className="size-6" aria-hidden />,
@@ -36,10 +40,11 @@ const STEPS = [
   { n: '03', title: 'Ödə', body: 'Payriff ilə saniyələr içində ödəyir.' },
 ]
 
-// Marketing landing page (#69). Whitespace-driven, content-centric, built on
-// the design-system-v2 rhythm: alternating greige (light) and near-black (dark)
-// sections, oversized light Helvetica Neue headings, the scroll-aware header
-// (#66), scroll reveal (#67) and parallax (#68).
+// Marketing landing page. Whitespace-driven, content-centric: alternating
+// greige (light) / near-black (dark) sections, oversized weight-400 headings
+// with tight tracking, black pill CTAs and the brand green used only as a rare
+// accent (logo and feature icons). Built on the scroll-aware header (#66),
+// reveal (#67), parallax (#68) and the 3D hero accent (#70).
 export function LandingPage() {
   return (
     <div id="top" className="min-h-svh bg-background">
@@ -55,16 +60,18 @@ export function LandingPage() {
             <p className="mb-6 text-sm font-medium uppercase tracking-widest text-muted-foreground">
               Restoranlar üçün QR ödəniş
             </p>
-            <h1 className="max-w-4xl text-[clamp(2.5rem,6vw,4.5rem)] font-normal leading-[1.05] tracking-tight">
+            <h1
+              className={`max-w-4xl text-[clamp(2.25rem,4.6vw,3.25rem)] ${HEADING}`}
+            >
               Vaxt qazandıran və 5 dəfə çox Google rəyi gətirən ödəniş
               təcrübəsi.
             </h1>
-            <p className="mt-8 max-w-xl text-lg text-muted-foreground">
+            <p className="mt-8 max-w-lg text-base text-muted-foreground">
               Müştəri masadakı QR kodu skan edir, hesabı görür, bölür, bəxşiş
               əlavə edir və saniyələr içində ödəyir.
             </p>
-            <div className="mt-10 flex flex-wrap items-center gap-4">
-              <Button variant="success" size="lg" asChild>
+            <div className="mt-10 flex flex-wrap items-center gap-3">
+              <Button size="lg" asChild>
                 <a href="#demo">
                   Demo istə
                   <ArrowRight />
@@ -80,7 +87,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Product — dark, feature grid with green icons */}
+      {/* Product — dark, feature grid with green accent icons */}
       <section
         id="product"
         data-section-tone="dark"
@@ -89,7 +96,9 @@ export function LandingPage() {
         <div className="mx-auto max-w-6xl px-6 py-28">
           <Parallax speed={0.25}>
             <Reveal>
-              <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
+              <h2
+                className={`max-w-3xl text-[clamp(2rem,4vw,3rem)] ${HEADING}`}
+              >
                 Skan et, böl, ödə.
               </h2>
             </Reveal>
@@ -114,10 +123,14 @@ export function LandingPage() {
           {STATS.map((stat, index) => (
             <Reveal key={stat.label} delay={index * 0.08}>
               <div>
-                <div className="text-[clamp(2.5rem,5vw,3.5rem)] font-normal leading-none tracking-tight">
+                <div
+                  className={`text-[clamp(2.5rem,5vw,3.5rem)] leading-none ${HEADING}`}
+                >
                   {stat.value}
                 </div>
-                <p className="mt-3 text-muted-foreground">{stat.label}</p>
+                <p className="mt-3 text-base text-muted-foreground">
+                  {stat.label}
+                </p>
               </div>
             </Reveal>
           ))}
@@ -132,7 +145,7 @@ export function LandingPage() {
       >
         <div className="mx-auto max-w-6xl px-6 py-28">
           <Reveal>
-            <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
+            <h2 className={`max-w-3xl text-[clamp(2rem,4vw,3rem)] ${HEADING}`}>
               Personala yox, təcrübəyə vaxt.
             </h2>
           </Reveal>
@@ -140,10 +153,12 @@ export function LandingPage() {
             {STEPS.map((step, index) => (
               <Reveal key={step.n} delay={index * 0.08}>
                 <div>
-                  <div className="text-sm font-medium text-brand-green">
+                  <div className="text-sm font-medium text-white/40">
                     {step.n}
                   </div>
-                  <h3 className="mt-4 text-lg font-medium">{step.title}</h3>
+                  <h3 className="mt-4 text-2xl font-normal tracking-tight">
+                    {step.title}
+                  </h3>
                   <p className="mt-2 text-white/60">{step.body}</p>
                 </div>
               </Reveal>
@@ -157,18 +172,20 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-6 py-28">
           <Parallax speed={0.2}>
             <Reveal>
-              <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
+              <h2
+                className={`max-w-3xl text-[clamp(2rem,4vw,3rem)] ${HEADING}`}
+              >
                 Restoranınız üçün canlı demo.
               </h2>
             </Reveal>
           </Parallax>
           <Reveal delay={0.08}>
-            <p className="max-w-xl text-lg text-muted-foreground">
+            <p className="max-w-lg text-base text-muted-foreground">
               15 dəqiqəlik demoda masapay-ın restoranınıza necə uyğunlaşdığını
               göstərək.
             </p>
           </Reveal>
-          <Button variant="success" size="lg" asChild>
+          <Button size="lg" asChild>
             <a id="demo" href="#top">
               Demo istə
               <ArrowRight />
@@ -183,8 +200,8 @@ export function LandingPage() {
         className="bg-brand-near-black text-brand-white"
       >
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
-          <span className="flex items-center gap-2 text-lg font-medium tracking-tight">
-            <img className="w-9 lg:w-11" src="/masapay.svg" alt="masapay" />
+          <span className="flex items-center gap-2 text-lg font-normal tracking-tight">
+            <img className="w-7 lg:w-8" src="/masapay.svg" alt="masapay" />
             masapay
           </span>
           <nav className="flex flex-wrap gap-8 text-sm text-white/60">
@@ -223,7 +240,7 @@ function Feature({
   return (
     <div>
       <div className="mb-5 text-brand-green">{icon}</div>
-      <h3 className="text-lg font-medium">{title}</h3>
+      <h3 className="text-2xl font-normal tracking-tight">{title}</h3>
       <p className="mt-2 text-white/60">{body}</p>
     </div>
   )

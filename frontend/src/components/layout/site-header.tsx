@@ -37,9 +37,9 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
         <a
           href="#top"
-          className="flex items-center gap-2 text-lg font-medium tracking-tight md:text-xl"
+          className="flex items-center gap-2 text-lg font-normal tracking-tight"
         >
-          <img className="w-9 lg:w-11" src="/masapay.svg" alt="masapay" />
+          <img className="w-7 lg:w-8" src="/masapay.svg" alt="masapay" />
           masapay
         </a>
 
@@ -60,7 +60,15 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <Button variant="success" size="sm" asChild>
+        <Button
+          size="sm"
+          asChild
+          className={cn(
+            onDark
+              ? 'bg-white text-black hover:bg-white/90'
+              : 'bg-black text-white hover:bg-black/90',
+          )}
+        >
           <a href="#demo">Demo istə</a>
         </Button>
       </div>

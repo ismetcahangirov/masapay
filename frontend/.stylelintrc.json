@@ -1,0 +1,13 @@
+{
+  "extends": ["stylelint-config-standard", "stylelint-config-tailwindcss"],
+  "rules": {
+    "function-disallowed-list": ["/gradient/i"],
+    "declaration-property-value-disallowed-list": {
+      "/.*/": ["/#6366[fF]1\\b/", "/#8[bB]5[cC][fF]6\\b/"]
+    },
+    "custom-property-empty-line-before": null,
+    "declaration-empty-line-before": null,
+    "alpha-value-notation": null,
+    "color-function-notation": null
+  }
+}

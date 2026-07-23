@@ -13,7 +13,17 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['"Helvetica Neue"', 'Arial', 'system-ui', 'sans-serif'],
+      },
       colors: {
+        brand: {
+          white: 'var(--brand-white)',
+          black: 'var(--brand-black)',
+          green: 'var(--brand-green)',
+          greige: 'var(--brand-greige)',
+          'near-black': 'var(--brand-near-black)',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

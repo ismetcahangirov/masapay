@@ -61,7 +61,7 @@ function Figure({ animate }: { animate: boolean }) {
   const { geometry, material, edges } = useMemo(() => {
     const edges = buildEdges(1.6, 1)
     // Thin, open-ended cylinders read as wires but still raycast for hover.
-    const geometry = new CylinderGeometry(0.022, 0.022, 1, 6, 1, true)
+    const geometry = new CylinderGeometry(0.01, 0.01, 1, 6, 1, true)
     const material = new MeshBasicMaterial({
       color: 0xffffff,
       toneMapped: false,

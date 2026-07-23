@@ -54,3 +54,14 @@ Tam qaydalar üçün [CLAUDE.md](./CLAUDE.md); backlog və issue əlaqələri ü
   ikonları ilə verilir.
 - Əsas UI komponent kitabxanası shadcn/ui-dir.
 - Qradient və bənövşəyi-mavi (#6366F1 / #8B5CF6) rənglər qadağandır.
+
+## Git Hooks (emoji qadağası)
+
+Emoji qadağası repo kökündəki pre-commit hook ilə tətbiq olunur (husky +
+`scripts/check-no-emoji.mjs`). Repo klonlandıqdan sonra hook-ları aktivləşdirmək
+üçün kök qovluqda bir dəfə `npm install` işlət:
+
+```bash
+npm install        # husky pre-commit hook-larını quraşdırır
+npm run check:no-emoji   # staged faylları əl ilə yoxla
+```

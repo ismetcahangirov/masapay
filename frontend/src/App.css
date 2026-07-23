@@ -1,0 +1,37 @@
+.app-shell {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.app-card {
+  max-width: 480px;
+  width: 100%;
+  padding: 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.app-title {
+  margin: 0 0 12px;
+  font-size: 40px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.app-subtitle {
+  margin: 0 0 16px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #0f172a;
+}
+
+.app-note {
+  margin: 0;
+  font-size: 14px;
+  color: #059669;
+}

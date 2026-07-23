@@ -63,11 +63,7 @@ export function SiteHeader() {
         <Button
           size="sm"
           asChild
-          className={cn(
-            onDark
-              ? 'bg-white text-black hover:bg-white/90'
-              : 'bg-black text-white hover:bg-black/90',
-          )}
+          className={cn(onDark ? 'bg-white text-black' : 'bg-black text-white')}
         >
           <a href="#demo">Demo istə</a>
         </Button>

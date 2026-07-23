@@ -1,0 +1,35 @@
+/* Helvetica Neue — self-hosted (woff2, subset of weights actually used).
+   Files live in /public/fonts and are served from the site root.
+   Weights: 300 Light, 400 Roman, 500 Medium, 700 Bold. */
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/helvetica-neue-300.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/helvetica-neue-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/helvetica-neue-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/helvetica-neue-700.woff2') format('woff2');
+}

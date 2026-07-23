@@ -1,3 +1,5 @@
+@import url('./styles/fonts.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -40,6 +42,16 @@
     --ring: 160 84% 39%;
 
     --radius: 0.5rem;
+
+    /* masapay brand palette (design system v2).
+       Raw values for section backgrounds and accents. See docs/DESIGN.md.
+       Migration of the semantic tokens above onto this palette is tracked
+       as a separate issue. */
+    --brand-white: #fff;
+    --brand-black: #000;
+    --brand-green: #08cb00;
+    --brand-greige: #f6f5f6;
+    --brand-near-black: #0a0a0a;
   }
 
   .dark {
@@ -83,7 +95,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Helvetica Neue', Arial, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

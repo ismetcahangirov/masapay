@@ -16,12 +16,15 @@ sonuna footer kimi əlavə olunub:
 - **Əsas UI komponent kitabxanası: shadcn/ui** (Radix UI əsasında). Yeni komponent
   lazım olduqda əvvəlcə shadcn-in mövcud komponentindən istifadə et; yalnız
   qarşılığı olmadıqda custom komponent yaz.
-- **Qradient rənglər və Bənövşəyi-Mavi (#6366F1, #8B5CF6) qarışıqları qadağandır.**
-- **Rəng palitrası:**
-  - Fon: `#FAFAFA` / `#FFFFFF`
-  - Mətn / Düymə: `#0F172A` / `#000000`
-  - Vurğu (uğur / CTA): `#10B981` / `#059669`
-  - Border: `#E2E8F0`
+- **Qradient rənglər və Bənövşəyi-Mavi qarışıqları qadağandır.**
+- **Rəng palitrası (design system v2):**
+  - Ağ `#FFFFFF` / Qara `#000000`
+  - Açıq fon (greige): `#F6F5F6` — hero və açıq bölmələr
+  - Tünd panel (near-black): `#0A0A0A`
+  - Vurğu (yaşıl, CTA / uğur): `#08CB00` (üzərində mətn qara)
+- **Şrift: Helvetica Neue / Arial** (self-hosted woff2, `/frontend/public/fonts`).
+- Tam dizayn dili, tipografiya, header davranışı və hərəkət (motion) qaydaları:
+  [docs/DESIGN.md](./docs/DESIGN.md).
 
 ## Texnoloji Stack
 

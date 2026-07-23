@@ -19,7 +19,7 @@ Layihədə istifadə olunan rənglər:
 |---|---|---|
 | Ağ | `#FFFFFF` | Səth / açıq mətn fonu |
 | Qara | `#000000` | Saf qara mətn (açıq fonda) |
-| Vurğu (yaşıl) | `#08CB00` | CTA, aktiv vəziyyət, uğur |
+| Vurğu (yaşıl) | `#08CB00` | Bizim **imza rəngi** — yalnız seyrək, önəmli vurğular |
 | Açıq fon (greige) | `#F6F5F6` | İsti, neytral açıq-boz/krem — hero və açıq bölmələr |
 | Near-black | `#0A0A0A` | Tünd panellər fonu |
 
@@ -28,10 +28,23 @@ Qaydalar:
 - **Fon:** hero və açıq bölmələr isti neytral açıq-boz/krem (`#F6F5F6`); tünd
   bölmələr demək olar qara (`#0A0A0A`) panellər.
 - **Mətn:** açıq fonda saf qara, tünd fonda ağ — həmişə **yüksək kontrast**.
+- **Yaşıl çox seyrək istifadə olunur.** O, bizim imza rəngimizdir və yalnız
+  önəmli vurğu nöqtələrində görünür (loqo, bir neçə açar ikon, kiçik nişan).
+  Səhifənin böyük hissəsi qara/ağ/greige-dir. **Yaşıl əsas düymələrdə,
+  başlıqlarda və ya böyük sahələrdə istifadə OLUNMUR.** (Referans: Sunday öz
+  çəhrayısını ~2000 elementdən yalnız ~8-ində işlədir.)
 - **Yaşıl vurğu (`#08CB00`) üzərində mətn qara** olmalıdır (parlaq yaşıl fonda
   ağ mətn kontrast standartını keçmir).
 - **Qradient rənglər və Bənövşəyi-Mavi qarışıqları qadağandır** (əvvəlki
   qaydadan qalır).
+
+### Düymələr
+
+- Forma: **pill** (`rounded-full`).
+- Əsas (primary): **qara fon, ağ mətn**. Tünd səth üzərində tərsinə —
+  **ağ fon, qara mətn**.
+- İkincili (secondary): şəffaf fon, nazik border (outline), yenə pill.
+- Düymələr yaşıl DEYİL — yaşıl yalnız imza vurğusudur.
 
 ### Tokenlər
 
@@ -53,20 +66,21 @@ Brand rəngləri CSS dəyişənləri kimi `src/index.css`-də təyin olunub və 
 
 - **Şrift:** Helvetica Neue / Arial (klassik qrotesk). Layihəyə self-hosted
   woff2 kimi inteqrasiya olunub (`/public/fonts`, bax [Font inteqrasiyası](#font-inteqrasiyası)).
-- **Nəhəng başlıqlar:** hero mətni ~64px, **yüngül/normal (400)** çəkidə, sıx
-  sətir aralığı (tight leading). İri, tam eninə yayılan başlıqlar səhifənin əsas
+- **Nəhəng başlıqlar:** çəki **400**, **çox sıx tracking** (`-0.045em`) və sıx
+  sətir aralığı (leading ~0.98). İri, tam eninə yayılan başlıqlar səhifənin əsas
   vizual ağırlığını daşıyır.
-- **Alt mətnlər:** kiçik, boz və oxunaqlı — aydın vizual iyerarxiya.
-- Çəkilər: 300 (Light), 400 (Roman/normal), 500 (Medium), 700 (Bold).
+- **Bütün mətn 400 çəkidədir** (başlıqlar da). Vurğu ölçü və boşluqla yaradılır,
+  qalın çəki ilə yox.
+- **Alt mətnlər:** kiçik (16px), boz (muted) və oxunaqlı — aydın iyerarxiya.
 
-Nümunə iyerarxiya:
+Nümunə iyerarxiya (referans design ilə uyğun):
 
-| Element | Ölçü (təxmini) | Çəki | Rəng |
+| Element | Ölçü | Çəki | Tracking |
 |---|---|---|---|
-| Hero başlıq | 56–72px | 400 | qara / ağ |
-| Bölmə başlığı | 32–40px | 400–500 | qara / ağ |
-| Gövdə mətni | 16–18px | 400 | qara |
-| Alt / köməkçi mətn | 13–14px | 400 | boz (muted) |
+| Hero başlıq | ~48px (`clamp` 36–52px) | 400 | -0.045em |
+| Bölmə başlığı | ~48px (`clamp` 32–48px) | 400 | -0.045em |
+| Kart / addım başlığı | 24px | 400 | -0.01em |
+| Gövdə / alt mətn | 16px | 400 | normal, boz |
 
 ## Bölmə Ritmi
 

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { ArrowRight, QrCode, SplitSquareHorizontal, Star } from 'lucide-react'
 import { SiteHeader } from '@/components/layout/site-header'
 import { Reveal } from '@/components/motion/reveal'
+import { Parallax } from '@/components/motion/parallax'
 import { Button } from '@/components/ui/button'
 
 const FEATURES = [
@@ -60,11 +61,13 @@ export function LandingPage() {
       {/* Product — near-black panel, white text */}
       <section id="product" className="bg-brand-near-black text-brand-white">
         <div className="mx-auto max-w-6xl px-6 py-28">
-          <Reveal>
-            <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
-              Skan et, böl, ödə.
-            </h2>
-          </Reveal>
+          <Parallax speed={0.25}>
+            <Reveal>
+              <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
+                Skan et, böl, ödə.
+              </h2>
+            </Reveal>
+          </Parallax>
           <div className="mt-16 grid gap-12 sm:grid-cols-3">
             {FEATURES.map((feature, index) => (
               <Reveal key={feature.title} delay={index * 0.08}>
@@ -97,11 +100,13 @@ export function LandingPage() {
       {/* Pricing / CTA — near-black */}
       <section id="pricing" className="bg-brand-near-black text-brand-white">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-6 py-28">
-          <Reveal>
-            <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
-              Restoranınız üçün canlı demo.
-            </h2>
-          </Reveal>
+          <Parallax speed={0.2}>
+            <Reveal>
+              <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
+                Restoranınız üçün canlı demo.
+              </h2>
+            </Reveal>
+          </Parallax>
           <Button variant="success" size="lg" asChild>
             <a id="demo" href="#top">
               Demo istə

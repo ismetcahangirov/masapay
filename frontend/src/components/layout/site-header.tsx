@@ -20,8 +20,9 @@ export function SiteHeader() {
   const tone = useUnderHeaderTone()
 
   const hidden = !reduceMotion && direction === 'down' && !atTop
-  // Header inverts against the section under it.
-  const dark = tone === 'light'
+  // Background is always transparent; the text/logo contrast the section
+  // beneath — light text over a dark section, dark text over a light one.
+  const onDark = tone === 'dark'
 
   return (
     <motion.header
@@ -29,10 +30,8 @@ export function SiteHeader() {
       animate={{ y: hidden ? '-100%' : '0%' }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        'fixed inset-x-0 top-0 z-50 border-b backdrop-blur transition-colors duration-300',
-        dark
-          ? 'border-white/10 bg-[#0a0a0a]/85 text-white'
-          : 'border-black/10 bg-white/85 text-[#0a0a0a]',
+        'fixed inset-x-0 top-0 z-50 bg-transparent transition-colors duration-300',
+        onDark ? 'text-white' : 'text-[#0a0a0a]',
       )}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
@@ -51,7 +50,7 @@ export function SiteHeader() {
               href={link.href}
               className={cn(
                 'text-sm transition-colors',
-                dark
+                onDark
                   ? 'text-white/60 hover:text-white'
                   : 'text-black/55 hover:text-black',
               )}

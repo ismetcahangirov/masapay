@@ -80,6 +80,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
     font-family: system-ui, 'Segoe UI', Roboto, sans-serif;

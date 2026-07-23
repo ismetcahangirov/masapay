@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { useScrollDirection } from '@/hooks/use-scroll-direction'
 import { useUnderHeaderTone } from '@/hooks/use-under-header-tone'
-import { Button } from '@/components/ui/button'
+import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
@@ -10,10 +10,10 @@ const NAV_LINKS = [
   { label: 'Qiymət', href: '#pricing' },
 ]
 
-// Fixed header that hides on scroll-down and reveals on scroll-up (#66) and
-// inverts its colours against the section beneath it: over a light section the
-// header is dark (near-black bg, light text/logo), over a dark section it is
-// light (white bg, dark text/logo). The brand-green CTA reads on both.
+// Fixed header that hides on scroll-down and reveals on scroll-up (#66). Its
+// background is transparent; text/logo contrast the section beneath (dark over
+// light sections, light over dark). The CTA is a liquid-glass button that
+// switches its glass tint (light/dark) with the same context.
 export function SiteHeader() {
   const { direction, atTop } = useScrollDirection()
   const reduceMotion = useReducedMotion()
@@ -60,13 +60,20 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <Button
+        <LiquidButton
           size="sm"
-          asChild
-          className={cn(onDark ? 'bg-white text-black' : 'bg-black text-white')}
+          onClick={() =>
+            document
+              .getElementById('demo')
+              ?.scrollIntoView({ behavior: 'smooth' })
+          }
+          className={cn(
+            'rounded-full font-medium',
+            onDark ? 'dark text-white' : 'text-black',
+          )}
         >
-          <a href="#demo">Demo istə</a>
-        </Button>
+          Demo istə
+        </LiquidButton>
       </div>
     </motion.header>
   )

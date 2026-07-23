@@ -1,4 +1,10 @@
-import { motion, useReducedMotion } from 'framer-motion'
+import { useRef, useState } from 'react'
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+} from 'framer-motion'
 import { useScrollDirection } from '@/hooks/use-scroll-direction'
 import { useUnderHeaderTone } from '@/hooks/use-under-header-tone'
 import { LiquidButton } from '@/components/ui/liquid-glass-button'
@@ -60,56 +66,64 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="relative">
-          <CtaGlow />
-          <LiquidButton
-            size="sm"
-            onClick={() =>
-              document
-                .getElementById('demo')
-                ?.scrollIntoView({ behavior: 'smooth' })
-            }
-            className={cn(
-              'rounded-full font-medium',
-              onDark ? 'dark text-white' : 'text-black',
-            )}
-          >
-            Demo istə
-          </LiquidButton>
-        </div>
+        <GlassCta onDark={onDark} />
       </div>
     </motion.header>
   )
 }
 
-// Subtle brand-green motion parked behind the liquid-glass CTA. It gives the
-// glass something to refract (the video effect) using only the signature green
-// — no gradients or purple. Clipped to just around the button. Static under
-// prefers-reduced-motion.
-function CtaGlow() {
+// Liquid-glass CTA with a pointer-reactive brand-green light: while hovering,
+// a soft green blob follows the cursor behind the glass, and the glass
+// displacement refracts it — the reference video's effect, on hover, using only
+// the signature green (no gradients or purple). Clipped to the button footprint
+// and disabled under prefers-reduced-motion.
+function GlassCta({ onDark }: { onDark: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
   const reduceMotion = useReducedMotion()
-  const loop = (duration: number) =>
-    reduceMotion
-      ? undefined
-      : ({
-          duration,
-          repeat: Infinity,
-          repeatType: 'mirror',
-          ease: 'easeInOut',
-        } as const)
+  const mx = useMotionValue(0)
+  const my = useMotionValue(0)
+  const x = useSpring(mx, { stiffness: 260, damping: 26, mass: 0.4 })
+  const y = useSpring(my, { stiffness: 260, damping: 26, mass: 0.4 })
+  const [active, setActive] = useState(false)
+
+  function handleMove(event: React.MouseEvent<HTMLDivElement>) {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    mx.set(event.clientX - rect.left)
+    my.set(event.clientY - rect.top)
+  }
 
   return (
-    <div className="pointer-events-none absolute -inset-3 -z-10 overflow-hidden rounded-full">
-      <motion.span
-        className="absolute left-1 top-0 size-9 rounded-full bg-brand-green opacity-70 blur-[10px]"
-        animate={reduceMotion ? undefined : { x: [0, 55, 12], y: [0, 6, 0] }}
-        transition={loop(6)}
-      />
-      <motion.span
-        className="absolute bottom-0 right-2 size-7 rounded-full bg-brand-green opacity-50 blur-[12px]"
-        animate={reduceMotion ? undefined : { x: [0, -38, 0], y: [0, -5, 4] }}
-        transition={loop(7.5)}
-      />
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setActive(true)}
+      onMouseLeave={() => setActive(false)}
+      onMouseMove={handleMove}
+    >
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-full">
+        <motion.span
+          className="absolute left-0 top-0 -ml-7 -mt-7 size-14 rounded-full bg-brand-green blur-[13px]"
+          style={reduceMotion ? undefined : { x, y }}
+          animate={{ opacity: active && !reduceMotion ? 0.85 : 0 }}
+          transition={{ duration: 0.3 }}
+        />
+      </div>
+      <LiquidButton
+        size="sm"
+        onClick={() =>
+          document
+            .getElementById('demo')
+            ?.scrollIntoView({ behavior: 'smooth' })
+        }
+        className={cn(
+          'rounded-full font-medium',
+          onDark ? 'dark text-white' : 'text-black',
+        )}
+      >
+        Demo istə
+      </LiquidButton>
     </div>
   )
 }

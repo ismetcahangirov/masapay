@@ -23,15 +23,28 @@ const FEATURES = [
   },
 ]
 
-// Marketing landing page (shell for #69). Alternating greige / near-black
-// section rhythm, the scroll-aware header (#66) and scroll-reveal animation
-// (#67). Parallax (#68) and the full content pass build on this scaffold.
+const STATS = [
+  { value: '5×', label: 'daha çox Google rəyi' },
+  { value: '40%', label: 'daha sürətli masa dövriyyəsi' },
+  { value: '3 san', label: 'orta ödəniş vaxtı' },
+]
+
+const STEPS = [
+  { n: '01', title: 'Skan et', body: 'Müştəri masadakı QR kodu skan edir.' },
+  { n: '02', title: 'Böl', body: 'Hesabı görür, bölür və bəxşiş əlavə edir.' },
+  { n: '03', title: 'Ödə', body: 'Payriff ilə saniyələr içində ödəyir.' },
+]
+
+// Marketing landing page (#69). Whitespace-driven, content-centric, built on
+// the design-system-v2 rhythm: alternating greige (light) and near-black (dark)
+// sections, oversized light Helvetica Neue headings, the scroll-aware header
+// (#66), scroll reveal (#67) and parallax (#68).
 export function LandingPage() {
   return (
     <div id="top" className="min-h-svh bg-background">
       <SiteHeader />
 
-      {/* Hero — greige, oversized light heading */}
+      {/* Hero — light */}
       <section className="mx-auto flex min-h-svh max-w-6xl flex-col justify-center px-6 pb-24 pt-32">
         <Reveal>
           <p className="mb-6 text-sm font-medium uppercase tracking-widest text-muted-foreground">
@@ -58,7 +71,7 @@ export function LandingPage() {
         </Reveal>
       </section>
 
-      {/* Product — near-black panel, white text */}
+      {/* Product — dark, feature grid with green icons */}
       <section id="product" className="bg-brand-near-black text-brand-white">
         <div className="mx-auto max-w-6xl px-6 py-28">
           <Parallax speed={0.25}>
@@ -82,23 +95,48 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* How — greige */}
-      <section id="how" className="bg-background">
+      {/* Stats / trust — light */}
+      <section className="bg-background">
+        <div className="mx-auto grid max-w-6xl gap-12 px-6 py-28 sm:grid-cols-3">
+          {STATS.map((stat, index) => (
+            <Reveal key={stat.label} delay={index * 0.08}>
+              <div>
+                <div className="text-[clamp(2.5rem,5vw,3.5rem)] font-normal leading-none tracking-tight">
+                  {stat.value}
+                </div>
+                <p className="mt-3 text-muted-foreground">{stat.label}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* How — dark, numbered steps */}
+      <section id="how" className="bg-brand-near-black text-brand-white">
         <div className="mx-auto max-w-6xl px-6 py-28">
           <Reveal>
             <h2 className="max-w-3xl text-[clamp(2rem,4vw,3rem)] font-normal leading-tight tracking-tight">
               Personala yox, təcrübəyə vaxt.
             </h2>
-            <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-              Masa dövriyyəsi sürətlənir, ödəniş növbəsi yox olur, bəxşiş və rəy
-              artır.
-            </p>
           </Reveal>
+          <div className="mt-16 grid gap-12 sm:grid-cols-3">
+            {STEPS.map((step, index) => (
+              <Reveal key={step.n} delay={index * 0.08}>
+                <div>
+                  <div className="text-sm font-medium text-brand-green">
+                    {step.n}
+                  </div>
+                  <h3 className="mt-4 text-lg font-medium">{step.title}</h3>
+                  <p className="mt-2 text-white/60">{step.body}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Pricing / CTA — near-black */}
-      <section id="pricing" className="bg-brand-near-black text-brand-white">
+      {/* CTA — light */}
+      <section id="pricing" className="bg-background">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-6 py-28">
           <Parallax speed={0.2}>
             <Reveal>
@@ -107,6 +145,12 @@ export function LandingPage() {
               </h2>
             </Reveal>
           </Parallax>
+          <Reveal delay={0.08}>
+            <p className="max-w-xl text-lg text-muted-foreground">
+              15 dəqiqəlik demoda masapay-ın restoranınıza necə uyğunlaşdığını
+              göstərək.
+            </p>
+          </Reveal>
           <Button variant="success" size="lg" asChild>
             <a id="demo" href="#top">
               Demo istə
@@ -116,9 +160,28 @@ export function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-background">
-        <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-muted-foreground">
-          masapay
+      {/* Footer — dark */}
+      <footer className="bg-brand-near-black text-brand-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-lg font-medium tracking-tight">masapay</span>
+          <nav className="flex flex-wrap gap-8 text-sm text-white/60">
+            <a
+              href="#product"
+              className="transition-colors hover:text-brand-white"
+            >
+              Məhsul
+            </a>
+            <a href="#how" className="transition-colors hover:text-brand-white">
+              Necə işləyir
+            </a>
+            <a
+              href="#demo"
+              className="transition-colors hover:text-brand-white"
+            >
+              Demo istə
+            </a>
+          </nav>
+          <span className="text-sm text-white/40">&copy; 2026 masapay</span>
         </div>
       </footer>
     </div>

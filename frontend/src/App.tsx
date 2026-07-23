@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CreditCard, Info, QrCode } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -28,7 +29,10 @@ function App() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>masapay</CardTitle>
-            <Badge variant="success">shadcn/ui</Badge>
+            <Badge variant="success">
+              <QrCode className="mr-1" />
+              shadcn/ui
+            </Badge>
           </div>
           <CardDescription>
             TailwindCSS və shadcn/ui dizayn sistemi uğurla inteqrasiya olundu.
@@ -47,17 +51,24 @@ function App() {
           </ToggleGroup>
         </CardContent>
         <CardFooter className="gap-2">
-          <Button variant="success">Hesabı ödə</Button>
+          <Button variant="success">
+            <CreditCard />
+            Hesabı ödə
+          </Button>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline">Ətraflı</Button>
+              <Button variant="outline">
+                <Info />
+                Ətraflı
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Dizayn sistemi hazırdır</DialogTitle>
                 <DialogDescription>
                   Button, Card, Dialog, Badge və ToggleGroup komponentləri
-                  layihəyə əlavə olundu.
+                  layihəyə əlavə olundu. Vizual işarələr üçün yalnız
+                  lucide-react ikonlarından istifadə olunur.
                 </DialogDescription>
               </DialogHeader>
             </DialogContent>

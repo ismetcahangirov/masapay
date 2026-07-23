@@ -47,5 +47,11 @@ həmişə bu tokenlərdən istifadə et.
 `npm run lint:css` (Stylelint) qradientləri (`function-disallowed-list`) və
 qadağan olunmuş bənövşəyi-mavi rəngləri (`#6366F1`, `#8B5CF6`) bloklayır.
 
-Növbəti epic-lərdə Redux Toolkit, RTK Query və lucide-react əlavə olunacaq
-(bax `BACKLOG.md`).
+## İkon Sistemi
+
+Bütün vizual işarələr (status, aksiya, naviqasiya) üçün YALNIZ
+[`lucide-react`](https://lucide.dev) ikon komponentlərindən istifadə olunur.
+Emoji istifadəsi qadağandır və repo kökündəki pre-commit hook ilə yoxlanılır
+(bax kök `scripts/check-no-emoji.mjs`).
+
+Növbəti epic-lərdə Redux Toolkit və RTK Query əlavə olunacaq (bax `BACKLOG.md`).

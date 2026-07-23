@@ -4,49 +4,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Design system v2 — semantic tokens mapped onto the brand palette.
+   Light: greige surface (#F6F5F6) with pure-black text.
+   Dark:  near-black panels (#0A0A0A) with white text.
+   Accent (CTA / success): brand green #08CB00 with BLACK foreground
+   (white fails contrast on this green). See docs/DESIGN.md. */
 @layer base {
   :root {
-    /* Background #FAFAFA / Surface #FFFFFF */
-    --background: 0 0% 98%;
-    --foreground: 222.2 47.4% 11.2%;
+    /* Surface: greige #F6F5F6, cards pure white */
+    --background: 300 5% 96%;
+    --foreground: 0 0% 0%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 0 0% 0%;
 
-    /* Text / Button #0F172A */
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 0 0% 98%;
+    /* Buttons / primary: pure black on white */
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 0% 93%;
+    --secondary-foreground: 0 0% 0%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 0 0% 93%;
+    --accent-foreground: 0 0% 0%;
 
-    /* Accent (success / CTA) #10B981 with #059669 hover */
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
+    /* Accent (success / CTA): brand green #08CB00, black text */
+    --success: 117 100% 40%;
+    --success-foreground: 0 0% 0%;
 
     --destructive: 0 72.2% 50.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Border #E2E8F0 */
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 160 84% 39%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 117 100% 40%;
 
     --radius: 0.5rem;
 
-    /* masapay brand palette (design system v2).
-       Raw values for section backgrounds and accents. See docs/DESIGN.md.
-       Migration of the semantic tokens above onto this palette is tracked
-       as a separate issue. */
+    /* masapay brand palette (design system v2). Raw values for section
+       backgrounds and accents. See docs/DESIGN.md. */
     --brand-white: #fff;
     --brand-black: #000;
     --brand-green: #08cb00;
@@ -55,36 +57,37 @@
   }
 
   .dark {
-    --background: 222.2 47.4% 11.2%;
-    --foreground: 0 0% 98%;
+    /* Near-black panels #0A0A0A, white text */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
 
-    --card: 222.2 47.4% 11.2%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 222.2 47.4% 11.2%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 64%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
+    --success: 117 100% 40%;
+    --success-foreground: 0 0% 0%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 40%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 160 84% 39%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 117 100% 40%;
   }
 }
 

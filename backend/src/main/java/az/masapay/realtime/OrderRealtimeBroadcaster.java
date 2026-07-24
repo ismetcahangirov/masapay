@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
  * order (e.g. a new item synced from the POS in #40).
  */
 @Service
-@ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "masapay.redis", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class OrderRealtimeBroadcaster {
 
 	private static final Logger log = LoggerFactory.getLogger(OrderRealtimeBroadcaster.class);

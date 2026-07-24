@@ -44,6 +44,9 @@ masapay:
       client-id: ${MASAPAY_GOOGLE_CLIENT_ID:}
     # Comma-separated emails bootstrapped as enabled SUPER_ADMINs on login (seeds the first admin).
     super-admin-emails: ${MASAPAY_SUPER_ADMIN_EMAILS:}
+  orders:
+    # Enables the customer-facing order endpoints; disabled in the infra-free smoke test.
+    enabled: ${MASAPAY_ORDERS_ENABLED:true}
   jwt:
     # HMAC-SHA256 signing secret (>= 32 bytes). Override per environment; never ship the default.
     secret: ${MASAPAY_JWT_SECRET:masapay-dev-secret-change-me-0123456789-abcdefghij}

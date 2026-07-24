@@ -14,5 +14,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
 	List<Order> findByTableId(UUID tableId);
 
+	/** The current order for a table in a given state (at most one OPEN order per table). */
+	Optional<Order> findFirstByTableIdAndStatusOrderByOpenedAtDesc(UUID tableId, OrderStatus status);
+
 	Optional<Order> findByRestaurantIdAndPosOrderId(UUID restaurantId, String posOrderId);
 }

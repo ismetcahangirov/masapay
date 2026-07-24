@@ -36,6 +36,7 @@ public class SecurityConfig {
 				.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 				.requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
 				.requestMatchers("/api/auth/**").permitAll()
+				.requestMatchers("/api/public/**").permitAll()
 				.anyRequest().authenticated())
 			.exceptionHandling(ex -> ex.authenticationEntryPoint(new RestAuthenticationEntryPoint(objectMapper)))
 			.addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class)

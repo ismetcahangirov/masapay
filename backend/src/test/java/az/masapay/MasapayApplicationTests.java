@@ -29,7 +29,8 @@ import org.springframework.http.ResponseEntity;
 			+ "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,"
 			+ "org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration",
 		"masapay.redis.enabled=false",
-		"masapay.auth.enabled=false"
+		"masapay.auth.enabled=false",
+		"masapay.orders.enabled=false"
 	})
 class MasapayApplicationTests {
 

@@ -1,5 +1,6 @@
 package az.masapay.config;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,7 +24,10 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
+				// Allow the container error dispatch so controller errors keep their status.
+				.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 				.requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+				.requestMatchers("/api/auth/**").permitAll()
 				.anyRequest().authenticated())
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable);

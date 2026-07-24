@@ -41,6 +41,9 @@ dependencies {
 	// Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
+	// Google ID token verification (OAuth2)
+	implementation 'com.google.api-client:google-api-client:2.7.0'
+
 	// Real-time
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 

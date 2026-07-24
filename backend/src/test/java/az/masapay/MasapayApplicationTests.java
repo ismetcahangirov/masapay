@@ -28,7 +28,8 @@ import org.springframework.http.ResponseEntity;
 			+ "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,"
 			+ "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,"
 			+ "org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration",
-		"masapay.redis.enabled=false"
+		"masapay.redis.enabled=false",
+		"masapay.auth.enabled=false"
 	})
 class MasapayApplicationTests {
 

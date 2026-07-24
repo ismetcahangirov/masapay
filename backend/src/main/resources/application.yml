@@ -42,6 +42,8 @@ masapay:
     google:
       # Google OAuth2 client id; also the expected ID token audience. Supplied per environment.
       client-id: ${MASAPAY_GOOGLE_CLIENT_ID:}
+    # Comma-separated emails bootstrapped as enabled SUPER_ADMINs on login (seeds the first admin).
+    super-admin-emails: ${MASAPAY_SUPER_ADMIN_EMAILS:}
   jwt:
     # HMAC-SHA256 signing secret (>= 32 bytes). Override per environment; never ship the default.
     secret: ${MASAPAY_JWT_SECRET:masapay-dev-secret-change-me-0123456789-abcdefghij}

@@ -9,10 +9,10 @@ import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.repository.UserRepository;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -26,11 +26,16 @@ class GoogleAuthServiceTest {
 	@Mock
 	private UserRepository userRepository;
 
-	@InjectMocks
 	private GoogleAuthService service;
 
 	private static final GoogleUserInfo INFO =
 		new GoogleUserInfo("google-sub-123", "diner@example.com", "Test Diner", "https://pic/1.png");
+
+	@BeforeEach
+	void setUp() {
+		// Only admin@masapay.az is a bootstrapped super admin.
+		service = new GoogleAuthService(tokenVerifier, userRepository, "admin@masapay.az");
+	}
 
 	@Test
 	void firstLoginProvisionsDisabledUserWithoutRole() {
@@ -71,6 +76,22 @@ class GoogleAuthServiceTest {
 		assertThat(result.isEnabled()).isTrue();
 		assertThat(result.getRole()).isEqualTo(UserRole.WAITER);
 		verify(userRepository).save(existing);
+	}
+
+	@Test
+	void configuredSuperAdminIsBootstrappedEnabledWithRole() {
+		GoogleUserInfo admin =
+			new GoogleUserInfo("admin-sub", "Admin@Masapay.az", "Platform Admin", null);
+		when(tokenVerifier.verify("token")).thenReturn(admin);
+		when(userRepository.findByGoogleSub("admin-sub")).thenReturn(Optional.empty());
+		when(userRepository.findByEmail("Admin@Masapay.az")).thenReturn(Optional.empty());
+		when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		User result = service.authenticate("token");
+
+		// Match is case-insensitive; admin is activated with SUPER_ADMIN.
+		assertThat(result.isEnabled()).isTrue();
+		assertThat(result.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
 	}
 
 	@Test

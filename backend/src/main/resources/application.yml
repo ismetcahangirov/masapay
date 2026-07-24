@@ -36,6 +36,8 @@ masapay:
     # Enables the cache manager and pub/sub wiring; disabled in the infra-free smoke test.
     enabled: ${MASAPAY_REDIS_ENABLED:true}
     events-channel: ${MASAPAY_REDIS_EVENTS_CHANNEL:masapay:events}
+    # Channel carrying order-update snapshots relayed to WebSocket clients.
+    order-channel: ${MASAPAY_REDIS_ORDER_CHANNEL:masapay:order-events}
   auth:
     # Enables the Google authentication endpoint; disabled in the infra-free smoke test.
     enabled: ${MASAPAY_AUTH_ENABLED:true}

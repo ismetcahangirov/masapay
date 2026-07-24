@@ -31,6 +31,12 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
 
+masapay:
+  redis:
+    # Enables the cache manager and pub/sub wiring; disabled in the infra-free smoke test.
+    enabled: ${MASAPAY_REDIS_ENABLED:true}
+    events-channel: ${MASAPAY_REDIS_EVENTS_CHANNEL:masapay:events}
+
 server:
   port: ${SERVER_PORT:8080}
 

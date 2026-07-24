@@ -1,12 +1,15 @@
 package az.masapay.payment;
 
+import az.masapay.payment.dto.ItemPaymentRequest;
 import az.masapay.payment.dto.PaymentQuote;
 import az.masapay.payment.dto.PaymentReceipt;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,5 +36,10 @@ public class CustomerPaymentController {
 	@PostMapping("/full")
 	public PaymentReceipt payFull(@PathVariable UUID qrToken) {
 		return paymentSettlementService.payFull(qrToken);
+	}
+
+	@PostMapping("/items")
+	public PaymentReceipt payItems(@PathVariable UUID qrToken, @Valid @RequestBody ItemPaymentRequest request) {
+		return paymentSettlementService.payItems(qrToken, request.itemIds());
 	}
 }

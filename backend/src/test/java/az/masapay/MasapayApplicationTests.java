@@ -19,14 +19,17 @@ import org.springframework.http.ResponseEntity;
  */
 @SpringBootTest(
 	webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-	properties = "spring.autoconfigure.exclude="
-		+ "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
-		+ "org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,"
-		+ "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
-		+ "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration,"
-		+ "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,"
-		+ "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,"
-		+ "org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration")
+	properties = {
+		"spring.autoconfigure.exclude="
+			+ "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
+			+ "org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,"
+			+ "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
+			+ "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration,"
+			+ "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,"
+			+ "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,"
+			+ "org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration",
+		"masapay.redis.enabled=false"
+	})
 class MasapayApplicationTests {
 
 	@Autowired

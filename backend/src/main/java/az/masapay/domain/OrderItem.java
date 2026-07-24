@@ -38,4 +38,13 @@ public class OrderItem extends BaseEntity {
 
 	@Column(name = "total_price", nullable = false, precision = 12, scale = 2)
 	private BigDecimal totalPrice;
+
+	/** True once this item has been settled (item-based split, #25). */
+	@Column(nullable = false)
+	private boolean paid = false;
+
+	/** The transaction that paid this item, when settled. */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "paid_transaction_id")
+	private Transaction paidTransaction;
 }

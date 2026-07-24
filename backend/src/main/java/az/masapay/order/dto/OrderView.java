@@ -13,7 +13,8 @@ public record OrderView(
 
 	public static OrderView of(Order order, List<OrderItem> items) {
 		List<OrderItemView> itemViews = items.stream()
-			.map(i -> new OrderItemView(i.getId(), i.getName(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice()))
+			.map(i -> new OrderItemView(
+				i.getId(), i.getName(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(), i.isPaid()))
 			.toList();
 		return new OrderView(order.getId(), order.getStatus().name(), order.getTotalAmount(), order.getOpenedAt(), itemViews);
 	}

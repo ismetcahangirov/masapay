@@ -18,8 +18,13 @@ spring:
 
   flyway:
     enabled: true
-    baseline-on-migrate: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
+    # Fail fast: a failed or checksum-mismatched migration aborts startup.
+    validate-on-migrate: true
+    out-of-order: false
+    # Never allow `flyway clean` to wipe a database, in any environment.
+    clean-disabled: true
 
   data:
     redis:

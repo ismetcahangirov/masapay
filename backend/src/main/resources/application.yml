@@ -42,6 +42,12 @@ masapay:
     google:
       # Google OAuth2 client id; also the expected ID token audience. Supplied per environment.
       client-id: ${MASAPAY_GOOGLE_CLIENT_ID:}
+  jwt:
+    # HMAC-SHA256 signing secret (>= 32 bytes). Override per environment; never ship the default.
+    secret: ${MASAPAY_JWT_SECRET:masapay-dev-secret-change-me-0123456789-abcdefghij}
+    issuer: ${MASAPAY_JWT_ISSUER:masapay}
+    access-token-ttl: ${MASAPAY_JWT_ACCESS_TTL:PT15M}
+    refresh-token-ttl: ${MASAPAY_JWT_REFRESH_TTL:P7D}
 
 server:
   port: ${SERVER_PORT:8080}

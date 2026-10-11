@@ -129,4 +129,21 @@ class SplitCalculationServiceTest {
 				.isInstanceOf(IllegalArgumentException.class);
 		}
 	}
+	@Nested
+	class ServiceCharge {
+
+		@Test
+		void isTheTotalAboveTheItems() {
+			assertThat(service.calculateServiceCharge(new BigDecimal("50.00"),
+				List.of(new BigDecimal("12.00"), new BigDecimal("30.00")))).isEqualByComparingTo("8.00");
+		}
+
+		@Test
+		void isZeroWhenTheItemsCoverTheTotal() {
+			assertThat(service.calculateServiceCharge(new BigDecimal("25.00"),
+				List.of(new BigDecimal("25.00")))).isEqualByComparingTo("0.00");
+			assertThat(service.calculateServiceCharge(new BigDecimal("20.00"),
+				List.of(new BigDecimal("25.00")))).isEqualByComparingTo("0.00");
+		}
+	}
 }

@@ -65,4 +65,12 @@ public class Order extends BaseEntity {
 	/** How many of the equal parts have been paid so far. */
 	@Column(name = "equal_split_paid_parts", nullable = false)
 	private int equalSplitPaidParts;
+
+	/** Guests sharing the service charge in ITEM mode (#25); null until the first item payer fixes it. */
+	@Column(name = "service_charge_guests")
+	private Integer serviceChargeGuests;
+
+	/** How many guests' service-charge shares have been paid so far. */
+	@Column(name = "service_charge_paid_shares", nullable = false)
+	private int serviceChargePaidShares;
 }

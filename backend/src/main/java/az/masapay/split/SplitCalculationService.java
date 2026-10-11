@@ -78,6 +78,16 @@ public class SplitCalculationService {
 		return sum.setScale(2, RoundingMode.HALF_UP);
 	}
 
+	/**
+	 * The part of the bill not tied to any line item (e.g. a service charge):
+	 * {@code max(0, orderTotal - sum(itemAmounts))} at scale 2.
+	 */
+	public BigDecimal calculateServiceCharge(BigDecimal orderTotal, List<BigDecimal> itemAmounts) {
+		requireNonNegative(orderTotal, "orderTotal");
+		return orderTotal.subtract(calculateItemPayment(itemAmounts)).max(BigDecimal.ZERO)
+			.setScale(2, RoundingMode.HALF_UP);
+	}
+
 	private long toCents(BigDecimal amount) {
 		return amount.movePointRight(2).setScale(0, RoundingMode.HALF_UP).longValueExact();
 	}

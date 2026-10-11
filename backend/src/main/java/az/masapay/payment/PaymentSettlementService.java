@@ -7,6 +7,7 @@ import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.OrderStatus;
 import az.masapay.domain.enums.SplitType;
 import az.masapay.domain.enums.TransactionStatus;
+import az.masapay.payment.dto.EqualPaymentQuote;
 import az.masapay.payment.dto.PaymentQuote;
 import az.masapay.payment.dto.PaymentReceipt;
 import az.masapay.realtime.OrderRealtimeBroadcaster;
@@ -28,8 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Settles payments against a table's open order. #24 covers the FULL mode: pay the
- * whole outstanding amount and close the order.
+ * Settles payments against a table's open order in the three split modes: FULL
+ * (#24) pays the whole outstanding amount, ITEM (#25) pays selected line items and
+ * EQUAL (#26) pays equal shares of the bill.
  * <p>
  * NOTE: until Payriff lands (EPIC 7, #33-37) the confirm step marks the payment
  * SUCCESS directly. That epic will move the trigger to the Payriff webhook: create
@@ -151,6 +153,103 @@ public class PaymentSettlementService {
 
 		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(qrToken));
 		return PaymentReceipt.of(transaction, order);
+	}
+
+	/** The amount for {@code partsToPay} of {@code parts} equal shares, without paying. */
+	@Transactional(readOnly = true)
+	public EqualPaymentQuote quoteEqualPayment(UUID qrToken, int parts, int partsToPay) {
+		Order order = openOrder(tableRepository.findByQrToken(qrToken)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found")));
+		EqualSharePlan plan = planEqualShares(order, parts, partsToPay, outstanding(order));
+		return new EqualPaymentQuote(plan.amount(), order.getCurrency(), parts, plan.paidBefore());
+	}
+
+	/**
+	 * EQUAL ("Bərabər Böl"): pays {@code partsToPay} of {@code parts} equal shares.
+	 * The first payment fixes the part count and the amount being split, so every
+	 * later payer gets a share of that same split. Shares come from
+	 * {@link SplitCalculationService#splitEqually}, so they sum exactly to the split
+	 * amount; the final share settles the exact outstanding balance, absorbing any
+	 * rounding difference. Paid parts are claimed with a compare-and-set, so a
+	 * concurrent payer is rejected with 409 and rolled back.
+	 */
+	@Transactional
+	public PaymentReceipt payEqual(UUID qrToken, int parts, int partsToPay) {
+		RestaurantTable table = tableRepository.findByQrToken(qrToken)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+		Order order = openOrder(table);
+		EqualSharePlan plan = planEqualShares(order, parts, partsToPay, outstanding(order));
+
+		Transaction transaction = new Transaction();
+		transaction.setOrder(order);
+		transaction.setRestaurant(order.getRestaurant());
+		transaction.setAmount(plan.amount());
+		transaction.setTotalAmount(plan.amount());
+		transaction.setCurrency(order.getCurrency());
+		transaction.setSplitType(SplitType.EQUAL);
+		transaction.setStatus(TransactionStatus.SUCCESS);
+		transaction.setPaidAt(Instant.now());
+		transaction = transactionRepository.save(transaction);
+
+		int claimed = orderRepository.claimEqualParts(
+			order.getId(), parts, plan.base(), plan.paidBefore(), plan.paidAfter());
+		if (claimed != 1) {
+			// Another payer claimed a part (or changed the split) first; abort and roll back.
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "The bill split was just updated by someone else");
+		}
+		// Keep the managed entity in step with the conditional update before it is flushed.
+		order.setEqualSplitParts(parts);
+		order.setEqualSplitBase(plan.base());
+		order.setEqualSplitPaidParts(plan.paidAfter());
+
+		if (plan.settlesOrder()) {
+			order.setStatus(OrderStatus.PAID);
+			order.setClosedAt(Instant.now());
+		}
+		orderRepository.save(order);
+
+		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(qrToken));
+		return PaymentReceipt.of(transaction, order);
+	}
+
+	/**
+	 * Works out what {@code partsToPay} equal shares cost right now. Once a part has
+	 * been paid the split is locked: the same part count must be used and the
+	 * shares are taken from the amount fixed when the split started. Until then the
+	 * split can be restarted with a different part count over the outstanding amount.
+	 */
+	private EqualSharePlan planEqualShares(Order order, int parts, int partsToPay, BigDecimal outstanding) {
+		if (outstanding.signum() <= 0) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Order has nothing left to pay");
+		}
+		int paidBefore = order.getEqualSplitPaidParts();
+		BigDecimal base = outstanding;
+		if (order.getEqualSplitParts() != null && paidBefore > 0) {
+			if (order.getEqualSplitParts() != parts) {
+				throw new ResponseStatusException(HttpStatus.CONFLICT,
+					"The bill is already split into " + order.getEqualSplitParts() + " parts");
+			}
+			base = order.getEqualSplitBase();
+		} else {
+			paidBefore = 0;
+		}
+		if (partsToPay < 1 || partsToPay > parts - paidBefore) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+				"Only " + (parts - paidBefore) + " of " + parts + " parts are left to pay");
+		}
+
+		int paidAfter = paidBefore + partsToPay;
+		boolean finalShare = paidAfter == parts;
+		BigDecimal amount = finalShare
+			? outstanding
+			: splitCalculationService.calculateEqualShare(base, parts, paidAfter)
+				.subtract(splitCalculationService.calculateEqualShare(base, parts, paidBefore))
+				.min(outstanding);
+		return new EqualSharePlan(base, paidBefore, paidAfter, amount, finalShare || amount.compareTo(outstanding) == 0);
+	}
+
+	private record EqualSharePlan(
+			BigDecimal base, int paidBefore, int paidAfter, BigDecimal amount, boolean settlesOrder) {
 	}
 
 	private Order openOrder(RestaurantTable table) {

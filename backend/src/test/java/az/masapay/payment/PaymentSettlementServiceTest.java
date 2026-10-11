@@ -3,6 +3,10 @@ package az.masapay.payment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +18,7 @@ import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.OrderStatus;
 import az.masapay.domain.enums.SplitType;
 import az.masapay.domain.enums.TransactionStatus;
+import az.masapay.payment.dto.EqualPaymentQuote;
 import az.masapay.payment.dto.PaymentReceipt;
 import az.masapay.realtime.OrderRealtimeBroadcaster;
 import az.masapay.repository.OrderItemRepository;
@@ -32,6 +37,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
@@ -232,5 +239,150 @@ class PaymentSettlementServiceTest {
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of());
 
 		assertThatThrownBy(() -> service.payItems(qrToken, ids)).isInstanceOf(ResponseStatusException.class);
+	}
+	private void openOrderWithTotal(String total, String alreadyPaid) {
+		order.setTotalAmount(new BigDecimal(total));
+		Transaction prior = new Transaction();
+		prior.setTotalAmount(new BigDecimal(alreadyPaid));
+		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
+		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+			.thenReturn(Optional.of(order));
+		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
+			.thenReturn(List.of(prior));
+	}
+
+	private void equalSplitInProgress(int parts, String base, int paidParts) {
+		order.setEqualSplitParts(parts);
+		order.setEqualSplitBase(new BigDecimal(base));
+		order.setEqualSplitPaidParts(paidParts);
+	}
+
+	private static HttpStatusCode statusOf(Throwable e) {
+		return ((ResponseStatusException) e).getStatusCode();
+	}
+
+	@Test
+	void payEqualFirstShareFixesTheSplitAndKeepsOrderOpen() {
+		openOrderWithTotal("100.00", "0.00");
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderRepository.claimEqualParts(eq(order.getId()), eq(3), argThat(b -> b.compareTo(new BigDecimal("100.00")) == 0),
+			eq(0), eq(1))).thenReturn(1);
+
+		PaymentReceipt receipt = service.payEqual(qrToken, 3, 1);
+
+		ArgumentCaptor<Transaction> txCaptor = ArgumentCaptor.forClass(Transaction.class);
+		verify(transactionRepository).save(txCaptor.capture());
+		assertThat(txCaptor.getValue().getSplitType()).isEqualTo(SplitType.EQUAL);
+		// 100.00 / 3: the leftover cent goes to the first share (33.34 + 33.33 + 33.33).
+		assertThat(receipt.amount()).isEqualByComparingTo("33.34");
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
+		assertThat(order.getEqualSplitParts()).isEqualTo(3);
+		assertThat(order.getEqualSplitBase()).isEqualByComparingTo("100.00");
+		assertThat(order.getEqualSplitPaidParts()).isEqualTo(1);
+	}
+
+	@Test
+	void payEqualLaterShareUsesTheLockedSplitAmount() {
+		// Splitting the 66.66 still outstanding by 3 again would give 22.22; the locked split keeps it fair.
+		openOrderWithTotal("100.00", "33.34");
+		equalSplitInProgress(3, "100.00", 1);
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderRepository.claimEqualParts(eq(order.getId()), eq(3), any(), eq(1), eq(2))).thenReturn(1);
+
+		PaymentReceipt receipt = service.payEqual(qrToken, 3, 1);
+
+		assertThat(receipt.amount()).isEqualByComparingTo("33.33");
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
+	}
+
+	@Test
+	void payEqualMultiplePartsChargesTheirSum() {
+		openOrderWithTotal("100.00", "0.00");
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderRepository.claimEqualParts(eq(order.getId()), eq(3), any(), eq(0), eq(2))).thenReturn(1);
+
+		PaymentReceipt receipt = service.payEqual(qrToken, 3, 2);
+
+		assertThat(receipt.amount()).isEqualByComparingTo("66.67");
+	}
+
+	@Test
+	void payEqualFinalShareSettlesExactRemainderAndClosesOrder() {
+		openOrderWithTotal("100.00", "66.67");
+		equalSplitInProgress(3, "100.00", 2);
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderRepository.claimEqualParts(eq(order.getId()), eq(3), any(), eq(2), eq(3))).thenReturn(1);
+
+		PaymentReceipt receipt = service.payEqual(qrToken, 3, 1);
+
+		assertThat(receipt.amount()).isEqualByComparingTo("33.33");
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+		assertThat(order.getClosedAt()).isNotNull();
+		verify(orderRepository).save(order);
+	}
+
+	@Test
+	void payEqualRejectsDifferentPartCountOnceSplitIsLocked() {
+		openOrderWithTotal("100.00", "33.34");
+		equalSplitInProgress(3, "100.00", 1);
+
+		assertThatThrownBy(() -> service.payEqual(qrToken, 4, 1))
+			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.CONFLICT));
+		verify(transactionRepository, never()).save(any());
+	}
+
+	@Test
+	void payEqualAllowsRestartingTheSplitBeforeAnyPartIsPaid() {
+		openOrderWithTotal("90.00", "0.00");
+		equalSplitInProgress(3, "90.00", 0);
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderRepository.claimEqualParts(eq(order.getId()), eq(2), any(), eq(0), eq(1))).thenReturn(1);
+
+		PaymentReceipt receipt = service.payEqual(qrToken, 2, 1);
+
+		assertThat(receipt.amount()).isEqualByComparingTo("45.00");
+	}
+
+	@Test
+	void payEqualRejectsMorePartsThanRemain() {
+		openOrderWithTotal("100.00", "66.67");
+		equalSplitInProgress(3, "100.00", 2);
+
+		assertThatThrownBy(() -> service.payEqual(qrToken, 3, 2))
+			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.BAD_REQUEST));
+	}
+
+	@Test
+	void payEqualRejectsConcurrentClaim() {
+		openOrderWithTotal("100.00", "0.00");
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		// Another diner claimed a part between our read and our update.
+		when(orderRepository.claimEqualParts(eq(order.getId()), eq(3), any(), eq(0), eq(1))).thenReturn(0);
+
+		assertThatThrownBy(() -> service.payEqual(qrToken, 3, 1))
+			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.CONFLICT));
+		assertThat(order.getEqualSplitParts()).isNull();
+	}
+
+	@Test
+	void payEqualWhenNothingLeftIsConflict() {
+		openOrderWithTotal("100.00", "100.00");
+
+		assertThatThrownBy(() -> service.payEqual(qrToken, 3, 1))
+			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.CONFLICT));
+	}
+
+	@Test
+	void quoteEqualReportsShareAndProgressWithoutPaying() {
+		openOrderWithTotal("100.00", "33.34");
+		equalSplitInProgress(3, "100.00", 1);
+
+		EqualPaymentQuote quote = service.quoteEqualPayment(qrToken, 3, 2);
+
+		assertThat(quote.amount()).isEqualByComparingTo("66.66");
+		assertThat(quote.totalParts()).isEqualTo(3);
+		assertThat(quote.paidParts()).isEqualTo(1);
+		verify(transactionRepository, never()).save(any());
+		verify(orderRepository, never()).claimEqualParts(any(), anyInt(), any(), anyInt(), anyInt());
 	}
 }

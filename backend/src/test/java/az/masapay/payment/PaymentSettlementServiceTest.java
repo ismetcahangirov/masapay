@@ -84,7 +84,7 @@ class PaymentSettlementServiceTest {
 	@Test
 	void payFullCreatesSuccessTransactionAndMarksOrderPaid() {
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
 		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
 			.thenReturn(List.of());
@@ -113,7 +113,7 @@ class PaymentSettlementServiceTest {
 		Transaction prior = new Transaction();
 		prior.setTotalAmount(new BigDecimal("10.00"));
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
 		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
 			.thenReturn(List.of(prior));
@@ -127,7 +127,7 @@ class PaymentSettlementServiceTest {
 	@Test
 	void payFullWithoutOpenOrderIsConflict() {
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> service.payFull(qrToken)).isInstanceOf(ResponseStatusException.class);
@@ -138,7 +138,7 @@ class PaymentSettlementServiceTest {
 		Transaction prior = new Transaction();
 		prior.setTotalAmount(new BigDecimal("25.00"));
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
 		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
 			.thenReturn(List.of(prior));
@@ -168,7 +168,7 @@ class PaymentSettlementServiceTest {
 		UUID id2 = UUID.randomUUID();
 		List<UUID> ids = List.of(id1, id2);
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
 		when(orderItemRepository.findAllById(ids))
 			.thenReturn(List.of(orderItem(id1, "7.00", false), orderItem(id2, "4.50", false)));
@@ -187,7 +187,7 @@ class PaymentSettlementServiceTest {
 		UUID id1 = UUID.randomUUID();
 		List<UUID> ids = List.of(id1);
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "25.00", false)));
 		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -206,7 +206,7 @@ class PaymentSettlementServiceTest {
 		UUID id2 = UUID.randomUUID();
 		List<UUID> ids = List.of(id1, id2);
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
 		when(orderItemRepository.findAllById(ids))
 			.thenReturn(List.of(orderItem(id1, "7.00", false), orderItem(id2, "4.50", false)));
@@ -222,7 +222,7 @@ class PaymentSettlementServiceTest {
 		UUID id1 = UUID.randomUUID();
 		List<UUID> ids = List.of(id1);
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "7.00", true)));
 
@@ -234,19 +234,29 @@ class PaymentSettlementServiceTest {
 		UUID id1 = UUID.randomUUID();
 		List<UUID> ids = List.of(id1);
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of());
 
 		assertThatThrownBy(() -> service.payItems(qrToken, ids)).isInstanceOf(ResponseStatusException.class);
 	}
 	private void openOrderWithTotal(String total, String alreadyPaid) {
+		orderWithTotal(total, alreadyPaid);
+		when(orderRepository.findOpenOrderForUpdate(tableId)).thenReturn(Optional.of(order));
+	}
+
+	/** Same as {@link #openOrderWithTotal} for read-only quotes, which do not lock the order. */
+	private void quotedOrderWithTotal(String total, String alreadyPaid) {
+		orderWithTotal(total, alreadyPaid);
+		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+			.thenReturn(Optional.of(order));
+	}
+
+	private void orderWithTotal(String total, String alreadyPaid) {
 		order.setTotalAmount(new BigDecimal(total));
 		Transaction prior = new Transaction();
 		prior.setTotalAmount(new BigDecimal(alreadyPaid));
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
-		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
-			.thenReturn(Optional.of(order));
 		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
 			.thenReturn(List.of(prior));
 	}
@@ -374,7 +384,7 @@ class PaymentSettlementServiceTest {
 
 	@Test
 	void quoteEqualReportsShareAndProgressWithoutPaying() {
-		openOrderWithTotal("100.00", "33.34");
+		quotedOrderWithTotal("100.00", "33.34");
 		equalSplitInProgress(3, "100.00", 1);
 
 		EqualPaymentQuote quote = service.quoteEqualPayment(qrToken, 3, 2);
@@ -384,5 +394,58 @@ class PaymentSettlementServiceTest {
 		assertThat(quote.paidParts()).isEqualTo(1);
 		verify(transactionRepository, never()).save(any());
 		verify(orderRepository, never()).claimEqualParts(any(), anyInt(), any(), anyInt(), anyInt());
+	}
+
+	@Test
+	void payFullLoadsTheOrderWithARowLock() {
+		openOrderWithTotal("25.00", "0.00");
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		service.payFull(qrToken);
+
+		// The locked read serializes concurrent payers; the unlocked one would let both charge the bill.
+		verify(orderRepository).findOpenOrderForUpdate(tableId);
+		verify(orderRepository, never()).findFirstByTableIdAndStatusOrderByOpenedAtDesc(any(), any());
+	}
+
+	@Test
+	void payItemsIsRejectedOnceEqualSharesArePaid() {
+		UUID id1 = UUID.randomUUID();
+		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
+		when(orderRepository.findOpenOrderForUpdate(tableId)).thenReturn(Optional.of(order));
+		equalSplitInProgress(2, "25.00", 1);
+
+		assertThatThrownBy(() -> service.payItems(qrToken, List.of(id1)))
+			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.CONFLICT));
+		verify(transactionRepository, never()).save(any());
+	}
+
+	@Test
+	void payItemsNeverChargesMoreThanIsOutstandingAndThenClosesTheOrder() {
+		// 20.00 of the 25.00 bill is already paid; the selected item costs 7.00.
+		UUID id1 = UUID.randomUUID();
+		List<UUID> ids = List.of(id1);
+		openOrderWithTotal("25.00", "20.00");
+		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "7.00", false)));
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderItemRepository.claimItems(eq(ids), eq(order.getId()), any())).thenReturn(1);
+		when(orderItemRepository.existsByOrderIdAndPaidFalse(order.getId())).thenReturn(true);
+
+		PaymentReceipt receipt = service.payItems(qrToken, ids);
+
+		assertThat(receipt.amount()).isEqualByComparingTo("5.00");
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+	}
+
+	@Test
+	void payItemsWhenNothingLeftIsConflict() {
+		UUID id1 = UUID.randomUUID();
+		List<UUID> ids = List.of(id1);
+		openOrderWithTotal("25.00", "25.00");
+		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "7.00", false)));
+
+		assertThatThrownBy(() -> service.payItems(qrToken, ids))
+			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.CONFLICT));
+		verify(transactionRepository, never()).save(any());
 	}
 }

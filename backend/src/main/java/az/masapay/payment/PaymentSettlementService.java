@@ -72,7 +72,7 @@ public class PaymentSettlementService {
 	public PaymentReceipt payFull(UUID qrToken) {
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
-		Order order = openOrder(table);
+		Order order = openOrderForUpdate(table);
 
 		BigDecimal amount = outstanding(order);
 		if (amount.signum() <= 0) {
@@ -104,13 +104,20 @@ public class PaymentSettlementService {
 	 * ITEM ("Öz Yediyini Ödə"): pays for the selected line items. The items are
 	 * claimed with a single conditional update, so if another payer settled one of
 	 * them first this call is rejected with 409 and rolled back (race protection).
+	 * Item payment is refused once equal shares have been paid, and the charge is
+	 * capped at the outstanding amount, so mixing split modes cannot overcharge.
 	 */
 	@Transactional
 	public PaymentReceipt payItems(UUID qrToken, List<UUID> itemIds) {
 		List<UUID> ids = itemIds.stream().distinct().toList();
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
-		Order order = openOrder(table);
+		Order order = openOrderForUpdate(table);
+		if (order.getEqualSplitPaidParts() > 0) {
+			// Equal shares are not tied to line items, so paying items now would charge them a second time.
+			throw new ResponseStatusException(HttpStatus.CONFLICT,
+				"The bill is being split equally; pay an equal share instead");
+		}
 
 		List<OrderItem> items = orderItemRepository.findAllById(ids);
 		if (items.size() != ids.size()) {
@@ -125,8 +132,13 @@ public class PaymentSettlementService {
 			}
 		}
 
+		BigDecimal outstanding = outstanding(order);
+		if (outstanding.signum() <= 0) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Order has nothing left to pay");
+		}
+		// Never charge more than is still owed on the bill.
 		BigDecimal amount = splitCalculationService.calculateItemPayment(
-			items.stream().map(OrderItem::getTotalPrice).collect(Collectors.toList()));
+			items.stream().map(OrderItem::getTotalPrice).collect(Collectors.toList())).min(outstanding);
 
 		Transaction transaction = new Transaction();
 		transaction.setOrder(order);
@@ -145,7 +157,7 @@ public class PaymentSettlementService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Some items were just paid by someone else");
 		}
 
-		if (!orderItemRepository.existsByOrderIdAndPaidFalse(order.getId())) {
+		if (!orderItemRepository.existsByOrderIdAndPaidFalse(order.getId()) || amount.compareTo(outstanding) == 0) {
 			order.setStatus(OrderStatus.PAID);
 			order.setClosedAt(Instant.now());
 			orderRepository.save(order);
@@ -177,7 +189,7 @@ public class PaymentSettlementService {
 	public PaymentReceipt payEqual(UUID qrToken, int parts, int partsToPay) {
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
-		Order order = openOrder(table);
+		Order order = openOrderForUpdate(table);
 		EqualSharePlan plan = planEqualShares(order, parts, partsToPay, outstanding(order));
 
 		Transaction transaction = new Transaction();
@@ -255,6 +267,12 @@ public class PaymentSettlementService {
 	private Order openOrder(RestaurantTable table) {
 		return orderRepository
 			.findFirstByTableIdAndStatusOrderByOpenedAtDesc(table.getId(), OrderStatus.OPEN)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No open order for this table"));
+	}
+
+	/** The open order, row-locked so payments on the same bill are serialized. */
+	private Order openOrderForUpdate(RestaurantTable table) {
+		return orderRepository.findOpenOrderForUpdate(table.getId())
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No open order for this table"));
 	}
 

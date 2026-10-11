@@ -2,11 +2,13 @@ package az.masapay.repository;
 
 import az.masapay.domain.Order;
 import az.masapay.domain.enums.OrderStatus;
+import jakarta.persistence.LockModeType;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,6 +22,17 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
 	/** The current order for a table in a given state (at most one OPEN order per table). */
 	Optional<Order> findFirstByTableIdAndStatusOrderByOpenedAtDesc(UUID tableId, OrderStatus status);
+
+	/**
+	 * The table's OPEN order, row-locked ({@code SELECT ... FOR UPDATE}) until the
+	 * transaction ends. Every payment loads the order through this, so concurrent
+	 * payments on one bill run one after another and each sees what the previous
+	 * one paid (two simultaneous "pay full" calls can no longer both charge the bill).
+	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT o FROM Order o WHERE o.table.id = :tableId "
+		+ "AND o.status = az.masapay.domain.enums.OrderStatus.OPEN ORDER BY o.openedAt DESC LIMIT 1")
+	Optional<Order> findOpenOrderForUpdate(@Param("tableId") UUID tableId);
 
 	Optional<Order> findByRestaurantIdAndPosOrderId(UUID restaurantId, String posOrderId);
 

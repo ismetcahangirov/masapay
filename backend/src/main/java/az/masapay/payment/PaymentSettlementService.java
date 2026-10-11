@@ -107,12 +107,12 @@ public class PaymentSettlementService {
 	 * See {@link #planItemPayment} for how the amount is worked out.
 	 */
 	@Transactional
-	public PaymentReceipt payItems(UUID qrToken, List<UUID> itemIds) {
+	public PaymentReceipt payItems(UUID qrToken, List<UUID> itemIds, Integer guests) {
 		List<UUID> ids = itemIds.stream().distinct().toList();
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
 		Order order = openOrderForUpdate(table);
-		ItemPaymentPlan plan = planItemPayment(order, ids);
+		ItemPaymentPlan plan = planItemPayment(order, ids, guests);
 
 		Transaction transaction = new Transaction();
 		transaction.setOrder(order);
@@ -131,11 +131,13 @@ public class PaymentSettlementService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Some items were just paid by someone else");
 		}
 
+		order.setServiceChargeGuests(plan.serviceChargeGuests());
+		order.setServiceChargePaidShares(plan.serviceChargePaidShares());
 		if (plan.settlesOrder()) {
 			order.setStatus(OrderStatus.PAID);
 			order.setClosedAt(Instant.now());
-			orderRepository.save(order);
 		}
+		orderRepository.save(order);
 
 		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(qrToken));
 		return PaymentReceipt.of(transaction, order);
@@ -143,22 +145,25 @@ public class PaymentSettlementService {
 
 	/** The amount for the selected line items, without paying (it may include the bill's extra charges). */
 	@Transactional(readOnly = true)
-	public PaymentQuote quoteItemPayment(UUID qrToken, List<UUID> itemIds) {
+	public PaymentQuote quoteItemPayment(UUID qrToken, List<UUID> itemIds, Integer guests) {
 		Order order = openOrder(tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found")));
-		ItemPaymentPlan plan = planItemPayment(order, itemIds.stream().distinct().toList());
+		ItemPaymentPlan plan = planItemPayment(order, itemIds.stream().distinct().toList(), guests);
 		return new PaymentQuote(plan.amount(), order.getCurrency());
 	}
 
 	/**
-	 * Validates the selected items and works out what they cost. Normally that is
-	 * the sum of their prices, capped at what is still owed. When the selection
-	 * covers every item still unpaid, the payer settles the whole outstanding
-	 * balance instead, so charges not tied to an item (e.g. a service charge, when
-	 * the order total is more than its items) are paid with the last items rather
-	 * than left owing. Item payment is refused once equal shares have been paid.
+	 * Validates the selected items and works out what they cost: the sum of their
+	 * prices plus, when the bill has a service charge (its total is more than its
+	 * items), one guest's equal share of that charge. The first item payer fixes
+	 * how many guests share it; shares come from
+	 * {@link SplitCalculationService#splitEqually}, so they sum exactly to the
+	 * charge. The payer whose selection covers every item still unpaid settles the
+	 * whole outstanding balance, so the order never closes with money owed (e.g.
+	 * when fewer guests paid than the count fixed). No payment is ever more than is
+	 * still owed. Item payment is refused once equal shares have been paid.
 	 */
-	private ItemPaymentPlan planItemPayment(Order order, List<UUID> ids) {
+	private ItemPaymentPlan planItemPayment(Order order, List<UUID> ids, Integer guests) {
 		if (order.getEqualSplitPaidParts() > 0) {
 			// Equal shares are not tied to line items, so paying items now would charge them a second time.
 			throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -182,16 +187,58 @@ public class PaymentSettlementService {
 		if (outstanding.signum() <= 0) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Order has nothing left to pay");
 		}
-		boolean lastItems = ids.size() == orderItemRepository.countByOrderIdAndPaidFalse(order.getId());
+
+		List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+		BigDecimal serviceCharge = splitCalculationService.calculateServiceCharge(
+			order.getTotalAmount(), orderItems.stream().map(OrderItem::getTotalPrice).collect(Collectors.toList()));
+		Integer chargeGuests = order.getServiceChargeGuests();
+		int paidShares = order.getServiceChargePaidShares();
+		BigDecimal share = BigDecimal.ZERO;
+		if (serviceCharge.signum() > 0) {
+			chargeGuests = resolveServiceChargeGuests(order, guests);
+			if (paidShares < chargeGuests) {
+				share = splitCalculationService.splitEqually(serviceCharge, chargeGuests).get(paidShares);
+				paidShares++;
+			}
+		}
+
+		long unpaidItems = orderItems.stream().filter(i -> !i.isPaid()).count();
+		boolean lastItems = ids.size() == unpaidItems;
 		BigDecimal amount = lastItems
 			? outstanding
 			// Never charge more than is still owed on the bill.
 			: splitCalculationService.calculateItemPayment(
-				items.stream().map(OrderItem::getTotalPrice).collect(Collectors.toList())).min(outstanding);
-		return new ItemPaymentPlan(amount, lastItems || amount.compareTo(outstanding) == 0);
+				items.stream().map(OrderItem::getTotalPrice).collect(Collectors.toList())).add(share).min(outstanding);
+		if (lastItems && serviceCharge.signum() > 0) {
+			// The last payer covers any shares left unpaid.
+			paidShares = chargeGuests;
+		}
+		return new ItemPaymentPlan(amount, lastItems || amount.compareTo(outstanding) == 0, chargeGuests, paidShares);
 	}
 
-	private record ItemPaymentPlan(BigDecimal amount, boolean settlesOrder) {
+	/**
+	 * The guest count the service charge is shared by: the one already fixed for
+	 * this order, or the payer's count if they are the first. A different count
+	 * once it is fixed is rejected so every guest pays the same share.
+	 */
+	private int resolveServiceChargeGuests(Order order, Integer guests) {
+		Integer fixed = order.getServiceChargeGuests();
+		if (fixed != null) {
+			if (guests != null && !guests.equals(fixed)) {
+				throw new ResponseStatusException(HttpStatus.CONFLICT,
+					"The service charge is already shared by " + fixed + " guests");
+			}
+			return fixed;
+		}
+		if (guests == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+				"guests is required: the bill has a service charge to share");
+		}
+		return guests;
+	}
+
+	private record ItemPaymentPlan(
+			BigDecimal amount, boolean settlesOrder, Integer serviceChargeGuests, int serviceChargePaidShares) {
 	}
 
 	/** The amount for {@code partsToPay} of {@code parts} equal shares, without paying. */

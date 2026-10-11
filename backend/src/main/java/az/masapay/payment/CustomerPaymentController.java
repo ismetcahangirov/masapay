@@ -46,13 +46,14 @@ public class CustomerPaymentController {
 	}
 
 	@GetMapping("/items")
-	public PaymentQuote quoteItems(@PathVariable UUID qrToken, @RequestParam @NotEmpty List<UUID> itemIds) {
-		return paymentSettlementService.quoteItemPayment(qrToken, itemIds);
+	public PaymentQuote quoteItems(@PathVariable UUID qrToken, @RequestParam @NotEmpty List<UUID> itemIds,
+			@RequestParam(required = false) @Min(1) @Max(EqualPaymentRequest.MAX_PARTS) Integer guests) {
+		return paymentSettlementService.quoteItemPayment(qrToken, itemIds, guests);
 	}
 
 	@PostMapping("/items")
 	public PaymentReceipt payItems(@PathVariable UUID qrToken, @Valid @RequestBody ItemPaymentRequest request) {
-		return paymentSettlementService.payItems(qrToken, request.itemIds());
+		return paymentSettlementService.payItems(qrToken, request.itemIds(), request.guests());
 	}
 
 	@GetMapping("/equal")

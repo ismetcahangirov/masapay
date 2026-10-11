@@ -175,9 +175,11 @@ class PaymentSettlementServiceTest {
 			.thenReturn(List.of(orderItem(id1, "7.00", false), orderItem(id2, "4.50", false)));
 		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 		when(orderItemRepository.claimItems(org.mockito.ArgumentMatchers.eq(ids), org.mockito.ArgumentMatchers.eq(order.getId()), org.mockito.ArgumentMatchers.any())).thenReturn(2);
-		when(orderItemRepository.countByOrderIdAndPaidFalse(order.getId())).thenReturn(3L);
+		// The 25.00 bill is exactly its items: no service charge.
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(id1, "7.00", false), orderItem(id2, "4.50", false), orderItem(UUID.randomUUID(), "13.50", false)));
 
-		PaymentReceipt receipt = service.payItems(qrToken, ids);
+		PaymentReceipt receipt = service.payItems(qrToken, ids, null);
 
 		assertThat(receipt.amount()).isEqualByComparingTo("11.50");
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
@@ -193,9 +195,9 @@ class PaymentSettlementServiceTest {
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "25.00", false)));
 		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 		when(orderItemRepository.claimItems(org.mockito.ArgumentMatchers.eq(ids), org.mockito.ArgumentMatchers.eq(order.getId()), org.mockito.ArgumentMatchers.any())).thenReturn(1);
-		when(orderItemRepository.countByOrderIdAndPaidFalse(order.getId())).thenReturn(1L);
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(orderItem(id1, "25.00", false)));
 
-		service.payItems(qrToken, ids);
+		service.payItems(qrToken, ids, null);
 
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
 		assertThat(order.getClosedAt()).isNotNull();
@@ -212,10 +214,12 @@ class PaymentSettlementServiceTest {
 		when(orderItemRepository.findAllById(ids))
 			.thenReturn(List.of(orderItem(id1, "7.00", false), orderItem(id2, "4.50", false)));
 		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(id1, "7.00", false), orderItem(id2, "4.50", false), orderItem(UUID.randomUUID(), "13.50", false)));
 		// Only one row claimed: the other item was settled concurrently.
 		when(orderItemRepository.claimItems(org.mockito.ArgumentMatchers.eq(ids), org.mockito.ArgumentMatchers.eq(order.getId()), org.mockito.ArgumentMatchers.any())).thenReturn(1);
 
-		assertThatThrownBy(() -> service.payItems(qrToken, ids)).isInstanceOf(ResponseStatusException.class);
+		assertThatThrownBy(() -> service.payItems(qrToken, ids, null)).isInstanceOf(ResponseStatusException.class);
 	}
 
 	@Test
@@ -227,7 +231,7 @@ class PaymentSettlementServiceTest {
 			.thenReturn(Optional.of(order));
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "7.00", true)));
 
-		assertThatThrownBy(() -> service.payItems(qrToken, ids)).isInstanceOf(ResponseStatusException.class);
+		assertThatThrownBy(() -> service.payItems(qrToken, ids, null)).isInstanceOf(ResponseStatusException.class);
 	}
 
 	@Test
@@ -239,7 +243,7 @@ class PaymentSettlementServiceTest {
 			.thenReturn(Optional.of(order));
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of());
 
-		assertThatThrownBy(() -> service.payItems(qrToken, ids)).isInstanceOf(ResponseStatusException.class);
+		assertThatThrownBy(() -> service.payItems(qrToken, ids, null)).isInstanceOf(ResponseStatusException.class);
 	}
 	private void openOrderWithTotal(String total, String alreadyPaid) {
 		orderWithTotal(total, alreadyPaid);
@@ -416,7 +420,7 @@ class PaymentSettlementServiceTest {
 		when(orderRepository.findOpenOrderForUpdate(tableId)).thenReturn(Optional.of(order));
 		equalSplitInProgress(2, "25.00", 1);
 
-		assertThatThrownBy(() -> service.payItems(qrToken, List.of(id1)))
+		assertThatThrownBy(() -> service.payItems(qrToken, List.of(id1), null))
 			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.CONFLICT));
 		verify(transactionRepository, never()).save(any());
 	}
@@ -430,9 +434,10 @@ class PaymentSettlementServiceTest {
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "7.00", false)));
 		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 		when(orderItemRepository.claimItems(eq(ids), eq(order.getId()), any())).thenReturn(1);
-		when(orderItemRepository.countByOrderIdAndPaidFalse(order.getId())).thenReturn(2L);
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(id1, "7.00", false), orderItem(UUID.randomUUID(), "5.00", false), orderItem(UUID.randomUUID(), "13.00", true)));
 
-		PaymentReceipt receipt = service.payItems(qrToken, ids);
+		PaymentReceipt receipt = service.payItems(qrToken, ids, null);
 
 		assertThat(receipt.amount()).isEqualByComparingTo("5.00");
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
@@ -445,56 +450,118 @@ class PaymentSettlementServiceTest {
 		openOrderWithTotal("25.00", "25.00");
 		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "7.00", false)));
 
-		assertThatThrownBy(() -> service.payItems(qrToken, ids))
+		assertThatThrownBy(() -> service.payItems(qrToken, ids, null))
 			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.CONFLICT));
 		verify(transactionRepository, never()).save(any());
 	}
 	@Test
-	void payItemsLastItemsAlsoSettleTheServiceCharge() {
-		// The 30.00 bill has 25.00 of items plus a 5.00 service charge; 10.00 of items is already paid.
+	void payItemsAddsOneGuestsEqualShareOfTheServiceCharge() {
+		// 50.00 bill = 42.00 of items + 8.00 service charge, shared by 4 guests: 2.00 each.
 		UUID id1 = UUID.randomUUID();
 		List<UUID> ids = List.of(id1);
-		openOrderWithTotal("30.00", "10.00");
-		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "15.00", false)));
+		openOrderWithTotal("50.00", "0.00");
+		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "12.00", false)));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(id1, "12.00", false), orderItem(UUID.randomUUID(), "30.00", false)));
 		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
 		when(orderItemRepository.claimItems(eq(ids), eq(order.getId()), any())).thenReturn(1);
-		when(orderItemRepository.countByOrderIdAndPaidFalse(order.getId())).thenReturn(1L);
 
-		PaymentReceipt receipt = service.payItems(qrToken, ids);
+		PaymentReceipt receipt = service.payItems(qrToken, ids, 4);
 
-		assertThat(receipt.amount()).isEqualByComparingTo("20.00");
-		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
-	}
-
-	@Test
-	void payItemsBeforeTheLastItemsChargesOnlyTheirPrices() {
-		UUID id1 = UUID.randomUUID();
-		List<UUID> ids = List.of(id1);
-		openOrderWithTotal("30.00", "0.00");
-		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "15.00", false)));
-		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
-		when(orderItemRepository.claimItems(eq(ids), eq(order.getId()), any())).thenReturn(1);
-		when(orderItemRepository.countByOrderIdAndPaidFalse(order.getId())).thenReturn(2L);
-
-		PaymentReceipt receipt = service.payItems(qrToken, ids);
-
-		assertThat(receipt.amount()).isEqualByComparingTo("15.00");
+		assertThat(receipt.amount()).isEqualByComparingTo("14.00");
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
+		assertThat(order.getServiceChargeGuests()).isEqualTo(4);
+		assertThat(order.getServiceChargePaidShares()).isEqualTo(1);
 	}
 
 	@Test
-	void quoteItemsShowsTheServiceChargeForTheLastItemsWithoutPaying() {
+	void payItemsUsesTheGuestCountFixedByTheFirstPayer() {
 		UUID id1 = UUID.randomUUID();
 		List<UUID> ids = List.of(id1);
-		quotedOrderWithTotal("30.00", "10.00");
-		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "15.00", false)));
-		when(orderItemRepository.countByOrderIdAndPaidFalse(order.getId())).thenReturn(1L);
+		openOrderWithTotal("50.00", "14.00");
+		order.setServiceChargeGuests(4);
+		order.setServiceChargePaidShares(1);
+		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "10.00", false)));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(UUID.randomUUID(), "12.00", true), orderItem(id1, "10.00", false),
+			orderItem(UUID.randomUUID(), "20.00", false)));
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderItemRepository.claimItems(eq(ids), eq(order.getId()), any())).thenReturn(1);
 
-		PaymentQuote quote = service.quoteItemPayment(qrToken, ids);
+		PaymentReceipt receipt = service.payItems(qrToken, ids, null);
 
-		assertThat(quote.amount()).isEqualByComparingTo("20.00");
+		assertThat(receipt.amount()).isEqualByComparingTo("12.00");
+		assertThat(order.getServiceChargePaidShares()).isEqualTo(2);
+	}
+
+	@Test
+	void payItemsLastItemsSettleWhateverServiceChargeIsLeft() {
+		// Only 2 of the 4 guests paid a share; the last payer covers the remaining 4.00 too.
+		UUID id1 = UUID.randomUUID();
+		List<UUID> ids = List.of(id1);
+		openOrderWithTotal("50.00", "26.00");
+		order.setServiceChargeGuests(4);
+		order.setServiceChargePaidShares(2);
+		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "20.00", false)));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(UUID.randomUUID(), "12.00", true), orderItem(UUID.randomUUID(), "10.00", true),
+			orderItem(id1, "20.00", false)));
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderItemRepository.claimItems(eq(ids), eq(order.getId()), any())).thenReturn(1);
+
+		PaymentReceipt receipt = service.payItems(qrToken, ids, null);
+
+		assertThat(receipt.amount()).isEqualByComparingTo("24.00");
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+		assertThat(order.getServiceChargePaidShares()).isEqualTo(4);
+	}
+
+	@Test
+	void payItemsRequiresAGuestCountWhenTheBillHasAServiceCharge() {
+		UUID id1 = UUID.randomUUID();
+		List<UUID> ids = List.of(id1);
+		openOrderWithTotal("50.00", "0.00");
+		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "12.00", false)));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(id1, "12.00", false), orderItem(UUID.randomUUID(), "30.00", false)));
+
+		assertThatThrownBy(() -> service.payItems(qrToken, ids, null))
+			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.BAD_REQUEST));
 		verify(transactionRepository, never()).save(any());
 	}
+
+	@Test
+	void payItemsRejectsADifferentGuestCountOnceFixed() {
+		UUID id1 = UUID.randomUUID();
+		List<UUID> ids = List.of(id1);
+		openOrderWithTotal("50.00", "14.00");
+		order.setServiceChargeGuests(4);
+		order.setServiceChargePaidShares(1);
+		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "10.00", false)));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(UUID.randomUUID(), "12.00", true), orderItem(id1, "10.00", false),
+			orderItem(UUID.randomUUID(), "20.00", false)));
+
+		assertThatThrownBy(() -> service.payItems(qrToken, ids, 3))
+			.satisfies(e -> assertThat(statusOf(e)).isEqualTo(HttpStatus.CONFLICT));
+	}
+
+	@Test
+	void quoteItemsIncludesTheServiceChargeShareWithoutPaying() {
+		UUID id1 = UUID.randomUUID();
+		List<UUID> ids = List.of(id1);
+		quotedOrderWithTotal("50.00", "0.00");
+		when(orderItemRepository.findAllById(ids)).thenReturn(List.of(orderItem(id1, "12.00", false)));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(
+			orderItem(id1, "12.00", false), orderItem(UUID.randomUUID(), "30.00", false)));
+
+		PaymentQuote quote = service.quoteItemPayment(qrToken, ids, 4);
+
+		assertThat(quote.amount()).isEqualByComparingTo("14.00");
+		assertThat(order.getServiceChargeGuests()).isNull();
+		verify(transactionRepository, never()).save(any());
+	}
+
 	@Test
 	void payEqualSplitsTheWholeBillIncludingServiceChargeByHeadcount() {
 		// The 50.00 bill includes a service charge on top of the items; 4 diners each pay 50.00 / 4.

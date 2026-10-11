@@ -14,7 +14,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
 	List<OrderItem> findByOrderId(UUID orderId);
 
-	boolean existsByOrderIdAndPaidFalse(UUID orderId);
+	long countByOrderIdAndPaidFalse(UUID orderId);
 
 	/**
 	 * Atomically claims the given still-unpaid items for a transaction. The

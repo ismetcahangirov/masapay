@@ -8,6 +8,8 @@ import az.masapay.payment.dto.PaymentReceipt;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +43,11 @@ public class CustomerPaymentController {
 	@PostMapping("/full")
 	public PaymentReceipt payFull(@PathVariable UUID qrToken) {
 		return paymentSettlementService.payFull(qrToken);
+	}
+
+	@GetMapping("/items")
+	public PaymentQuote quoteItems(@PathVariable UUID qrToken, @RequestParam @NotEmpty List<UUID> itemIds) {
+		return paymentSettlementService.quoteItemPayment(qrToken, itemIds);
 	}
 
 	@PostMapping("/items")

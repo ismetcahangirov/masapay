@@ -104,8 +104,7 @@ public class PaymentSettlementService {
 	 * ITEM ("Öz Yediyini Ödə"): pays for the selected line items. The items are
 	 * claimed with a single conditional update, so if another payer settled one of
 	 * them first this call is rejected with 409 and rolled back (race protection).
-	 * Item payment is refused once equal shares have been paid, and the charge is
-	 * capped at the outstanding amount, so mixing split modes cannot overcharge.
+	 * See {@link #planItemPayment} for how the amount is worked out.
 	 */
 	@Transactional
 	public PaymentReceipt payItems(UUID qrToken, List<UUID> itemIds) {
@@ -113,6 +112,53 @@ public class PaymentSettlementService {
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
 		Order order = openOrderForUpdate(table);
+		ItemPaymentPlan plan = planItemPayment(order, ids);
+
+		Transaction transaction = new Transaction();
+		transaction.setOrder(order);
+		transaction.setRestaurant(order.getRestaurant());
+		transaction.setAmount(plan.amount());
+		transaction.setTotalAmount(plan.amount());
+		transaction.setCurrency(order.getCurrency());
+		transaction.setSplitType(SplitType.ITEM);
+		transaction.setStatus(TransactionStatus.SUCCESS);
+		transaction.setPaidAt(Instant.now());
+		transaction = transactionRepository.save(transaction);
+
+		int claimed = orderItemRepository.claimItems(ids, order.getId(), transaction);
+		if (claimed != ids.size()) {
+			// A concurrent payer settled one of these items first; abort and roll back.
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Some items were just paid by someone else");
+		}
+
+		if (plan.settlesOrder()) {
+			order.setStatus(OrderStatus.PAID);
+			order.setClosedAt(Instant.now());
+			orderRepository.save(order);
+		}
+
+		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(qrToken));
+		return PaymentReceipt.of(transaction, order);
+	}
+
+	/** The amount for the selected line items, without paying (it may include the bill's extra charges). */
+	@Transactional(readOnly = true)
+	public PaymentQuote quoteItemPayment(UUID qrToken, List<UUID> itemIds) {
+		Order order = openOrder(tableRepository.findByQrToken(qrToken)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found")));
+		ItemPaymentPlan plan = planItemPayment(order, itemIds.stream().distinct().toList());
+		return new PaymentQuote(plan.amount(), order.getCurrency());
+	}
+
+	/**
+	 * Validates the selected items and works out what they cost. Normally that is
+	 * the sum of their prices, capped at what is still owed. When the selection
+	 * covers every item still unpaid, the payer settles the whole outstanding
+	 * balance instead, so charges not tied to an item (e.g. a service charge, when
+	 * the order total is more than its items) are paid with the last items rather
+	 * than left owing. Item payment is refused once equal shares have been paid.
+	 */
+	private ItemPaymentPlan planItemPayment(Order order, List<UUID> ids) {
 		if (order.getEqualSplitPaidParts() > 0) {
 			// Equal shares are not tied to line items, so paying items now would charge them a second time.
 			throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -136,35 +182,16 @@ public class PaymentSettlementService {
 		if (outstanding.signum() <= 0) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Order has nothing left to pay");
 		}
-		// Never charge more than is still owed on the bill.
-		BigDecimal amount = splitCalculationService.calculateItemPayment(
-			items.stream().map(OrderItem::getTotalPrice).collect(Collectors.toList())).min(outstanding);
+		boolean lastItems = ids.size() == orderItemRepository.countByOrderIdAndPaidFalse(order.getId());
+		BigDecimal amount = lastItems
+			? outstanding
+			// Never charge more than is still owed on the bill.
+			: splitCalculationService.calculateItemPayment(
+				items.stream().map(OrderItem::getTotalPrice).collect(Collectors.toList())).min(outstanding);
+		return new ItemPaymentPlan(amount, lastItems || amount.compareTo(outstanding) == 0);
+	}
 
-		Transaction transaction = new Transaction();
-		transaction.setOrder(order);
-		transaction.setRestaurant(order.getRestaurant());
-		transaction.setAmount(amount);
-		transaction.setTotalAmount(amount);
-		transaction.setCurrency(order.getCurrency());
-		transaction.setSplitType(SplitType.ITEM);
-		transaction.setStatus(TransactionStatus.SUCCESS);
-		transaction.setPaidAt(Instant.now());
-		transaction = transactionRepository.save(transaction);
-
-		int claimed = orderItemRepository.claimItems(ids, order.getId(), transaction);
-		if (claimed != ids.size()) {
-			// A concurrent payer settled one of these items first; abort and roll back.
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Some items were just paid by someone else");
-		}
-
-		if (!orderItemRepository.existsByOrderIdAndPaidFalse(order.getId()) || amount.compareTo(outstanding) == 0) {
-			order.setStatus(OrderStatus.PAID);
-			order.setClosedAt(Instant.now());
-			orderRepository.save(order);
-		}
-
-		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(qrToken));
-		return PaymentReceipt.of(transaction, order);
+	private record ItemPaymentPlan(BigDecimal amount, boolean settlesOrder) {
 	}
 
 	/** The amount for {@code partsToPay} of {@code parts} equal shares, without paying. */

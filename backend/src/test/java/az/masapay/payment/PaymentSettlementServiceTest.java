@@ -495,4 +495,16 @@ class PaymentSettlementServiceTest {
 		assertThat(quote.amount()).isEqualByComparingTo("20.00");
 		verify(transactionRepository, never()).save(any());
 	}
+	@Test
+	void payEqualSplitsTheWholeBillIncludingServiceChargeByHeadcount() {
+		// The 50.00 bill includes a service charge on top of the items; 4 diners each pay 50.00 / 4.
+		openOrderWithTotal("50.00", "0.00");
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(orderRepository.claimEqualParts(eq(order.getId()), eq(4), argThat(b -> b.compareTo(new BigDecimal("50.00")) == 0),
+			eq(0), eq(1))).thenReturn(1);
+
+		PaymentReceipt receipt = service.payEqual(qrToken, 4, 1);
+
+		assertThat(receipt.amount()).isEqualByComparingTo("12.50");
+	}
 }

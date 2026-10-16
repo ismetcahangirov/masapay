@@ -3,3 +3,11 @@
 rootProject.name = 'masapay'
 
 includeBuild('backend')
+
+// cmd.exe has no `#` comments, so a pasted `gradlew bootRun  # note` passes
+// `#` and the note to Gradle as task names. Drop everything from `#` on.
+def taskNames = gradle.startParameter.taskNames
+def commentAt = taskNames.findIndexOf { it.startsWith('#') }
+if (commentAt >= 0) {
+	gradle.startParameter.taskNames = taskNames.take(commentAt)
+}

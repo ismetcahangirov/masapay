@@ -1,0 +1,9 @@
+// Delegates common tasks to the included backend build, so
+// `./gradlew bootRun` works from the repo root as well as from backend/.
+['bootRun', 'build', 'test', 'clean'].each { name ->
+	tasks.register(name) {
+		group = 'masapay'
+		description = "Runs :${name} in the backend build."
+		dependsOn gradle.includedBuild('backend').task(":${name}")
+	}
+}

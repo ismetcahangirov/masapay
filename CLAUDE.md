@@ -76,8 +76,9 @@ masapay/
 
 ## İş Bölgüsü
 
-- **Frontend** issue-ları → `@ismetcahangirov`
+- **FullStack** issue-ları → `@ismetcahangirov`
 - **Backend** issue-ları → `@YunisPashayev`
+- **FullStack** issue-ları → `@codelady-ship`
 - Həm frontend həm backend olan issue-lar → hər ikisi assign olunub.
 
 Tam backlog və issue nömrələri üçün bax: [BACKLOG.md](./BACKLOG.md).

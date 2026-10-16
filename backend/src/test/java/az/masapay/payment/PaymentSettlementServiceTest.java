@@ -112,7 +112,7 @@ class PaymentSettlementServiceTest {
 	@Test
 	void payFullOnlyChargesTheOutstandingRemainder() {
 		Transaction prior = new Transaction();
-		prior.setTotalAmount(new BigDecimal("10.00"));
+		prior.setAmount(new BigDecimal("10.00"));
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
 		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
@@ -123,6 +123,23 @@ class PaymentSettlementServiceTest {
 		PaymentReceipt receipt = service.payFull(qrToken);
 
 		assertThat(receipt.amount()).isEqualByComparingTo("15.00");
+	}
+
+	@Test
+	void earlierTipsDoNotPayTheBillDown() {
+		Transaction prior = new Transaction();
+		prior.setAmount(new BigDecimal("10.00"));
+		prior.setTipAmount(new BigDecimal("2.00"));
+		prior.setTotalAmount(new BigDecimal("12.00"));
+		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
+		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+			.thenReturn(Optional.of(order));
+		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
+			.thenReturn(List.of(prior));
+
+		PaymentQuote quote = service.quoteFullPayment(qrToken);
+
+		assertThat(quote.amount()).isEqualByComparingTo("15.00");
 	}
 
 	@Test
@@ -137,7 +154,7 @@ class PaymentSettlementServiceTest {
 	@Test
 	void payFullWhenAlreadySettledIsConflict() {
 		Transaction prior = new Transaction();
-		prior.setTotalAmount(new BigDecimal("25.00"));
+		prior.setAmount(new BigDecimal("25.00"));
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
 		when(orderRepository.findOpenOrderForUpdate(tableId))
 			.thenReturn(Optional.of(order));
@@ -260,7 +277,7 @@ class PaymentSettlementServiceTest {
 	private void orderWithTotal(String total, String alreadyPaid) {
 		order.setTotalAmount(new BigDecimal(total));
 		Transaction prior = new Transaction();
-		prior.setTotalAmount(new BigDecimal(alreadyPaid));
+		prior.setAmount(new BigDecimal(alreadyPaid));
 		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table));
 		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
 			.thenReturn(List.of(prior));

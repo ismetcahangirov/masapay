@@ -19,7 +19,7 @@ masapay/
 
 `frontend/` və `backend/` bir-birindən müstəqil workspace-lərdir; hər biri öz
 asılılıqlarını və build alətlərini idarə edir (frontend üçün npm, backend üçün
-Maven).
+Gradle).
 
 ## Texnoloji Stack
 
@@ -42,7 +42,7 @@ npm run dev
 
 # Backend
 cd backend
-./mvnw spring-boot:run
+./gradlew bootRun        # Windows: .\gradlew.bat bootRun
 ```
 
 ## Layihə Qaydaları

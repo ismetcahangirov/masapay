@@ -53,4 +53,24 @@ public class Order extends BaseEntity {
 
 	@Column(name = "closed_at")
 	private Instant closedAt;
+
+	/** Number of parts the bill is split into for EQUAL mode (#26); null until an equal payer fixes it. */
+	@Column(name = "equal_split_parts")
+	private Integer equalSplitParts;
+
+	/** The amount divided by the equal split, fixed when the split starts. */
+	@Column(name = "equal_split_base", precision = 12, scale = 2)
+	private BigDecimal equalSplitBase;
+
+	/** How many of the equal parts have been paid so far. */
+	@Column(name = "equal_split_paid_parts", nullable = false)
+	private int equalSplitPaidParts;
+
+	/** Guests sharing the service charge in ITEM mode (#25); null until the first item payer fixes it. */
+	@Column(name = "service_charge_guests")
+	private Integer serviceChargeGuests;
+
+	/** How many guests' service-charge shares have been paid so far. */
+	@Column(name = "service_charge_paid_shares", nullable = false)
+	private int serviceChargePaidShares;
 }

@@ -1,9 +1,16 @@
 package az.masapay.payment.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.UUID;
 
-/** The line items a diner selected to pay for (item-based split, #25). */
-public record ItemPaymentRequest(@NotEmpty List<UUID> itemIds) {
+/**
+ * The line items a diner selected to pay for (item-based split, #25).
+ * {@code guests} is how many people share the bill's service charge; it is needed
+ * only when the bill has one and nobody has fixed the guest count yet.
+ */
+public record ItemPaymentRequest(
+		@NotEmpty List<UUID> itemIds, @Min(1) @Max(EqualPaymentRequest.MAX_PARTS) Integer guests) {
 }

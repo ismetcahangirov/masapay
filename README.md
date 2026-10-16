@@ -10,7 +10,8 @@ Custom) ilə iki-tərəfli sinxronlaşır.
 ```
 masapay/
 ├── frontend/            # React 18 + Vite + TypeScript PWA və admin panel
-├── backend/             # Spring Boot 3.x REST API
+├── backend/             # Spring Boot 3.x REST API (Gradle)
+├── settings.gradle      # kök Gradle build, backend/-i daxil edir
 ├── docker-compose.yml   # postgres, redis, backend, frontend (sonrakı epic-lər)
 ├── BACKLOG.md           # Epic / sub-issue backlog
 ├── CLAUDE.md            # Layihə qaydaları və texnoloji stack
@@ -39,10 +40,28 @@ Hər workspace müstəqil işə salınır:
 cd frontend
 npm install
 npm run dev
+```
 
-# Backend
-cd backend
-./gradlew bootRun        # Windows: .\gradlew.bat bootRun
+Backend həm repo kökündən, həm də `backend/` qovluğundan işə salınır (kökdəki
+Gradle build `backend/`-i daxil edir):
+
+```bash
+./gradlew bootRun
+```
+
+Windows (PowerShell / cmd):
+
+```
+.\gradlew.bat bootRun
+```
+
+Backend default olaraq `localhost:5432`-də PostgreSQL və `localhost:6379`-da
+Redis gözləyir. Onları `docker compose up -d postgres redis` ilə qaldırsan,
+PostgreSQL host-da `5433` portundadır, ona görə əvvəlcə:
+
+```bash
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/masapay
+# PowerShell: $env:SPRING_DATASOURCE_URL = "jdbc:postgresql://localhost:5433/masapay"
 ```
 
 ## Layihə Qaydaları

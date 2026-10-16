@@ -1,0 +1,5 @@
+// Root Gradle entry point: lets the repo root be opened/run as a Gradle build.
+// The backend stays a standalone build in backend/ and is included here.
+rootProject.name = 'masapay'
+
+includeBuild('backend')

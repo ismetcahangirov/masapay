@@ -8,8 +8,8 @@ coverage/
 *.local
 
 # --- Java / Backend ---
-target/
-!.mvn/wrapper/maven-wrapper.jar
+.gradle/
+!**/gradle/wrapper/gradle-wrapper.jar
 *.class
 *.jar
 *.war

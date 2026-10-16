@@ -64,6 +64,34 @@ export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/masapay
 # PowerShell: $env:SPRING_DATASOURCE_URL = "jdbc:postgresql://localhost:5433/masapay"
 ```
 
+### Lokal PostgreSQL (Docker-siz)
+
+PostgreSQL 16 maşına quraşdırılıbsa, `scripts/db/` altındakı skriptlər ardıcıl
+işlədilir:
+
+1. Rol və baza (`masapay` / `masapay`), `postgres` superuser ilə:
+
+   ```bash
+   psql -U postgres -h localhost -f scripts/db/1-setup-db.sql
+   ```
+
+2. Backend-i bir dəfə işə sal: Flyway sxemi yaradır.
+3. Mock data (restoranlar, masalar, açıq adisyonlar, istifadəçilər):
+
+   ```bash
+   psql -U masapay -h localhost -d masapay -f scripts/db/2-seed-mock-data.sql
+   ```
+
+Hər iki skript təkrar işlədilə bilər. Mock datadakı masaların QR token-ləri
+sabitdir və seed faylının başında siyahılanıb, məsələn:
+
+```
+GET http://localhost:8080/api/public/tables/11111111-0000-0000-0000-000000000001/order
+```
+
+Redis yoxdursa, backend-i `MASAPAY_REDIS_ENABLED=false` ilə işə sal (real-time
+WebSocket yeniləmələri o zaman söndürülür).
+
 ## Layihə Qaydaları
 
 Tam qaydalar üçün [CLAUDE.md](./CLAUDE.md); backlog və issue əlaqələri üçün

@@ -350,10 +350,11 @@ public class PaymentSettlementService {
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No open order for this table"));
 	}
 
+	/** What is still owed on the bill. Tips go to the staff, so they never pay the bill down. */
 	private BigDecimal outstanding(Order order) {
 		BigDecimal paid = transactionRepository
 			.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS).stream()
-			.map(Transaction::getTotalAmount)
+			.map(Transaction::getAmount)
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
 		return splitCalculationService.calculateFullPayment(order.getTotalAmount(), paid);
 	}

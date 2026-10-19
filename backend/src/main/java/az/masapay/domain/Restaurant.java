@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,4 +33,10 @@ public class Restaurant extends BaseEntity {
 
 	@Column(nullable = false)
 	private boolean active = true;
+
+	@Column(name = "iiko_api_login")
+	private String iikoApiLogin;
+
+	@Column(name = "iiko_organization_id")
+	private UUID iikoOrganizationId;
 }

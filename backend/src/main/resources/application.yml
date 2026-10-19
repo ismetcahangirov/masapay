@@ -55,6 +55,9 @@ masapay:
     issuer: ${MASAPAY_JWT_ISSUER:masapay}
     access-token-ttl: ${MASAPAY_JWT_ACCESS_TTL:PT15M}
     refresh-token-ttl: ${MASAPAY_JWT_REFRESH_TTL:P7D}
+  iiko:
+    # iiko Cloud API root; overridden in tests and for the EU region (api-eu.iiko.services).
+    base-url: ${MASAPAY_IIKO_BASE_URL:https://api-ru.iiko.services}
 
 springdoc:
   # OpenAPI spec and Swagger UI for trying the API by hand. Set MASAPAY_API_DOCS_ENABLED=false

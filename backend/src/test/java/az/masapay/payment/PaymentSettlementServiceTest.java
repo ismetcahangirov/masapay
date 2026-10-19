@@ -38,6 +38,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.server.ResponseStatusException;
@@ -55,6 +56,8 @@ class PaymentSettlementServiceTest {
 	private TransactionRepository transactionRepository;
 	@Mock
 	private ObjectProvider<OrderRealtimeBroadcaster> broadcaster;
+	@Mock
+	private ApplicationEventPublisher events;
 
 	private PaymentSettlementService service;
 
@@ -66,7 +69,7 @@ class PaymentSettlementServiceTest {
 	@BeforeEach
 	void setUp() {
 		service = new PaymentSettlementService(tableRepository, orderRepository, orderItemRepository,
-			transactionRepository, new SplitCalculationService(), broadcaster);
+			transactionRepository, new SplitCalculationService(), broadcaster, events);
 
 		Restaurant restaurant = new Restaurant();
 		restaurant.setId(UUID.randomUUID());
@@ -104,6 +107,7 @@ class PaymentSettlementServiceTest {
 		verify(orderRepository).save(order);
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
 		assertThat(order.getClosedAt()).isNotNull();
+		verify(events).publishEvent(new OrderPaidEvent(order.getId()));
 
 		assertThat(receipt.orderStatus()).isEqualTo("PAID");
 		assertThat(receipt.amount()).isEqualByComparingTo("25.00");
@@ -183,6 +187,7 @@ class PaymentSettlementServiceTest {
 
 		assertThat(receipt.amount()).isEqualByComparingTo("11.50");
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
+		verify(events, never()).publishEvent(any(OrderPaidEvent.class));
 	}
 
 	@Test

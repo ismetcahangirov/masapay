@@ -1,5 +1,6 @@
 package az.masapay.pos.iiko;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -46,6 +47,27 @@ public class IikoClient {
 			throw new IllegalStateException("iiko order " + orderId + " not found");
 		}
 		return response.orders().get(0).order();
+	}
+
+	/** Books a payment masapay already took onto the iiko order. */
+	public void addPayment(String apiLogin, UUID organizationId, UUID orderId, UUID paymentTypeId, BigDecimal amount) {
+		IikoPayment payment = new IikoPayment("External", amount, paymentTypeId, true);
+		restClient.post()
+				.uri("/api/1/order/add_payments")
+				.headers(headers -> headers.setBearerAuth(token(apiLogin)))
+				.body(new IikoAddPaymentsRequest(organizationId, orderId, List.of(payment)))
+				.retrieve()
+				.toBodilessEntity();
+	}
+
+	/** Closes the iiko order once it is fully paid, which frees the table in the POS. */
+	public void closeOrder(String apiLogin, UUID organizationId, UUID orderId) {
+		restClient.post()
+				.uri("/api/1/order/close")
+				.headers(headers -> headers.setBearerAuth(token(apiLogin)))
+				.body(new IikoCloseOrderRequest(organizationId, orderId))
+				.retrieve()
+				.toBodilessEntity();
 	}
 
 	/** A token for this login, reused from the cache until it is about to expire. */

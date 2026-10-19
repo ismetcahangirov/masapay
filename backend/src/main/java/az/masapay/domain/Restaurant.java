@@ -39,4 +39,7 @@ public class Restaurant extends BaseEntity {
 
 	@Column(name = "iiko_organization_id")
 	private UUID iikoOrganizationId;
+
+	@Column(name = "iiko_payment_type_id")
+	private UUID iikoPaymentTypeId;
 }

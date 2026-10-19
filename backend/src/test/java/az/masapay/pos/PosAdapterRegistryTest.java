@@ -2,15 +2,17 @@ package az.masapay.pos;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.enums.PosType;
+import az.masapay.pos.iiko.IikoClient;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class PosAdapterRegistryTest {
 
-	private final IikoPosAdapter iiko = new IikoPosAdapter();
+	private final IikoPosAdapter iiko = new IikoPosAdapter(mock(IikoClient.class));
 	private final MicrosPosAdapter micros = new MicrosPosAdapter();
 	private final CustomPosAdapter custom = new CustomPosAdapter();
 
@@ -34,7 +36,7 @@ class PosAdapterRegistryTest {
 
 	@Test
 	void rejectsTwoAdaptersForTheSamePosType() {
-		assertThatThrownBy(() -> new PosAdapterRegistry(List.of(iiko, new IikoPosAdapter())))
+		assertThatThrownBy(() -> new PosAdapterRegistry(List.of(iiko, new IikoPosAdapter(mock(IikoClient.class)))))
 			.isInstanceOf(IllegalStateException.class)
 			.hasMessageContaining("IIKO");
 	}

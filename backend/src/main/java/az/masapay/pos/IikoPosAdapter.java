@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/** iiko integration: reads the bill through {@link IikoClient} (#40); closing it lands in #41. */
+/** iiko integration: reads the bill (#40) and books the payment and closes it (#41) through {@link IikoClient}. */
 @Component
 public class IikoPosAdapter implements PosAdapter {
 
@@ -44,7 +44,10 @@ public class IikoPosAdapter implements PosAdapter {
 
 	@Override
 	public void closeOrder(Restaurant restaurant, String posOrderId, BigDecimal amountPaid) {
-		throw new UnsupportedOperationException("iiko closeOrder is not implemented yet (#41)");
+		UUID orderId = UUID.fromString(posOrderId);
+		iikoClient.addPayment(restaurant.getIikoApiLogin(), restaurant.getIikoOrganizationId(), orderId,
+				restaurant.getIikoPaymentTypeId(), amountPaid);
+		iikoClient.closeOrder(restaurant.getIikoApiLogin(), restaurant.getIikoOrganizationId(), orderId);
 	}
 
 	private IikoOrder fetch(Restaurant restaurant, String posOrderId) {

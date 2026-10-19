@@ -23,6 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,16 +48,19 @@ public class PaymentSettlementService {
 	private final TransactionRepository transactionRepository;
 	private final SplitCalculationService splitCalculationService;
 	private final ObjectProvider<OrderRealtimeBroadcaster> broadcaster;
+	private final ApplicationEventPublisher events;
 
 	public PaymentSettlementService(RestaurantTableRepository tableRepository, OrderRepository orderRepository,
 			OrderItemRepository orderItemRepository, TransactionRepository transactionRepository,
-			SplitCalculationService splitCalculationService, ObjectProvider<OrderRealtimeBroadcaster> broadcaster) {
+			SplitCalculationService splitCalculationService, ObjectProvider<OrderRealtimeBroadcaster> broadcaster,
+			ApplicationEventPublisher events) {
 		this.tableRepository = tableRepository;
 		this.orderRepository = orderRepository;
 		this.orderItemRepository = orderItemRepository;
 		this.transactionRepository = transactionRepository;
 		this.splitCalculationService = splitCalculationService;
 		this.broadcaster = broadcaster;
+		this.events = events;
 	}
 
 	/** The outstanding amount to settle the whole bill for this table's open order. */
@@ -90,8 +94,7 @@ public class PaymentSettlementService {
 		transaction.setPaidAt(Instant.now());
 		transaction = transactionRepository.save(transaction);
 
-		order.setStatus(OrderStatus.PAID);
-		order.setClosedAt(Instant.now());
+		markPaid(order);
 		orderRepository.save(order);
 
 		// Best-effort real-time notification; absent when Redis is disabled.
@@ -134,8 +137,7 @@ public class PaymentSettlementService {
 		order.setServiceChargeGuests(plan.serviceChargeGuests());
 		order.setServiceChargePaidShares(plan.serviceChargePaidShares());
 		if (plan.settlesOrder()) {
-			order.setStatus(OrderStatus.PAID);
-			order.setClosedAt(Instant.now());
+			markPaid(order);
 		}
 		orderRepository.save(order);
 
@@ -289,8 +291,7 @@ public class PaymentSettlementService {
 		order.setEqualSplitPaidParts(plan.paidAfter());
 
 		if (plan.settlesOrder()) {
-			order.setStatus(OrderStatus.PAID);
-			order.setClosedAt(Instant.now());
+			markPaid(order);
 		}
 		orderRepository.save(order);
 
@@ -336,6 +337,13 @@ public class PaymentSettlementService {
 
 	private record EqualSharePlan(
 			BigDecimal base, int paidBefore, int paidAfter, BigDecimal amount, boolean settlesOrder) {
+	}
+
+	/** Marks the order fully paid and announces it; POS closing happens after commit. */
+	private void markPaid(Order order) {
+		order.setStatus(OrderStatus.PAID);
+		order.setClosedAt(Instant.now());
+		events.publishEvent(new OrderPaidEvent(order.getId()));
 	}
 
 	private Order openOrder(RestaurantTable table) {

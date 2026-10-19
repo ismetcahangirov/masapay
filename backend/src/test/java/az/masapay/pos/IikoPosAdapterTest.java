@@ -1,6 +1,7 @@
 package az.masapay.pos;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 class IikoPosAdapterTest {
 
@@ -60,5 +62,18 @@ class IikoPosAdapterTest {
 
 		assertThat(lines).containsExactly(
 				new PosOrderLine("p-1", "Plov", new BigDecimal("2"), new BigDecimal("8.50")));
+	}
+
+	@Test
+	void closingBooksThePaymentBeforeClosingTheIikoOrder() {
+		UUID paymentTypeId = UUID.fromString("5c2e0000-0000-4000-8000-000000000003");
+		restaurant.setIikoPaymentTypeId(paymentTypeId);
+
+		adapter.closeOrder(restaurant, ORDER_ID, new BigDecimal("24.50"));
+
+		InOrder calls = inOrder(iikoClient);
+		calls.verify(iikoClient).addPayment("api-login", ORGANIZATION_ID, UUID.fromString(ORDER_ID), paymentTypeId,
+				new BigDecimal("24.50"));
+		calls.verify(iikoClient).closeOrder("api-login", ORGANIZATION_ID, UUID.fromString(ORDER_ID));
 	}
 }

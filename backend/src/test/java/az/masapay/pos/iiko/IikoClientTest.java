@@ -10,6 +10,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -64,5 +65,32 @@ class IikoClientTest {
 		assertThatThrownBy(() -> client.fetchOrder("api-login", ORGANIZATION_ID, ORDER_ID))
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining(ORDER_ID.toString());
+	}
+
+	@Test
+	void booksAnExternalPaymentThenClosesTheOrder() {
+		UUID paymentTypeId = UUID.fromString("5c2e0000-0000-4000-8000-000000000003");
+		server.expect(requestTo("https://iiko.test/api/1/access_token"))
+				.andRespond(withSuccess("""
+						{"token": "tok-1"}
+						""", MediaType.APPLICATION_JSON));
+		server.expect(requestTo("https://iiko.test/api/1/order/add_payments"))
+				.andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer tok-1"))
+				.andExpect(jsonPath("$.orderId").value(ORDER_ID.toString()))
+				.andExpect(jsonPath("$.payments[0].paymentTypeKind").value("External"))
+				.andExpect(jsonPath("$.payments[0].paymentTypeId").value(paymentTypeId.toString()))
+				.andExpect(jsonPath("$.payments[0].sum").value(24.5))
+				.andExpect(jsonPath("$.payments[0].isProcessedExternally").value(true))
+				.andRespond(withSuccess());
+		server.expect(requestTo("https://iiko.test/api/1/order/close"))
+				.andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer tok-1"))
+				.andExpect(jsonPath("$.organizationId").value(ORGANIZATION_ID.toString()))
+				.andExpect(jsonPath("$.orderId").value(ORDER_ID.toString()))
+				.andRespond(withSuccess());
+
+		client.addPayment("api-login", ORGANIZATION_ID, ORDER_ID, paymentTypeId, new BigDecimal("24.50"));
+		client.closeOrder("api-login", ORGANIZATION_ID, ORDER_ID);
+
+		server.verify();
 	}
 }

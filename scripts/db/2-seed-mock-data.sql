@@ -82,4 +82,11 @@ INSERT INTO users (id, google_sub, email, name, role, restaurant_id, enabled) VA
     ('f0000000-0000-0000-0000-000000000004', 'mock-google-sub-pending', 'pending@bulvar.local',  'Mock Pending',     NULL,            NULL,                                   FALSE)
 ON CONFLICT (id) DO NOTHING;
 
+-- waiters -----------------------------------------------------------------
+-- Masa 1 and Masa 3 are served by the mock waiter (tip report, #48); the other
+-- orders stay unassigned. Runs after the users insert because of the FK.
+UPDATE orders SET waiter_id = 'f0000000-0000-0000-0000-000000000003'
+WHERE id IN ('c0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003')
+  AND waiter_id IS NULL;
+
 COMMIT;

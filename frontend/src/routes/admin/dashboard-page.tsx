@@ -4,7 +4,7 @@ import { formatCurrency } from '@/features/order/format'
 import { KpiCard } from '@/features/admin/dashboard/kpi-card'
 import { RevenueChart } from '@/features/admin/dashboard/revenue-chart'
 import { mockDashboardMetrics } from '@/features/admin/dashboard/mock'
-import { LogoutButton } from '@/features/auth/logout-button'
+import { AdminNav } from '@/features/admin/admin-nav'
 import {
   Card,
   CardContent,
@@ -29,12 +29,10 @@ export function DashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Bugünkü göstəricilər</p>
-        </div>
-        <LogoutButton />
+      <AdminNav />
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Bugünkü göstəricilər</p>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

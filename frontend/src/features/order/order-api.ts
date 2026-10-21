@@ -1,4 +1,5 @@
 import { api } from '@/app/api'
+import { subscribeToTopic } from '@/lib/stomp'
 import type {
   Order,
   OrderItem,
@@ -98,6 +99,45 @@ export const orderApi = api.injectEndpoints({
       providesTags: (_result, _error, qrToken) => [
         { type: 'TableOrder', id: qrToken },
       ],
+      // Live updates (#21): while a screen shows this bill, keep a STOMP
+      // subscription to /topic/tables/{qrToken}. The backend pushes the whole
+      // fresh bill when the POS adds an item or someone pays, and it replaces the
+      // cached one, so the screen updates without a manual refresh.
+      async onCacheEntryAdded(
+        qrToken,
+        { updateCachedData, cacheDataLoaded, cacheEntryRemoved, dispatch },
+      ) {
+        try {
+          await cacheDataLoaded
+        } catch {
+          return // the first load failed; nothing to keep live
+        }
+        let connectedBefore = false
+        const subscription = subscribeToTopic(
+          `/topic/tables/${qrToken}`,
+          (body) => {
+            try {
+              const next = toTableOrder(JSON.parse(body) as TableOrderDto)
+              updateCachedData(() => next)
+            } catch {
+              // Ignore a malformed push; the next one or a refetch fixes it.
+            }
+          },
+          () => {
+            // After a reconnect, refetch once to pick up anything missed.
+            if (connectedBefore) {
+              dispatch(
+                orderApi.util.invalidateTags([
+                  { type: 'TableOrder', id: qrToken },
+                ]),
+              )
+            }
+            connectedBefore = true
+          },
+        )
+        await cacheEntryRemoved
+        subscription.close()
+      },
     }),
   }),
 })

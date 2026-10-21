@@ -57,4 +57,27 @@ class PayriffClientTest {
 				.isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("01000");
 	}
+
+	@Test
+	void refundsAnOrderAndFailsOnANonSuccessCode() {
+		server.expect(requestTo("https://payriff.test/api/v3/refund"))
+				.andExpect(header(HttpHeaders.AUTHORIZATION, "app-key-1"))
+				.andExpect(jsonPath("$.orderId").value("ord-1"))
+				.andExpect(jsonPath("$.amount").value(27.5))
+				.andRespond(withSuccess("""
+						{"code": "00000", "message": "OK", "payload": null}
+						""", MediaType.APPLICATION_JSON));
+		server.expect(requestTo("https://payriff.test/api/v3/refund"))
+				.andRespond(withSuccess("""
+						{"code": "15400", "message": "Already refunded", "payload": null}
+						""", MediaType.APPLICATION_JSON));
+
+		PayriffRefundRequest refund = new PayriffRefundRequest("ord-1", new BigDecimal("27.50"), "wrong dish");
+		client.refund(refund);
+
+		assertThatThrownBy(() -> client.refund(refund))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("15400");
+		server.verify();
+	}
 }

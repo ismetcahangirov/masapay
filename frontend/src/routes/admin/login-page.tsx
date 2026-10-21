@@ -3,7 +3,11 @@ import { GoogleLogin } from '@react-oauth/google'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Clock, CircleAlert } from 'lucide-react'
 import { useAppDispatch } from '@/app/hooks'
-import { useLoginWithGoogleMutation } from '@/features/auth/auth-api'
+import {
+  type GoogleLoginResponse,
+  useLoginWithGoogleMutation,
+} from '@/features/auth/auth-api'
+import { DevLoginButtons } from '@/features/auth/dev-login-buttons'
 import { tokenReceived } from '@/features/auth/auth-slice'
 import { useSession } from '@/features/auth/use-session'
 import { googleClientId } from '@/features/auth/google'
@@ -42,25 +46,28 @@ export function LoginPage() {
       return
     }
     try {
-      const response = await login(credential).unwrap()
-      if (!response.enabled || !response.tokens) {
-        setProblem('pending')
-        return
-      }
-      dispatch(
-        tokenReceived({
-          accessToken: response.tokens.accessToken,
-          user: {
-            id: response.userId,
-            email: response.email,
-            role: response.role,
-          },
-        }),
-      )
-      navigate(from, { replace: true })
+      finish(await login(credential).unwrap())
     } catch {
       setProblem('failed')
     }
+  }
+
+  function finish(response: GoogleLoginResponse) {
+    if (!response.enabled || !response.tokens) {
+      setProblem('pending')
+      return
+    }
+    dispatch(
+      tokenReceived({
+        accessToken: response.tokens.accessToken,
+        user: {
+          id: response.userId,
+          email: response.email,
+          role: response.role,
+        },
+      }),
+    )
+    navigate(from, { replace: true })
   }
 
   return (
@@ -99,6 +106,7 @@ export function LoginPage() {
               Giriş alınmadı. Yenidən cəhd edin.
             </p>
           )}
+          {import.meta.env.DEV && <DevLoginButtons onResponse={finish} />}
         </CardContent>
       </Card>
     </main>

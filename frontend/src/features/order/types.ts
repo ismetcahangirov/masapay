@@ -1,7 +1,5 @@
-// Domain types for a table's live bill (adisyon).
-//
-// These shapes are consumed by presentational components now (fed with mock
-// data) and will be produced by the RTK Query order API in sub-issue 4.2.
+// Domain types for a table's live bill (adisyon), as the UI uses them. The
+// backend's JSON is mapped into these shapes in `order-api.ts`.
 
 export type OrderStatus =
   /** Table is seated and the bill is still growing. */
@@ -19,31 +17,44 @@ export interface OrderItem {
   quantity: number
   /** Unit price in minor currency units (qəpik). */
   unitPrice: number
+  /** Line total in minor currency units. */
+  total: number
+  /** Already settled by an item payment. */
+  paid: boolean
 }
 
 export interface Order {
   id: string
-  tableId: string
-  restaurantSlug: string
   status: OrderStatus
   items: OrderItem[]
-  /** ISO-4217 currency code, e.g. "AZN". */
-  currency: string
+  /** Bill total in minor units, including any service charge. */
+  totalAmount: number
   /** Amount already paid, in minor currency units. */
   paidAmount: number
+  /** ISO-4217 currency code, e.g. "AZN". */
+  currency: string
+}
+
+/** The table a QR code belongs to, with its open bill (null when there is none). */
+export interface TableOrder {
+  tableId: string
+  tableLabel: string
+  restaurantName: string
+  currency: string
+  order: Order | null
 }
 
 /** Line total in minor currency units. */
 export function orderItemTotal(item: OrderItem): number {
-  return item.quantity * item.unitPrice
+  return item.total
 }
 
 /** Bill total in minor currency units. */
 export function orderTotal(order: Order): number {
-  return order.items.reduce((sum, item) => sum + orderItemTotal(item), 0)
+  return order.totalAmount
 }
 
 /** Outstanding balance in minor currency units, never negative. */
 export function orderBalance(order: Order): number {
-  return Math.max(0, orderTotal(order) - order.paidAmount)
+  return Math.max(0, order.totalAmount - order.paidAmount)
 }

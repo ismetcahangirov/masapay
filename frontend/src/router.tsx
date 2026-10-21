@@ -18,6 +18,11 @@ const TablesPage = lazy(() =>
     default: m.TablesPage,
   })),
 )
+const LiveTablesPage = lazy(() =>
+  import('@/routes/admin/live-tables-page').then((m) => ({
+    default: m.LiveTablesPage,
+  })),
+)
 const SettingsPage = lazy(() =>
   import('@/routes/admin/settings-page').then((m) => ({
     default: m.SettingsPage,
@@ -56,6 +61,17 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
         <Suspense fallback={null}>
           <TablesPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // Live floor plan: managers and waiters (#44).
+    path: '/admin/live',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
+        <Suspense fallback={null}>
+          <LiveTablesPage />
         </Suspense>
       </RequireAuth>
     ),

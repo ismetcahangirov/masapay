@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, QrCode, Settings } from 'lucide-react'
+import { LayoutDashboard, LayoutGrid, QrCode, Settings } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import type { UserRole } from '@/features/auth/auth-slice'
 import { LogoutButton } from '@/features/auth/logout-button'
@@ -20,6 +20,13 @@ const LINKS = [
     to: '/admin/tables',
     label: 'Masalar',
     icon: QrCode,
+    end: false,
+    roles: STAFF,
+  },
+  {
+    to: '/admin/live',
+    label: 'Canlı masalar',
+    icon: LayoutGrid,
     end: false,
     roles: STAFF,
   },

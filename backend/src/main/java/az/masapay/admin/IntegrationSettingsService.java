@@ -60,6 +60,14 @@ public class IntegrationSettingsService {
 		if (!SecretMasker.isUnchanged(request.payriffSecretKey(), restaurant.getPayriffSecretKey())) {
 			restaurant.setPayriffSecretKey(request.payriffSecretKey().strip());
 		}
+		if (Boolean.FALSE.equals(request.serviceChargeEnabled())) {
+			restaurant.setServiceChargePercent(null);
+		} else if (Boolean.TRUE.equals(request.serviceChargeEnabled())) {
+			if (request.serviceChargePercent() == null) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "serviceChargePercent is required");
+			}
+			restaurant.setServiceChargePercent(request.serviceChargePercent());
+		}
 		return IntegrationSettings.from(restaurantRepository.save(restaurant));
 	}
 

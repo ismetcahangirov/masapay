@@ -13,6 +13,11 @@ const DashboardPage = lazy(() =>
     default: m.DashboardPage,
   })),
 )
+const SettingsPage = lazy(() =>
+  import('@/routes/admin/settings-page').then((m) => ({
+    default: m.SettingsPage,
+  })),
+)
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +40,16 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
         <Suspense fallback={null}>
           <DashboardPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: '/admin/settings',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
+        <Suspense fallback={null}>
+          <SettingsPage />
         </Suspense>
       </RequireAuth>
     ),

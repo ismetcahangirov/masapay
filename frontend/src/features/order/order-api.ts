@@ -28,6 +28,9 @@ interface OrderDto {
   orderId: string
   status: 'OPEN' | 'CLOSED' | 'PAID' | 'CANCELLED'
   totalAmount: number
+  /** What successful payments have covered so far (tips excluded). */
+  paidAmount: number
+  outstanding: number
   items: OrderItemDto[]
   equalSplit: EqualSplitDto | null
   serviceCharge: { amount: number; guests: number | null } | null
@@ -39,6 +42,8 @@ export interface TableOrderDto {
   restaurantId: string
   restaurantName: string
   currency: string
+  /** Restaurant service charge in percent, null when it charges none. */
+  serviceChargePercent: number | null
   order: OrderDto | null
 }
 
@@ -59,18 +64,10 @@ function toOrder(dto: OrderDto, currency: string): Order {
   }))
   const totalAmount = toMinor(dto.totalAmount)
 
-  let paidAmount: number
-  if (dto.status === 'PAID') {
-    paidAmount = totalAmount
-  } else if (dto.equalSplit && dto.equalSplit.totalParts > 0) {
-    paidAmount = Math.round(
-      (totalAmount * dto.equalSplit.paidParts) / dto.equalSplit.totalParts,
-    )
-  } else {
-    paidAmount = items
-      .filter((item) => item.paid)
-      .reduce((sum, item) => sum + item.total, 0)
-  }
+  // The backend sums the successful payments, so paid vs. remaining is exact even
+  // when item payments and an equal split were mixed on one bill.
+  const paidAmount =
+    dto.status === 'PAID' ? totalAmount : toMinor(dto.paidAmount)
 
   let status: OrderStatus
   if (dto.status === 'PAID') status = 'paid'
@@ -102,6 +99,7 @@ export function toTableOrder(dto: TableOrderDto): TableOrder {
     tableLabel: dto.tableLabel,
     restaurantName: dto.restaurantName,
     currency: dto.currency,
+    serviceChargePercent: dto.serviceChargePercent,
     order: dto.order ? toOrder(dto.order, dto.currency) : null,
   }
 }

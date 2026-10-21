@@ -110,6 +110,11 @@ export function EqualSplitDialog({
               max={Math.max(1, remaining)}
               onChange={setPartsToPay}
             />
+            <p className="text-xs text-muted-foreground">
+              {started
+                ? `Bölgü başlayıb, ona görə nəfər sayı dəyişmir. ${remaining} hissə qalıb, ən çox ${remaining} nəfər üçün ödəyə bilərsiniz.`
+                : `Başqaları üçün də ödəyirsinizsə, sayı artırın (ən çox ${remaining}).`}
+            </p>
             <AmountDue
               amount={quote.data?.amount}
               currency={order.currency}

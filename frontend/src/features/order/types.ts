@@ -45,6 +45,8 @@ export interface TableOrder {
   tableLabel: string
   restaurantName: string
   currency: string
+  /** Restaurant service charge in percent (e.g. 10), null when it charges none. */
+  serviceChargePercent: number | null
   order: Order | null
 }
 

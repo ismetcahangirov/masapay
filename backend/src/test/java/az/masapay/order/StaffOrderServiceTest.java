@@ -24,6 +24,7 @@ import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -84,6 +85,24 @@ class StaffOrderServiceTest {
 		assertThat(saved.getValue().getOrder()).isSameAs(order);
 		assertThat(order.getTotalAmount()).isEqualByComparingTo("35.50");
 		verify(realtime).broadcastOrderUpdate(table.getQrToken());
+	}
+
+	@Test
+	void withAServiceChargeTheTotalIsItemsPlusThePercent() {
+		restaurant.setServiceChargePercent(new BigDecimal("10.00"));
+		Order order = new Order();
+		order.setId(UUID.randomUUID());
+		order.setTotalAmount(new BigDecimal("22.00"));
+		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
+		OrderItem existing = new OrderItem();
+		existing.setTotalPrice(new BigDecimal("20.00"));
+		OrderItem added = new OrderItem();
+		added.setTotalPrice(new BigDecimal("29.00"));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(existing, added));
+
+		service.addItem(table.getId(), kabab, waiter);
+
+		assertThat(order.getTotalAmount()).isEqualByComparingTo("53.90");
 	}
 
 	@Test

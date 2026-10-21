@@ -17,6 +17,7 @@ import az.masapay.domain.enums.UserRole;
 import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,7 +75,7 @@ class IntegrationSettingsServiceTest {
 	}
 
 	private static UpdateIntegrationSettingsRequest secretsOnly(String apiLogin, String secretKey) {
-		return new UpdateIntegrationSettingsRequest(null, apiLogin, null, null, null, secretKey);
+		return new UpdateIntegrationSettingsRequest(null, apiLogin, null, null, null, secretKey, null, null);
 	}
 
 	@Test
@@ -107,7 +108,8 @@ class IntegrationSettingsServiceTest {
 		UUID paymentTypeId = UUID.randomUUID();
 
 		IntegrationSettings result = service.updateSettings(restaurantId,
-			new UpdateIntegrationSettingsRequest(null, null, null, paymentTypeId, "ES7654321", "sk_live_new_5678"),
+			new UpdateIntegrationSettingsRequest(null, null, null, paymentTypeId, "ES7654321", "sk_live_new_5678",
+				null, null),
 			superAdmin);
 
 		assertThat(restaurant.getPosType()).isEqualTo(PosType.IIKO);
@@ -122,7 +124,7 @@ class IntegrationSettingsServiceTest {
 	@Test
 	void updateSwitchesPosProvider() {
 		service.updateSettings(restaurantId,
-			new UpdateIntegrationSettingsRequest(PosType.CUSTOM, null, null, null, null, null), superAdmin);
+			new UpdateIntegrationSettingsRequest(PosType.CUSTOM, null, null, null, null, null, null, null), superAdmin);
 
 		assertThat(restaurant.getPosType()).isEqualTo(PosType.CUSTOM);
 	}
@@ -147,7 +149,7 @@ class IntegrationSettingsServiceTest {
 	@Test
 	void blankMerchantIdClearsIt() {
 		service.updateSettings(restaurantId,
-			new UpdateIntegrationSettingsRequest(null, null, null, null, " ", null), superAdmin);
+			new UpdateIntegrationSettingsRequest(null, null, null, null, " ", null, null, null), superAdmin);
 
 		assertThat(restaurant.getPayriffMerchantId()).isNull();
 	}
@@ -183,5 +185,24 @@ class IntegrationSettingsServiceTest {
 		assertThatThrownBy(() -> service.getSettings(unknownId, superAdmin))
 			.isInstanceOfSatisfying(ResponseStatusException.class,
 				e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+	}
+
+	@Test
+	void serviceChargeIsSwitchedOnWithAPercentAndOffAgain() {
+		service.updateSettings(restaurantId, new UpdateIntegrationSettingsRequest(null, null, null, null, null, null,
+				true, new BigDecimal("10.00")), superAdmin);
+		assertThat(restaurant.getServiceChargePercent()).isEqualByComparingTo("10.00");
+
+		service.updateSettings(restaurantId, new UpdateIntegrationSettingsRequest(null, null, null, null, null, null,
+				false, null), superAdmin);
+		assertThat(restaurant.getServiceChargePercent()).isNull();
+	}
+
+	@Test
+	void switchingServiceChargeOnWithoutAPercentIs400() {
+		assertThatThrownBy(() -> service.updateSettings(restaurantId,
+				new UpdateIntegrationSettingsRequest(null, null, null, null, null, null, true, null), superAdmin))
+			.isInstanceOfSatisfying(ResponseStatusException.class,
+				e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
 	}
 }

@@ -33,6 +33,10 @@ export interface Order {
   paidAmount: number
   /** ISO-4217 currency code, e.g. "AZN". */
   currency: string
+  /** Progress of an equal split, once someone has started one (#26). */
+  equalSplit: { totalParts: number; paidParts: number } | null
+  /** Charge not tied to an item, shared by the guests (#25); null when there is none. */
+  serviceCharge: { amount: number; guests: number | null } | null
 }
 
 /** The table a QR code belongs to, with its open bill (null when there is none). */

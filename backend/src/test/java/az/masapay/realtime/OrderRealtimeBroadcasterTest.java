@@ -1,6 +1,7 @@
 package az.masapay.realtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -10,6 +11,8 @@ import static org.mockito.Mockito.when;
 
 import az.masapay.order.CustomerOrderService;
 import az.masapay.order.dto.TableOrderResponse;
+import az.masapay.table.FloorStatus;
+import az.masapay.table.dto.FloorTableView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -46,6 +49,8 @@ class OrderRealtimeBroadcasterTest {
 		OrderUpdateMessage sent = objectMapper.readValue(payload.getValue(), OrderUpdateMessage.class);
 		assertThat(sent.qrToken()).isEqualTo(qrToken);
 		assertThat(sent.order().tableLabel()).isEqualTo("A1");
+		// The relay on each instance sends the table and floor topics, not the broadcaster.
+		verify(messagingTemplate, never()).convertAndSend(anyString(), any(Object.class));
 	}
 
 	@Test
@@ -54,5 +59,18 @@ class OrderRealtimeBroadcasterTest {
 
 		verify(messagingTemplate).convertAndSend("/topic/tables/" + qrToken, snapshot);
 		verify(stringRedisTemplate, never()).convertAndSend(anyString(), anyString());
+	}
+
+	@Test
+	void withoutRedisAlsoSendsTheFloorEntryToTheRestaurantFloorTopic() {
+		broadcaster(false).broadcastOrderUpdate(qrToken);
+
+		ArgumentCaptor<Object> floor = ArgumentCaptor.forClass(Object.class);
+		verify(messagingTemplate).convertAndSend(eq("/topic/restaurants/" + snapshot.restaurantId() + "/floor"),
+				floor.capture());
+		assertThat(floor.getValue()).isInstanceOfSatisfying(FloorTableView.class, entry -> {
+			assertThat(entry.tableId()).isEqualTo(snapshot.tableId());
+			assertThat(entry.status()).isEqualTo(FloorStatus.EMPTY);
+		});
 	}
 }

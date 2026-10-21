@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
  * Pushes a fresh order snapshot to the table's WebSocket subscribers. With Redis enabled the
  * snapshot goes through Redis so every backend instance relays it to its own clients; with Redis
  * disabled (single instance, e.g. local development) it is sent straight to the STOMP topic (#21).
+ * Either way the restaurant's live floor plan also gets the table's new floor entry (#44).
  * Call this after any change to a table's order.
  */
 @Service
@@ -47,7 +48,7 @@ public class OrderRealtimeBroadcaster {
 	public void broadcastOrderUpdate(UUID qrToken) {
 		TableOrderResponse snapshot = customerOrderService.getCurrentOrder(qrToken);
 		if (stringRedisTemplate == null) {
-			messagingTemplate.convertAndSend(OrderRealtimeRelay.destination(qrToken), snapshot);
+			OrderRealtimeRelay.deliver(messagingTemplate, qrToken, snapshot);
 			return;
 		}
 		try {

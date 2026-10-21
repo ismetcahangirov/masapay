@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   HandCoins,
   LayoutDashboard,
+  LayoutGrid,
   QrCode,
   ReceiptText,
   Settings,
@@ -21,6 +22,13 @@ const LINKS = [
     icon: LayoutDashboard,
     end: true,
     roles: MANAGERS,
+  },
+  {
+    to: '/admin/live',
+    label: 'Canlı masalar',
+    icon: LayoutGrid,
+    end: false,
+    roles: STAFF,
   },
   {
     to: '/admin/tables',

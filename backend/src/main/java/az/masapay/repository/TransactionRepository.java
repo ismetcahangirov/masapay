@@ -1,5 +1,8 @@
 package az.masapay.repository;
 
+import az.masapay.dashboard.dto.PaidAmount;
+import az.masapay.dashboard.dto.PaymentTotals;
+import az.masapay.dashboard.dto.StatusCount;
 import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.tip.dto.WaiterTip;
@@ -51,6 +54,53 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
 	List<WaiterTip> sumTipsByWaiter(
 		@Param("restaurantId") UUID restaurantId,
 		@Param("status") TransactionStatus status,
+		@Param("from") Instant from,
+		@Param("to") Instant to);
+
+	/** Dashboard (#43): bill amount and tips of successful payments paid in {@code [from, to)}. */
+	@Query("""
+		select new az.masapay.dashboard.dto.PaymentTotals(sum(t.amount), sum(t.tipAmount))
+		from Transaction t
+		where t.restaurant.id = :restaurantId
+			and t.status = az.masapay.domain.enums.TransactionStatus.SUCCESS
+			and t.paidAt >= :from
+			and t.paidAt < :to
+		""")
+	PaymentTotals sumSuccessfulPayments(
+		@Param("restaurantId") UUID restaurantId,
+		@Param("from") Instant from,
+		@Param("to") Instant to);
+
+	/**
+	 * Dashboard (#43): successful payments paid in {@code [from, to)}, one row each. The
+	 * caller groups them by Asia/Baku day, which keeps the query free of database-specific
+	 * date and time-zone functions.
+	 */
+	@Query("""
+		select new az.masapay.dashboard.dto.PaidAmount(t.paidAt, t.amount, t.tipAmount)
+		from Transaction t
+		where t.restaurant.id = :restaurantId
+			and t.status = az.masapay.domain.enums.TransactionStatus.SUCCESS
+			and t.paidAt >= :from
+			and t.paidAt < :to
+		""")
+	List<PaidAmount> findSuccessfulPayments(
+		@Param("restaurantId") UUID restaurantId,
+		@Param("from") Instant from,
+		@Param("to") Instant to);
+
+	/** Dashboard (#43): Payriff payments started in {@code [from, to)}, counted per status. */
+	@Query("""
+		select new az.masapay.dashboard.dto.StatusCount(t.status, count(t))
+		from Transaction t
+		where t.restaurant.id = :restaurantId
+			and t.payriffOrderId is not null
+			and t.createdAt >= :from
+			and t.createdAt < :to
+		group by t.status
+		""")
+	List<StatusCount> countPayriffByStatus(
+		@Param("restaurantId") UUID restaurantId,
 		@Param("from") Instant from,
 		@Param("to") Instant to);
 }

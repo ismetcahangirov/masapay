@@ -1,5 +1,6 @@
 package az.masapay.repository;
 
+import az.masapay.dashboard.dto.TableVisit;
 import az.masapay.domain.Order;
 import az.masapay.domain.enums.OrderStatus;
 import jakarta.persistence.LockModeType;
@@ -40,6 +41,13 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 	Optional<Order> findOpenOrderForUpdate(@Param("tableId") UUID tableId);
 
 	Optional<Order> findByRestaurantIdAndPosOrderId(UUID restaurantId, String posOrderId);
+
+	/** Dashboard (#43): open and close times of the restaurant's orders paid in {@code [from, to)}. */
+	@Query("SELECT new az.masapay.dashboard.dto.TableVisit(o.openedAt, o.closedAt) FROM Order o "
+		+ "WHERE o.restaurant.id = :restaurantId AND o.status = az.masapay.domain.enums.OrderStatus.PAID "
+		+ "AND o.closedAt >= :from AND o.closedAt < :to")
+	List<TableVisit> findPaidVisits(@Param("restaurantId") UUID restaurantId, @Param("from") Instant from,
+			@Param("to") Instant to);
 
 	/**
 	 * Atomically records paid parts of an equal split (#26) as a compare-and-set on

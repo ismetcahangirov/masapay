@@ -40,6 +40,11 @@ export function RequireAuth({
     return <Navigate to="/admin/login" replace state={{ from: location }} />
   }
 
+  // Waiters have no dashboard; their home in the panel is the tables page.
+  if (user.role === 'WAITER' && !roles.includes('WAITER')) {
+    return <Navigate to="/admin/tables" replace />
+  }
+
   if (!user.role || !roles.includes(user.role)) {
     return (
       <main className="flex min-h-svh items-center justify-center p-6">

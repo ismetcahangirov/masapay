@@ -13,6 +13,11 @@ const DashboardPage = lazy(() =>
     default: m.DashboardPage,
   })),
 )
+const TablesPage = lazy(() =>
+  import('@/routes/admin/tables-page').then((m) => ({
+    default: m.TablesPage,
+  })),
+)
 const SettingsPage = lazy(() =>
   import('@/routes/admin/settings-page').then((m) => ({
     default: m.SettingsPage,
@@ -40,6 +45,17 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
         <Suspense fallback={null}>
           <DashboardPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // Tables and QR codes: managers and waiters (#47).
+    path: '/admin/tables',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
+        <Suspense fallback={null}>
+          <TablesPage />
         </Suspense>
       </RequireAuth>
     ),

@@ -18,6 +18,11 @@ const TablesPage = lazy(() =>
     default: m.TablesPage,
   })),
 )
+const TransactionsPage = lazy(() =>
+  import('@/routes/admin/transactions-page').then((m) => ({
+    default: m.TransactionsPage,
+  })),
+)
 const SettingsPage = lazy(() =>
   import('@/routes/admin/settings-page').then((m) => ({
     default: m.SettingsPage,
@@ -61,6 +66,17 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
         <Suspense fallback={null}>
           <TablesPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // Payments and refunds (#45).
+    path: '/admin/transactions',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
+        <Suspense fallback={null}>
+          <TransactionsPage />
         </Suspense>
       </RequireAuth>
     ),

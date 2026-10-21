@@ -1,3 +1,4 @@
+import { CircleCheckBig } from 'lucide-react'
 import {
   type TableOrder,
   orderTotal,
@@ -14,33 +15,37 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 function TotalRow({
   label,
   amount,
   currency,
-  emphasis = false,
+  tone = 'muted',
 }: {
   label: string
   amount: number
   currency: string
-  emphasis?: boolean
+  tone?: 'muted' | 'paid' | 'emphasis'
 }) {
   return (
     <div className="flex items-center justify-between">
       <span
-        className={
-          emphasis ? 'text-sm font-semibold' : 'text-sm text-muted-foreground'
-        }
+        className={cn(
+          'text-sm',
+          tone === 'muted' && 'text-muted-foreground',
+          tone === 'paid' && 'text-success',
+          tone === 'emphasis' && 'font-semibold',
+        )}
       >
         {label}
       </span>
       <span
-        className={
-          emphasis
-            ? 'tabular-nums text-lg font-semibold'
-            : 'tabular-nums text-sm'
-        }
+        className={cn(
+          'tabular-nums',
+          tone === 'emphasis' ? 'text-lg font-semibold' : 'text-sm',
+          tone === 'paid' && 'text-success',
+        )}
       >
         {formatCurrency(amount, currency)}
       </span>
@@ -48,8 +53,29 @@ function TotalRow({
   )
 }
 
-// Presentational live-bill card built from shadcn Card + Badge, fed by the RTK
-// Query order feed (#20). Only rendered when the table has an open bill.
+/** Thin bar showing how much of the bill is paid. */
+function PaidProgress({ paid, total }: { paid: number; total: number }) {
+  const percent = total > 0 ? Math.min(100, (paid / total) * 100) : 0
+  return (
+    <div
+      className="h-2 w-full overflow-hidden rounded-full bg-muted"
+      role="progressbar"
+      aria-label="Ödənilmiş hissə"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(percent)}
+    >
+      <div
+        className="h-full rounded-full bg-success transition-[width] duration-500"
+        style={{ width: `${percent}%` }}
+      />
+    </div>
+  )
+}
+
+// The live bill as a receipt (#20, #24-#26): every line stays visible, paid
+// lines are crossed out, and the footer shows paid vs. remaining. A fully paid
+// bill keeps showing for a while with a "paid" banner instead of disappearing.
 export function BillCard({
   table,
   order,
@@ -59,6 +85,7 @@ export function BillCard({
 }) {
   const total = orderTotal(order)
   const balance = orderBalance(order)
+  const fullyPaid = order.status === 'paid' || balance === 0
 
   return (
     <Card className="w-full max-w-md">
@@ -70,6 +97,15 @@ export function BillCard({
         <CardDescription>{table.restaurantName}</CardDescription>
       </CardHeader>
 
+      {fullyPaid && (
+        <div className="mx-6 mb-2 flex items-center gap-3 rounded-lg bg-success/10 px-4 py-3 text-success">
+          <CircleCheckBig className="size-5 shrink-0" aria-hidden />
+          <span className="text-sm font-medium">
+            Hesab tam ödənilib. Təşəkkür edirik!
+          </span>
+        </div>
+      )}
+
       <CardContent>
         <OrderItemList items={order.items} currency={order.currency} />
       </CardContent>
@@ -77,17 +113,27 @@ export function BillCard({
       <CardFooter className="flex-col items-stretch gap-2 border-t pt-6">
         <TotalRow label="Cəmi" amount={total} currency={order.currency} />
         {order.paidAmount > 0 && (
-          <TotalRow
-            label="Ödənilib"
-            amount={order.paidAmount}
-            currency={order.currency}
-          />
+          <>
+            <TotalRow
+              label="Ödənilib"
+              amount={order.paidAmount}
+              currency={order.currency}
+              tone="paid"
+            />
+            <PaidProgress paid={order.paidAmount} total={total} />
+          </>
+        )}
+        {order.equalSplit && !fullyPaid && (
+          <p className="text-xs text-muted-foreground">
+            Bərabər bölgü: {order.equalSplit.paidParts} /{' '}
+            {order.equalSplit.totalParts} hissə ödənilib
+          </p>
         )}
         <TotalRow
           label="Qalıq"
           amount={balance}
           currency={order.currency}
-          emphasis
+          tone="emphasis"
         />
       </CardFooter>
     </Card>

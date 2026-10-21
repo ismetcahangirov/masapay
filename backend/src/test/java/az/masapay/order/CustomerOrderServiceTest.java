@@ -2,6 +2,8 @@ package az.masapay.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import az.masapay.domain.Order;
@@ -14,6 +16,7 @@ import az.masapay.repository.OrderItemRepository;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -95,6 +98,25 @@ class CustomerOrderServiceTest {
 
 		assertThat(response.tableLabel()).isEqualTo("A1");
 		assertThat(response.order()).isNull();
+	}
+
+	@Test
+	void showsARecentlyPaidBillAsAReceiptWhenNoBillIsOpen() {
+		Order paid = new Order();
+		paid.setId(UUID.randomUUID());
+		paid.setStatus(OrderStatus.PAID);
+		paid.setTotalAmount(new BigDecimal("7.00"));
+		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table()));
+		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+			.thenReturn(Optional.empty());
+		when(orderRepository.findFirstByTableIdAndStatusAndClosedAtAfterOrderByClosedAtDesc(
+				eq(tableId), eq(OrderStatus.PAID), any(Instant.class)))
+			.thenReturn(Optional.of(paid));
+
+		TableOrderResponse response = service.getCurrentOrder(qrToken);
+
+		assertThat(response.order()).isNotNull();
+		assertThat(response.order().status()).isEqualTo("PAID");
 	}
 
 	@Test

@@ -52,6 +52,9 @@ dependencies {
 	// Real-time
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
+	// QR code matrix generation for printable table codes (rendered to SVG ourselves)
+	implementation 'com.google.zxing:core:3.5.3'
+
 	// Observability (health endpoint)
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 

@@ -9,6 +9,8 @@ import az.masapay.order.dto.TableOrderResponse;
 import az.masapay.repository.OrderItemRepository;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,9 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class CustomerOrderService {
+
+	/** How long a fully paid bill stays visible on the table page as a receipt. */
+	static final Duration RECEIPT_WINDOW = Duration.ofHours(2);
 
 	private final RestaurantTableRepository tableRepository;
 	private final OrderRepository orderRepository;
@@ -38,8 +43,12 @@ public class CustomerOrderService {
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
 		Restaurant restaurant = table.getRestaurant();
 
+		// No open bill: show the one paid in the last hours as a receipt, so the guest who just paid
+		// (and everyone else at the table) still sees what was paid instead of an empty table.
 		OrderView orderView = orderRepository
 			.findFirstByTableIdAndStatusOrderByOpenedAtDesc(table.getId(), OrderStatus.OPEN)
+			.or(() -> orderRepository.findFirstByTableIdAndStatusAndClosedAtAfterOrderByClosedAtDesc(
+				table.getId(), OrderStatus.PAID, Instant.now().minus(RECEIPT_WINDOW)))
 			.map(this::toOrderView)
 			.orElse(null);
 

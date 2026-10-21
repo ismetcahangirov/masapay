@@ -4,6 +4,7 @@ import az.masapay.domain.Order;
 import az.masapay.domain.enums.OrderStatus;
 import jakarta.persistence.LockModeType;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +23,10 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
 	/** The current order for a table in a given state (at most one OPEN order per table). */
 	Optional<Order> findFirstByTableIdAndStatusOrderByOpenedAtDesc(UUID tableId, OrderStatus status);
+
+	/** The table's latest bill in this status that was closed after {@code since} (#24 receipt view). */
+	Optional<Order> findFirstByTableIdAndStatusAndClosedAtAfterOrderByClosedAtDesc(UUID tableId, OrderStatus status,
+			Instant since);
 
 	/**
 	 * The table's OPEN order, row-locked ({@code SELECT ... FOR UPDATE}) until the

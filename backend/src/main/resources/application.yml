@@ -55,6 +55,9 @@ masapay:
     issuer: ${MASAPAY_JWT_ISSUER:masapay}
     access-token-ttl: ${MASAPAY_JWT_ACCESS_TTL:PT15M}
     refresh-token-ttl: ${MASAPAY_JWT_REFRESH_TTL:P7D}
+  qr:
+    # Public origin of the customer PWA; table QR codes encode <base-url>/r/<restaurantId>/t/<tableId>?token=<qrToken>.
+    base-url: ${MASAPAY_QR_BASE_URL:http://localhost:5173}
   iiko:
     # iiko Cloud API root; overridden in tests and for the EU region (api-eu.iiko.services).
     base-url: ${MASAPAY_IIKO_BASE_URL:https://api-ru.iiko.services}

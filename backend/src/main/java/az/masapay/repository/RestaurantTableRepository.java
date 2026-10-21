@@ -12,4 +12,7 @@ public interface RestaurantTableRepository extends JpaRepository<RestaurantTable
 	Optional<RestaurantTable> findByQrToken(UUID qrToken);
 
 	List<RestaurantTable> findByRestaurantId(UUID restaurantId);
+
+	/** Tables of a restaurant in label order, for the bulk QR export (#47). */
+	List<RestaurantTable> findByRestaurantIdOrderByLabelAsc(UUID restaurantId);
 }

@@ -46,6 +46,9 @@ masapay:
       client-id: ${MASAPAY_GOOGLE_CLIENT_ID:}
     # Comma-separated emails bootstrapped as enabled SUPER_ADMINs on login (seeds the first admin).
     super-admin-emails: ${MASAPAY_SUPER_ADMIN_EMAILS:}
+    # Send the refresh-token cookie only over HTTPS. Keep true in every deployed environment,
+    # false only for plain-http local development.
+    cookie-secure: ${MASAPAY_AUTH_COOKIE_SECURE:false}
   orders:
     # Enables the customer-facing order endpoints; disabled in the infra-free smoke test.
     enabled: ${MASAPAY_ORDERS_ENABLED:true}

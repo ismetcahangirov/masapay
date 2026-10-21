@@ -59,6 +59,10 @@ public class JwtService {
 		return accessTokenTtl;
 	}
 
+	public Duration getRefreshTokenTtl() {
+		return refreshTokenTtl;
+	}
+
 	private String build(User user, String type, Duration ttl) {
 		Instant now = Instant.now();
 		var builder = Jwts.builder()

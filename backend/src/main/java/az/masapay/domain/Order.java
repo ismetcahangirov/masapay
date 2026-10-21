@@ -33,6 +33,11 @@ public class Order extends BaseEntity {
 	@JoinColumn(name = "table_id", nullable = false)
 	private RestaurantTable table;
 
+	/** Waiter serving the table; null when unknown (e.g. not sent by the POS). Drives the tip report (#48). */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "waiter_id")
+	private User waiter;
+
 	/** Reference to the matching order in the external POS, when synced. */
 	@Column(name = "pos_order_id", length = 128)
 	private String posOrderId;

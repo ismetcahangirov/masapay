@@ -2,7 +2,9 @@ package az.masapay.repository;
 
 import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.TransactionStatus;
+import az.masapay.tip.dto.WaiterTip;
 import jakarta.persistence.LockModeType;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,4 +30,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("SELECT t FROM Transaction t WHERE t.id = :id")
 	Optional<Transaction> findByIdForUpdate(@Param("id") UUID id);
+
+	/**
+	 * Tips per waiter (#48): successful payments with a tip, paid in {@code [from, to)}.
+	 * Orders without a waiter form one row whose waiter fields are null.
+	 */
+	@Query("""
+		select new az.masapay.tip.dto.WaiterTip(w.id, w.name, w.email, count(t), sum(t.tipAmount))
+		from Transaction t
+		join t.order o
+		left join o.waiter w
+		where t.restaurant.id = :restaurantId
+			and t.status = :status
+			and t.tipAmount > 0
+			and t.paidAt >= :from
+			and t.paidAt < :to
+		group by w.id, w.name, w.email
+		order by sum(t.tipAmount) desc
+		""")
+	List<WaiterTip> sumTipsByWaiter(
+		@Param("restaurantId") UUID restaurantId,
+		@Param("status") TransactionStatus status,
+		@Param("from") Instant from,
+		@Param("to") Instant to);
 }

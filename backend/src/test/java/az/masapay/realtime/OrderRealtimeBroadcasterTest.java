@@ -26,7 +26,7 @@ class OrderRealtimeBroadcasterTest {
 	private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 	private final UUID qrToken = UUID.randomUUID();
 	private final TableOrderResponse snapshot =
-			new TableOrderResponse(UUID.randomUUID(), "A1", UUID.randomUUID(), "Cafe", "AZN", null);
+			new TableOrderResponse(UUID.randomUUID(), "A1", UUID.randomUUID(), "Cafe", "AZN", null, null);
 
 	@SuppressWarnings("unchecked")
 	private OrderRealtimeBroadcaster broadcaster(boolean redisEnabled) {

@@ -13,6 +13,7 @@ import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
@@ -29,6 +30,8 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class StaffOrderService {
+
+	private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
 
 	private final RestaurantTableRepository tableRepository;
 	private final OrderRepository orderRepository;
@@ -65,12 +68,27 @@ public class StaffOrderService {
 		item.setTotalPrice(request.quantity().multiply(request.unitPrice()).setScale(2, RoundingMode.HALF_UP));
 		orderItemRepository.save(item);
 
-		order.setTotalAmount(order.getTotalAmount().add(item.getTotalPrice()));
+		order.setTotalAmount(newTotal(order, item, table.getRestaurant().getServiceChargePercent()));
 		orderRepository.save(order);
 
 		UUID qrToken = table.getQrToken();
 		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(qrToken));
 		return customerOrderService.getCurrentOrder(qrToken);
+	}
+
+	/**
+	 * Bill total after adding the item. Without a service charge it simply grows by the item. With
+	 * one, it is recomputed from all items so the charge always matches them: items + items * percent.
+	 */
+	private BigDecimal newTotal(Order order, OrderItem added, BigDecimal serviceChargePercent) {
+		if (serviceChargePercent == null) {
+			return order.getTotalAmount().add(added.getTotalPrice());
+		}
+		BigDecimal items = orderItemRepository.findByOrderId(order.getId()).stream()
+			.map(OrderItem::getTotalPrice)
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal charge = items.multiply(serviceChargePercent).divide(ONE_HUNDRED, 2, RoundingMode.HALF_UP);
+		return items.add(charge);
 	}
 
 	private Order openOrder(RestaurantTable table) {

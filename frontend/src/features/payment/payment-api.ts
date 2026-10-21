@@ -3,8 +3,8 @@ import { toMinor } from '@/features/order/order-api'
 
 // Customer payment endpoints (#24 full, #25 own items, #26 equal split), all
 // reached with the table's qrToken. Each mode has a quote (GET: "how much would
-// I pay?") and a pay call (POST). Amounts come back as decimals and are turned
-// into minor units here, like the bill.
+// I pay?") and a checkout (POST) that opens a Payriff payment (#37): the guest is
+// sent to Payriff's page and the split is applied once Payriff confirms it.
 
 export interface Quote {
   /** Amount to pay, in minor units. */
@@ -17,12 +17,24 @@ export interface EqualQuote extends Quote {
   paidParts: number
 }
 
-export interface Receipt {
+/** A started payment: the pending transaction and the Payriff page to open. */
+export interface Checkout {
   transactionId: string
+  paymentUrl: string
+}
+
+export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED'
+
+export interface PaymentStatusView {
+  transactionId: string
+  status: PaymentStatus
+  /** Charged amount in minor units. */
   amount: number
   currency: string
-  /** Order status after the payment, e.g. "OPEN" or "PAID". */
   orderStatus: string
+  restaurantId: string
+  tableId: string
+  qrToken: string
 }
 
 interface QuoteDto {
@@ -35,23 +47,13 @@ interface EqualQuoteDto extends QuoteDto {
   paidParts: number
 }
 
-interface ReceiptDto {
-  transactionId: string
+interface PaymentStatusDto extends Omit<PaymentStatusView, 'amount'> {
   amount: number
-  currency: string
-  orderStatus: string
 }
 
 const toQuote = (dto: QuoteDto): Quote => ({
   amount: toMinor(dto.amount),
   currency: dto.currency,
-})
-
-const toReceipt = (dto: ReceiptDto): Receipt => ({
-  transactionId: dto.transactionId,
-  amount: toMinor(dto.amount),
-  currency: dto.currency,
-  orderStatus: dto.orderStatus,
 })
 
 const base = (qrToken: string) =>
@@ -64,12 +66,11 @@ export const paymentApi = api.injectEndpoints({
       transformResponse: toQuote,
       keepUnusedDataFor: 0,
     }),
-    payFull: build.mutation<Receipt, string>({
-      query: (qrToken) => ({ url: `${base(qrToken)}/full`, method: 'POST' }),
-      transformResponse: toReceipt,
-      invalidatesTags: (_r, _e, qrToken) => [
-        { type: 'TableOrder', id: qrToken },
-      ],
+    checkoutFull: build.mutation<Checkout, string>({
+      query: (qrToken) => ({
+        url: `${base(qrToken)}/full/checkout`,
+        method: 'POST',
+      }),
     }),
 
     quoteEqual: build.query<
@@ -87,19 +88,15 @@ export const paymentApi = api.injectEndpoints({
       }),
       keepUnusedDataFor: 0,
     }),
-    payEqual: build.mutation<
-      Receipt,
+    checkoutEqual: build.mutation<
+      Checkout,
       { qrToken: string; parts: number; partsToPay: number }
     >({
       query: ({ qrToken, parts, partsToPay }) => ({
-        url: `${base(qrToken)}/equal`,
+        url: `${base(qrToken)}/equal/checkout`,
         method: 'POST',
         body: { parts, partsToPay },
       }),
-      transformResponse: toReceipt,
-      invalidatesTags: (_r, _e, { qrToken }) => [
-        { type: 'TableOrder', id: qrToken },
-      ],
     }),
 
     quoteItems: build.query<
@@ -115,28 +112,40 @@ export const paymentApi = api.injectEndpoints({
       transformResponse: toQuote,
       keepUnusedDataFor: 0,
     }),
-    payItems: build.mutation<
-      Receipt,
+    checkoutItems: build.mutation<
+      Checkout,
       { qrToken: string; itemIds: string[]; guests?: number }
     >({
       query: ({ qrToken, itemIds, guests }) => ({
-        url: `${base(qrToken)}/items`,
+        url: `${base(qrToken)}/items/checkout`,
         method: 'POST',
         body: { itemIds, guests: guests ?? null },
       }),
-      transformResponse: toReceipt,
-      invalidatesTags: (_r, _e, { qrToken }) => [
-        { type: 'TableOrder', id: qrToken },
-      ],
+    }),
+
+    /** Status of a payment, polled by the result page Payriff returns to. */
+    paymentStatus: build.query<PaymentStatusView, string>({
+      query: (transactionId) =>
+        `/public/payments/${encodeURIComponent(transactionId)}`,
+      transformResponse: (dto: PaymentStatusDto) => ({
+        ...dto,
+        amount: toMinor(dto.amount),
+      }),
     }),
   }),
 })
 
 export const {
   useQuoteFullQuery,
-  usePayFullMutation,
+  useCheckoutFullMutation,
   useQuoteEqualQuery,
-  usePayEqualMutation,
+  useCheckoutEqualMutation,
   useQuoteItemsQuery,
-  usePayItemsMutation,
+  useCheckoutItemsMutation,
+  usePaymentStatusQuery,
 } = paymentApi
+
+/** Sends the guest to Payriff's payment page (a full page load, as Payriff requires). */
+export function goToPayment(checkout: Checkout) {
+  window.location.assign(checkout.paymentUrl)
+}

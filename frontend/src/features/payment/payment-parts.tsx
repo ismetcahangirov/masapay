@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
-import { CircleAlert, CircleCheckBig, Minus, Plus } from 'lucide-react'
+import { CircleAlert, Minus, Plus } from 'lucide-react'
 import { formatCurrency } from '@/features/order/format'
-import type { Receipt } from '@/features/payment/payment-api'
 import { Button } from '@/components/ui/button'
 
 // Small building blocks shared by the three payment dialogs.
@@ -87,33 +86,5 @@ export function ErrorNote({ children }: { children: ReactNode }) {
       <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
       {children}
     </p>
-  )
-}
-
-/** Shown in place of the form once the payment went through. */
-export function PaymentSuccess({
-  receipt,
-  onClose,
-}: {
-  receipt: Receipt
-  onClose: () => void
-}) {
-  const settled = receipt.orderStatus === 'PAID'
-  return (
-    <div className="flex flex-col items-center gap-4 py-2 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-success/15 text-success">
-        <CircleCheckBig className="size-7" aria-hidden />
-      </div>
-      <div className="space-y-1">
-        <p className="text-lg font-semibold">Ödəniş qəbul edildi</p>
-        <p className="text-sm text-muted-foreground">
-          {formatCurrency(receipt.amount, receipt.currency)}
-          {settled ? ' - hesab tam bağlandı.' : ' - hesabın qalığı yeniləndi.'}
-        </p>
-      </div>
-      <Button className="w-full" onClick={onClose}>
-        Bağla
-      </Button>
-    </div>
   )
 }

@@ -10,16 +10,11 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/features/order/format'
 import type { Order } from '@/features/order/types'
 import {
-  type Receipt,
-  usePayEqualMutation,
+  useCheckoutEqualMutation,
   useQuoteEqualQuery,
+  goToPayment,
 } from '@/features/payment/payment-api'
-import {
-  AmountDue,
-  ErrorNote,
-  PaymentSuccess,
-  Stepper,
-} from '@/features/payment/payment-parts'
+import { AmountDue, ErrorNote, Stepper } from '@/features/payment/payment-parts'
 import { paymentErrorMessage } from '@/features/payment/payment-errors'
 
 const MIN_PARTS = 2
@@ -42,7 +37,6 @@ export function EqualSplitDialog({
   const started = order.equalSplit
   const [parts, setParts] = useState(started?.totalParts ?? MIN_PARTS)
   const [partsToPay, setPartsToPay] = useState(1)
-  const [receipt, setReceipt] = useState<Receipt | null>(null)
 
   // Another guest may start the split while this dialog is open.
   useEffect(() => {
@@ -56,11 +50,10 @@ export function EqualSplitDialog({
     { qrToken, parts, partsToPay: shares },
     { skip: !open },
   )
-  const [pay, payState] = usePayEqualMutation()
+  const [pay, payState] = useCheckoutEqualMutation()
 
   function close(next: boolean) {
     if (!next) {
-      setReceipt(null)
       setPartsToPay(1)
       payState.reset()
     }
@@ -69,7 +62,7 @@ export function EqualSplitDialog({
 
   async function onPay() {
     try {
-      setReceipt(await pay({ qrToken, parts, partsToPay: shares }).unwrap())
+      goToPayment(await pay({ qrToken, parts, partsToPay: shares }).unwrap())
     } catch {
       void quote.refetch()
     }
@@ -88,9 +81,7 @@ export function EqualSplitDialog({
               : 'Hesabı neçə nəfər arasında bölmək istəyirsiniz?'}
           </DialogDescription>
         </DialogHeader>
-        {receipt ? (
-          <PaymentSuccess receipt={receipt} onClose={() => close(false)} />
-        ) : (
+        {
           <div className="space-y-4">
             <Stepper
               label="Nəfər sayı"
@@ -127,13 +118,13 @@ export function EqualSplitDialog({
               onClick={() => void onPay()}
             >
               {payState.isLoading
-                ? 'Ödənilir...'
+                ? 'Payriff-ə yönləndirilir...'
                 : quote.data
                   ? `${formatCurrency(quote.data.amount, order.currency)} ödə`
                   : 'Ödə'}
             </Button>
           </div>
-        )}
+        }
       </DialogContent>
     </Dialog>
   )

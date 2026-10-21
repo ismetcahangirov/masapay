@@ -57,13 +57,10 @@ class PayriffWebhookServiceTest {
 	}
 
 	@Test
-	void approvedMarksTheTransactionSuccessfulAndSettlesTheBill() {
+	void approvedAppliesThePendingSplit() {
 		service.handle(txId, sig, callback("ord-1", "APPROVED"));
 
-		assertThat(transaction.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
-		assertThat(transaction.getPaidAt()).isNotNull();
-		verify(transactionRepository).save(transaction);
-		verify(settlementService).settleIfFullyPaid(order);
+		verify(settlementService).settlePending(transaction);
 	}
 
 	@Test

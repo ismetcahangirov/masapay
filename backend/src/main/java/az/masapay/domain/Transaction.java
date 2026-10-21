@@ -74,6 +74,20 @@ public class Transaction extends BaseEntity {
 	@Column(name = "payriff_session_id", length = 128)
 	private String payriffSessionId;
 
+	/** Comma-separated item ids an ITEM checkout pays for, applied once Payriff confirms (#37). */
+	@Column(name = "checkout_item_ids")
+	private String checkoutItemIds;
+
+	@Column(name = "checkout_guests")
+	private Integer checkoutGuests;
+
+	/** Equal split of an EQUAL checkout: total parts and parts this payer covers (#37). */
+	@Column(name = "checkout_parts")
+	private Integer checkoutParts;
+
+	@Column(name = "checkout_parts_to_pay")
+	private Integer checkoutPartsToPay;
+
 	@Column(name = "paid_at")
 	private Instant paidAt;
 }

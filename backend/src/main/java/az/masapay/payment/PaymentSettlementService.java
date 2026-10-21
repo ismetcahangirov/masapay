@@ -18,9 +18,12 @@ import az.masapay.repository.TransactionRepository;
 import az.masapay.split.SplitCalculationService;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,6 +44,8 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class PaymentSettlementService {
+
+	private static final Logger log = LoggerFactory.getLogger(PaymentSettlementService.class);
 
 	private final RestaurantTableRepository tableRepository;
 	private final OrderRepository orderRepository;
@@ -76,24 +81,17 @@ public class PaymentSettlementService {
 	public PaymentReceipt payFull(UUID qrToken) {
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
-		Order order = openOrderForUpdate(table);
+		return settleFull(openOrderForUpdate(table), qrToken, null);
+	}
 
+	private PaymentReceipt settleFull(Order order, UUID qrToken, Transaction pending) {
 		BigDecimal amount = outstanding(order);
 		if (amount.signum() <= 0) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Order has nothing left to pay");
 		}
+		requireSameAmount(pending, amount);
 
-		Transaction transaction = new Transaction();
-		transaction.setOrder(order);
-		transaction.setRestaurant(order.getRestaurant());
-		transaction.setAmount(amount);
-		transaction.setTotalAmount(amount);
-		transaction.setCurrency(order.getCurrency());
-		transaction.setSplitType(SplitType.FULL);
-		transaction.setStatus(TransactionStatus.SUCCESS);
-		transaction.setPaidAt(Instant.now());
-		transaction = transactionRepository.save(transaction);
-
+		Transaction transaction = record(order, amount, SplitType.FULL, pending);
 		markPaid(order);
 		orderRepository.save(order);
 
@@ -111,22 +109,18 @@ public class PaymentSettlementService {
 	 */
 	@Transactional
 	public PaymentReceipt payItems(UUID qrToken, List<UUID> itemIds, Integer guests) {
-		List<UUID> ids = itemIds.stream().distinct().toList();
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
-		Order order = openOrderForUpdate(table);
-		ItemPaymentPlan plan = planItemPayment(order, ids, guests);
+		return settleItems(openOrderForUpdate(table), qrToken, itemIds, guests, null);
+	}
 
-		Transaction transaction = new Transaction();
-		transaction.setOrder(order);
-		transaction.setRestaurant(order.getRestaurant());
-		transaction.setAmount(plan.amount());
-		transaction.setTotalAmount(plan.amount());
-		transaction.setCurrency(order.getCurrency());
-		transaction.setSplitType(SplitType.ITEM);
-		transaction.setStatus(TransactionStatus.SUCCESS);
-		transaction.setPaidAt(Instant.now());
-		transaction = transactionRepository.save(transaction);
+	private PaymentReceipt settleItems(Order order, UUID qrToken, List<UUID> itemIds, Integer guests,
+			Transaction pending) {
+		List<UUID> ids = itemIds.stream().distinct().toList();
+		ItemPaymentPlan plan = planItemPayment(order, ids, guests);
+		requireSameAmount(pending, plan.amount());
+
+		Transaction transaction = record(order, plan.amount(), SplitType.ITEM, pending);
 
 		int claimed = orderItemRepository.claimItems(ids, order.getId(), transaction);
 		if (claimed != ids.size()) {
@@ -265,19 +259,14 @@ public class PaymentSettlementService {
 	public PaymentReceipt payEqual(UUID qrToken, int parts, int partsToPay) {
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
-		Order order = openOrderForUpdate(table);
-		EqualSharePlan plan = planEqualShares(order, parts, partsToPay, outstanding(order));
+		return settleEqual(openOrderForUpdate(table), qrToken, parts, partsToPay, null);
+	}
 
-		Transaction transaction = new Transaction();
-		transaction.setOrder(order);
-		transaction.setRestaurant(order.getRestaurant());
-		transaction.setAmount(plan.amount());
-		transaction.setTotalAmount(plan.amount());
-		transaction.setCurrency(order.getCurrency());
-		transaction.setSplitType(SplitType.EQUAL);
-		transaction.setStatus(TransactionStatus.SUCCESS);
-		transaction.setPaidAt(Instant.now());
-		transaction = transactionRepository.save(transaction);
+	private PaymentReceipt settleEqual(Order order, UUID qrToken, int parts, int partsToPay, Transaction pending) {
+		EqualSharePlan plan = planEqualShares(order, parts, partsToPay, outstanding(order));
+		requireSameAmount(pending, plan.amount());
+
+		Transaction transaction = record(order, plan.amount(), SplitType.EQUAL, pending);
 
 		int claimed = orderRepository.claimEqualParts(
 			order.getId(), parts, plan.base(), plan.paidBefore(), plan.paidAfter());
@@ -351,6 +340,67 @@ public class PaymentSettlementService {
 		}
 		UUID qrToken = order.getTable().getQrToken();
 		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(qrToken));
+	}
+
+	/**
+	 * Applies a Payriff-confirmed payment (#37). The guest chose the split before being sent to
+	 * Payriff; only now, with the money taken, are the items claimed or the equal parts counted.
+	 * If the bill changed in the meantime (someone else paid those items, more items were added)
+	 * the payment still stands: it is recorded against the bill without a split, and staff can
+	 * refund the difference from the transactions page.
+	 */
+	@Transactional
+	public void settlePending(Transaction pending) {
+		RestaurantTable table = pending.getOrder().getTable();
+		UUID qrToken = table.getQrToken();
+		try {
+			Order order = openOrderForUpdate(table);
+			switch (pending.getSplitType()) {
+				case FULL -> settleFull(order, qrToken, pending);
+				case ITEM -> settleItems(order, qrToken, checkoutItemIds(pending), pending.getCheckoutGuests(), pending);
+				case EQUAL -> settleEqual(order, qrToken, pending.getCheckoutParts(), pending.getCheckoutPartsToPay(),
+					pending);
+			}
+		} catch (ResponseStatusException conflict) {
+			log.warn("Payriff payment {} no longer matches the bill ({}); recorded without a split",
+				pending.getId(), conflict.getReason());
+			record(pending.getOrder(), pending.getAmount(), pending.getSplitType(), pending);
+			settleIfFullyPaid(pending.getOrder());
+		}
+	}
+
+	private static List<UUID> checkoutItemIds(Transaction pending) {
+		String ids = pending.getCheckoutItemIds();
+		if (ids == null || ids.isBlank()) {
+			return List.of();
+		}
+		return Arrays.stream(ids.split(",")).map(UUID::fromString).toList();
+	}
+
+	/**
+	 * Records the payment: a new SUCCESS transaction for a direct payment, or the pending Payriff
+	 * transaction switched to SUCCESS (keeping the amount Payriff actually charged).
+	 */
+	private Transaction record(Order order, BigDecimal amount, SplitType splitType, Transaction pending) {
+		Transaction transaction = pending != null ? pending : new Transaction();
+		if (pending == null) {
+			transaction.setOrder(order);
+			transaction.setRestaurant(order.getRestaurant());
+			transaction.setAmount(amount);
+			transaction.setTotalAmount(amount);
+			transaction.setCurrency(order.getCurrency());
+			transaction.setSplitType(splitType);
+		}
+		transaction.setStatus(TransactionStatus.SUCCESS);
+		transaction.setPaidAt(Instant.now());
+		return transactionRepository.save(transaction);
+	}
+
+	/** A pending payment may only apply its split if the bill still costs what was charged. */
+	private static void requireSameAmount(Transaction pending, BigDecimal amount) {
+		if (pending != null && pending.getAmount().compareTo(amount) != 0) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "The bill changed during the payment");
+		}
 	}
 
 	/** Marks the order fully paid and announces it; POS closing happens after commit. */

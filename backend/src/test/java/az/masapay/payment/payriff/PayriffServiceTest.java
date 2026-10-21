@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import az.masapay.domain.Transaction;
@@ -21,7 +22,8 @@ class PayriffServiceTest {
 	private final PayriffSignature signature = new PayriffSignature("test-secret-0123456789-0123456789");
 	private final TransactionRepository transactionRepository = mock(TransactionRepository.class);
 	private final PayriffService service = new PayriffService(client, signature, transactionRepository,
-			"https://masapay.test/api/public/payriff/webhook", "https://masapay.test/payment/result");
+			"https://masapay.test/api/public/payriff/webhook", "https://masapay.test/payment/result", false,
+			"https://masapay.test/payment/mock");
 
 	@Test
 	void opensACheckoutWithASignedCallbackAndStoresPayriffIds() {
@@ -43,12 +45,30 @@ class PayriffServiceTest {
 		verify(client).createOrder(sent.capture());
 		assertThat(sent.getValue().amount()).isEqualByComparingTo("27.50");
 		assertThat(sent.getValue().currency()).isEqualTo("AZN");
-		assertThat(sent.getValue().redirectUrl()).isEqualTo("https://masapay.test/payment/result");
+		assertThat(sent.getValue().redirectUrl())
+				.isEqualTo("https://masapay.test/payment/result?tx=" + transaction.getId());
 
 		// The webhook (#35) will verify exactly these two query parameters.
 		UriComponents callback = UriComponentsBuilder.fromUriString(sent.getValue().callbackUrl()).build();
 		String tx = callback.getQueryParams().getFirst("tx");
 		assertThat(tx).isEqualTo(transaction.getId().toString());
 		assertThat(signature.matches(tx, callback.getQueryParams().getFirst("sig"))).isTrue();
+	}
+
+	@Test
+	void mockModeSkipsPayriffAndPointsToTheMockPage() {
+		PayriffService mockService = new PayriffService(client, signature, transactionRepository,
+				"https://masapay.test/api/public/payriff/webhook", "https://masapay.test/payment/result", true,
+				"https://masapay.test/payment/mock");
+		Transaction transaction = new Transaction();
+		transaction.setId(UUID.randomUUID());
+		transaction.setTotalAmount(new BigDecimal("9.00"));
+
+		PayriffCheckout checkout = mockService.startCheckout(transaction);
+
+		verifyNoInteractions(client);
+		assertThat(transaction.getPayriffOrderId()).isEqualTo("MOCK-" + transaction.getId());
+		assertThat(checkout.paymentUrl()).startsWith("https://masapay.test/payment/mock?tx=" + transaction.getId())
+				.contains("sig=" + signature.sign(transaction.getId().toString()));
 	}
 }

@@ -6,6 +6,9 @@ export function paymentErrorMessage(
   error: FetchBaseQueryError | SerializedError | undefined,
 ): string | null {
   if (!error) return null
+  if ('status' in error && error.status === 'FETCH_ERROR') {
+    return 'İnternet bağlantısı yoxdur. Bağlantını yoxlayıb yenidən cəhd edin, pul çəkilməyib.'
+  }
   if ('status' in error && error.status === 409) {
     return 'Hesab bu arada dəyişdi (kimsə artıq ödəmiş ola bilər). Məbləği yoxlayıb yenidən cəhd edin.'
   }

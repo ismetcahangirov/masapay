@@ -81,6 +81,10 @@ masapay:
     callback-url: ${MASAPAY_PAYRIFF_CALLBACK_URL:http://localhost:8080/api/public/payriff/webhook}
     # Where Payriff sends the customer back after the payment page.
     redirect-url: ${MASAPAY_PAYRIFF_REDIRECT_URL:http://localhost:5173/payment/result}
+    # LOCAL DEVELOPMENT ONLY: approve payments on a mock page instead of Payriff (#37). Never true
+    # in a deployed environment.
+    mock: ${MASAPAY_PAYRIFF_MOCK:false}
+    mock-page-url: ${MASAPAY_PAYRIFF_MOCK_PAGE_URL:http://localhost:5173/payment/mock}
 
 springdoc:
   # OpenAPI spec and Swagger UI for trying the API by hand. Set MASAPAY_API_DOCS_ENABLED=false

@@ -3,6 +3,8 @@ import { createBrowserRouter } from 'react-router-dom'
 import { LandingPage } from '@/routes/landing-page'
 import { TablePage } from '@/routes/table-page'
 import { NotFoundPage } from '@/routes/not-found-page'
+import { PaymentResultPage } from '@/routes/payment-result-page'
+import { MockPayriffPage } from '@/routes/mock-payriff-page'
 import { LoginPage } from '@/routes/admin/login-page'
 import { RequireAuth } from '@/features/auth/require-auth'
 
@@ -48,6 +50,16 @@ export const router = createBrowserRouter([
     // Reached by scanning a table QR code.
     path: '/r/:restaurantSlug/t/:tableId',
     element: <TablePage />,
+  },
+  {
+    // Payriff sends the guest back here after paying (#37).
+    path: '/payment/result',
+    element: <PaymentResultPage />,
+  },
+  {
+    // Local stand-in for Payriff's page; only in development (#37).
+    path: '/payment/mock',
+    element: import.meta.env.DEV ? <MockPayriffPage /> : <NotFoundPage />,
   },
   {
     path: '/admin/login',

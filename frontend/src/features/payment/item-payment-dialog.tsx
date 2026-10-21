@@ -11,16 +11,11 @@ import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/features/order/format'
 import type { Order } from '@/features/order/types'
 import {
-  type Receipt,
-  usePayItemsMutation,
+  useCheckoutItemsMutation,
   useQuoteItemsQuery,
+  goToPayment,
 } from '@/features/payment/payment-api'
-import {
-  AmountDue,
-  ErrorNote,
-  PaymentSuccess,
-  Stepper,
-} from '@/features/payment/payment-parts'
+import { AmountDue, ErrorNote, Stepper } from '@/features/payment/payment-parts'
 import { paymentErrorMessage } from '@/features/payment/payment-errors'
 import { cn } from '@/lib/utils'
 
@@ -43,7 +38,6 @@ export function ItemPaymentDialog({
 }) {
   const [selected, setSelected] = useState<string[]>([])
   const [guests, setGuests] = useState(2)
-  const [receipt, setReceipt] = useState<Receipt | null>(null)
 
   const needsGuests =
     !!order.serviceCharge && order.serviceCharge.guests === null
@@ -58,7 +52,7 @@ export function ItemPaymentDialog({
     { qrToken, itemIds: chosen, guests: guestCount },
     { skip: !open || chosen.length === 0 },
   )
-  const [pay, payState] = usePayItemsMutation()
+  const [pay, payState] = useCheckoutItemsMutation()
 
   function toggle(id: string) {
     setSelected((current) =>
@@ -70,7 +64,6 @@ export function ItemPaymentDialog({
 
   function close(next: boolean) {
     if (!next) {
-      setReceipt(null)
       setSelected([])
       payState.reset()
     }
@@ -79,7 +72,7 @@ export function ItemPaymentDialog({
 
   async function onPay() {
     try {
-      setReceipt(
+      goToPayment(
         await pay({ qrToken, itemIds: chosen, guests: guestCount }).unwrap(),
       )
     } catch {
@@ -98,9 +91,7 @@ export function ItemPaymentDialog({
             Yalnız sizin sifariş etdiyiniz məhsulları seçin.
           </DialogDescription>
         </DialogHeader>
-        {receipt ? (
-          <PaymentSuccess receipt={receipt} onClose={() => close(false)} />
-        ) : (
+        {
           <div className="space-y-4">
             <ul className="max-h-64 space-y-2 overflow-y-auto">
               {order.items.map((item) => {
@@ -177,13 +168,13 @@ export function ItemPaymentDialog({
               onClick={() => void onPay()}
             >
               {payState.isLoading
-                ? 'Ödənilir...'
+                ? 'Payriff-ə yönləndirilir...'
                 : quote.data && chosen.length > 0
                   ? `${formatCurrency(quote.data.amount, order.currency)} ödə`
                   : 'Ödə'}
             </Button>
           </div>
-        )}
+        }
       </DialogContent>
     </Dialog>
   )

@@ -58,6 +58,11 @@ masapay:
   iiko:
     # iiko Cloud API root; overridden in tests and for the EU region (api-eu.iiko.services).
     base-url: ${MASAPAY_IIKO_BASE_URL:https://api-ru.iiko.services}
+  payriff:
+    # HMAC-SHA256 key that signs the callback URLs we hand to Payriff (#34). Payriff does not sign
+    # its callbacks, so this signature is how a webhook proves it belongs to one of our payments.
+    # Override per environment; never ship the default.
+    webhook-secret: ${MASAPAY_PAYRIFF_WEBHOOK_SECRET:masapay-dev-webhook-secret-change-me-0123456789}
 
 springdoc:
   # OpenAPI spec and Swagger UI for trying the API by hand. Set MASAPAY_API_DOCS_ENABLED=false

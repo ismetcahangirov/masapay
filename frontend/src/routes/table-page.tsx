@@ -10,6 +10,7 @@ import {
   NoOpenBill,
 } from '@/features/order/bill-states'
 import { useGetTableOrderQuery } from '@/features/order/order-api'
+import { PaymentActions } from '@/features/payment/payment-actions'
 
 // Landing page reached by scanning a table QR code:
 //   /r/:restaurantId/t/:tableId?token=<qrToken>
@@ -43,7 +44,12 @@ export function TablePage() {
       />
     )
   } else {
-    content = <BillCard table={data} order={data.order} />
+    content = (
+      <div className="flex w-full flex-col items-center gap-4">
+        <BillCard table={data} order={data.order} />
+        <PaymentActions qrToken={validation.qrToken} order={data.order} />
+      </div>
+    )
   }
 
   return (

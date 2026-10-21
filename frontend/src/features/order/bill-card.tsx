@@ -53,6 +53,50 @@ function TotalRow({
   )
 }
 
+/**
+ * Where the paid amount came from. Item payments cross lines out, but equal
+ * split shares are not tied to a line, so without this a guest sees an
+ * un-crossed item and cannot tell that half of it is already covered.
+ */
+function PaymentBreakdown({
+  order,
+  currency,
+}: {
+  order: NonNullable<TableOrder['order']>
+  currency: string
+}) {
+  const byItems = order.items
+    .filter((item) => item.paid)
+    .reduce((sum, item) => sum + item.total, 0)
+  const other = Math.max(0, order.paidAmount - byItems)
+  if (byItems === 0 || other === 0) {
+    return order.equalSplit ? (
+      <p className="pl-3 text-xs text-muted-foreground">
+        Bərabər bölgü: {order.equalSplit.paidParts} /{' '}
+        {order.equalSplit.totalParts} hissə ödənilib
+      </p>
+    ) : null
+  }
+  return (
+    <ul className="space-y-1 border-l-2 border-success/40 pl-3 text-xs text-muted-foreground">
+      <li className="flex justify-between">
+        <span>Məhsul seçərək (xətt çəkilənlər)</span>
+        <span className="tabular-nums">
+          {formatCurrency(byItems, currency)}
+        </span>
+      </li>
+      <li className="flex justify-between">
+        <span>
+          {order.equalSplit
+            ? `Bərabər bölgü (${order.equalSplit.paidParts} / ${order.equalSplit.totalParts} hissə)`
+            : 'Digər ödənişlər'}
+        </span>
+        <span className="tabular-nums">{formatCurrency(other, currency)}</span>
+      </li>
+    </ul>
+  )
+}
+
 /** Thin bar showing how much of the bill is paid. */
 function PaidProgress({ paid, total }: { paid: number; total: number }) {
   const percent = total > 0 ? Math.min(100, (paid / total) * 100) : 0
@@ -143,14 +187,11 @@ export function BillCard({
               currency={order.currency}
               tone="paid"
             />
+            {!fullyPaid && (
+              <PaymentBreakdown order={order} currency={order.currency} />
+            )}
             <PaidProgress paid={order.paidAmount} total={total} />
           </>
-        )}
-        {order.equalSplit && !fullyPaid && (
-          <p className="text-xs text-muted-foreground">
-            Bərabər bölgü: {order.equalSplit.paidParts} /{' '}
-            {order.equalSplit.totalParts} hissə ödənilib
-          </p>
         )}
         <TotalRow
           label="Qalıq"

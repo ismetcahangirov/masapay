@@ -13,10 +13,14 @@ import java.util.UUID;
  * unless the total is more than the items (e.g. a service charge).
  */
 public record OrderView(
-		UUID orderId, String status, BigDecimal totalAmount, Instant openedAt, List<OrderItemView> items,
-		EqualSplitView equalSplit, ServiceChargeView serviceCharge) {
+		UUID orderId, String status, BigDecimal totalAmount, BigDecimal paidAmount, BigDecimal outstanding,
+		Instant openedAt, List<OrderItemView> items, EqualSplitView equalSplit, ServiceChargeView serviceCharge) {
 
-	public static OrderView of(Order order, List<OrderItem> items) {
+	/**
+	 * {@code paidAmount} is what successful payments have covered so far (tips excluded), so the
+	 * receipt shows paid vs. remaining exactly, whatever mix of split modes was used.
+	 */
+	public static OrderView of(Order order, List<OrderItem> items, BigDecimal paidAmount) {
 		List<OrderItemView> itemViews = items.stream()
 			.map(i -> new OrderItemView(
 				i.getId(), i.getName(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(), i.isPaid()))
@@ -29,8 +33,9 @@ public record OrderView(
 		ServiceChargeView serviceCharge = extra.signum() <= 0
 			? null
 			: new ServiceChargeView(extra, order.getServiceChargeGuests(), order.getServiceChargePaidShares());
+		BigDecimal outstanding = order.getTotalAmount().subtract(paidAmount).max(BigDecimal.ZERO);
 		return new OrderView(
-			order.getId(), order.getStatus().name(), order.getTotalAmount(), order.getOpenedAt(), itemViews,
-			equalSplit, serviceCharge);
+			order.getId(), order.getStatus().name(), order.getTotalAmount(), paidAmount, outstanding,
+			order.getOpenedAt(), itemViews, equalSplit, serviceCharge);
 	}
 }

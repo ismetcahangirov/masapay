@@ -3,12 +3,16 @@ package az.masapay.order;
 import az.masapay.domain.Order;
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.RestaurantTable;
+import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.OrderStatus;
+import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.order.dto.OrderView;
 import az.masapay.order.dto.TableOrderResponse;
 import az.masapay.repository.OrderItemRepository;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
+import az.masapay.repository.TransactionRepository;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -29,12 +33,14 @@ public class CustomerOrderService {
 	private final RestaurantTableRepository tableRepository;
 	private final OrderRepository orderRepository;
 	private final OrderItemRepository orderItemRepository;
+	private final TransactionRepository transactionRepository;
 
 	public CustomerOrderService(RestaurantTableRepository tableRepository, OrderRepository orderRepository,
-			OrderItemRepository orderItemRepository) {
+			OrderItemRepository orderItemRepository, TransactionRepository transactionRepository) {
 		this.tableRepository = tableRepository;
 		this.orderRepository = orderRepository;
 		this.orderItemRepository = orderItemRepository;
+		this.transactionRepository = transactionRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -58,6 +64,9 @@ public class CustomerOrderService {
 	}
 
 	private OrderView toOrderView(Order order) {
-		return OrderView.of(order, orderItemRepository.findByOrderId(order.getId()));
+		BigDecimal paid = transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS).stream()
+			.map(Transaction::getAmount)
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+		return OrderView.of(order, orderItemRepository.findByOrderId(order.getId()), paid);
 	}
 }

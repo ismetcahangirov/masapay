@@ -10,11 +10,14 @@ import az.masapay.domain.Order;
 import az.masapay.domain.OrderItem;
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.RestaurantTable;
+import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.OrderStatus;
+import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.order.dto.TableOrderResponse;
 import az.masapay.repository.OrderItemRepository;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
+import az.masapay.repository.TransactionRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +39,8 @@ class CustomerOrderServiceTest {
 	private OrderRepository orderRepository;
 	@Mock
 	private OrderItemRepository orderItemRepository;
+	@Mock
+	private TransactionRepository transactionRepository;
 
 	private CustomerOrderService service;
 
@@ -44,7 +49,8 @@ class CustomerOrderServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new CustomerOrderService(tableRepository, orderRepository, orderItemRepository);
+		service = new CustomerOrderService(tableRepository, orderRepository, orderItemRepository,
+			transactionRepository);
 	}
 
 	private RestaurantTable table() {
@@ -117,6 +123,28 @@ class CustomerOrderServiceTest {
 
 		assertThat(response.order()).isNotNull();
 		assertThat(response.order().status()).isEqualTo("PAID");
+	}
+
+	@Test
+	void reportsPaidAndOutstandingFromSuccessfulPaymentsAcrossSplitModes() {
+		Order order = new Order();
+		order.setId(UUID.randomUUID());
+		order.setStatus(OrderStatus.OPEN);
+		order.setTotalAmount(new BigDecimal("27.00"));
+		Transaction itemPayment = new Transaction();
+		itemPayment.setAmount(new BigDecimal("9.00"));
+		Transaction equalShare = new Transaction();
+		equalShare.setAmount(new BigDecimal("9.00"));
+		when(tableRepository.findByQrToken(qrToken)).thenReturn(Optional.of(table()));
+		when(orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(tableId, OrderStatus.OPEN))
+			.thenReturn(Optional.of(order));
+		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
+			.thenReturn(List.of(itemPayment, equalShare));
+
+		TableOrderResponse response = service.getCurrentOrder(qrToken);
+
+		assertThat(response.order().paidAmount()).isEqualByComparingTo("18.00");
+		assertThat(response.order().outstanding()).isEqualByComparingTo("9.00");
 	}
 
 	@Test

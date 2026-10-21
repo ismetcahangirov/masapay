@@ -31,7 +31,7 @@ class OrderRealtimeRelayTest {
 	void relaysRedisMessageToTableTopic() throws Exception {
 		UUID qrToken = UUID.randomUUID();
 		OrderView order = new OrderView(
-			UUID.randomUUID(), "OPEN", new BigDecimal("7.00"), Instant.parse("2026-01-01T00:00:00Z"), List.of(), null, null);
+			UUID.randomUUID(), "OPEN", new BigDecimal("7.00"), BigDecimal.ZERO, new BigDecimal("7.00"), Instant.parse("2026-01-01T00:00:00Z"), List.of(), null, null);
 		TableOrderResponse snapshot =
 			new TableOrderResponse(UUID.randomUUID(), "A1", UUID.randomUUID(), "Cafe", "AZN", order);
 		byte[] body = objectMapper.writeValueAsString(new OrderUpdateMessage(qrToken, snapshot))

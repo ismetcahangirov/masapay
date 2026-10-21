@@ -78,9 +78,12 @@ class AdminQrControllerTest {
 	}
 
 	@Test
-	void waiterIsForbidden() throws Exception {
-		mvc.perform(get("/api/admin/tables/{id}/qr", UUID.randomUUID()).with(authentication(as(UserRole.WAITER))))
-			.andExpect(status().isForbidden());
+	void waiterCanSeeTheirTableQrCodes() throws Exception {
+		UUID tableId = UUID.randomUUID();
+		when(exportService.tableSvg(any(), eq(tableId))).thenReturn("<svg/>");
+
+		mvc.perform(get("/api/admin/tables/{id}/qr", tableId).with(authentication(as(UserRole.WAITER))))
+			.andExpect(status().isOk());
 	}
 
 	@Test

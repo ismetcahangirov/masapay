@@ -1,19 +1,46 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Settings } from 'lucide-react'
+import { LayoutDashboard, QrCode, Settings } from 'lucide-react'
+import { useAppSelector } from '@/app/hooks'
+import type { UserRole } from '@/features/auth/auth-slice'
 import { LogoutButton } from '@/features/auth/logout-button'
 import { cn } from '@/lib/utils'
 
+const MANAGERS: UserRole[] = ['SUPER_ADMIN', 'RESTO_MANAGER']
+const STAFF: UserRole[] = [...MANAGERS, 'WAITER']
+
 const LINKS = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/admin/settings', label: 'Tənzimləmələr', icon: Settings, end: false },
+  {
+    to: '/admin',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    end: true,
+    roles: MANAGERS,
+  },
+  {
+    to: '/admin/tables',
+    label: 'Masalar',
+    icon: QrCode,
+    end: false,
+    roles: STAFF,
+  },
+  {
+    to: '/admin/settings',
+    label: 'Tənzimləmələr',
+    icon: Settings,
+    end: false,
+    roles: MANAGERS,
+  },
 ]
 
-/** Top navigation shared by the admin pages. */
+/** Top navigation shared by the admin pages; shows only the pages the role may open. */
 export function AdminNav() {
+  const role = useAppSelector((state) => state.auth.user?.role)
+  const links = LINKS.filter((link) => role && link.roles.includes(role))
+
   return (
-    <nav className="flex items-center justify-between gap-4 border-b pb-4">
-      <div className="flex gap-1">
-        {LINKS.map(({ to, label, icon: Icon, end }) => (
+    <nav className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-wrap gap-1">
+        {links.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}

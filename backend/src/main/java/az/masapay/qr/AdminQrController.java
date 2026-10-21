@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Admin-panel export of printable table QR codes: one table as SVG, or every table
- * of a restaurant as a ZIP of SVGs. Managers are limited to their own restaurant.
+ * of a restaurant as a ZIP of SVGs. Managers and waiters are limited to their own restaurant.
  */
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER','WAITER')")
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AdminQrController {
 

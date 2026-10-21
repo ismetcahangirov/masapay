@@ -1,5 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, QrCode, ReceiptText, Settings } from 'lucide-react'
+import {
+  HandCoins,
+  LayoutDashboard,
+  QrCode,
+  ReceiptText,
+  Settings,
+} from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import type { UserRole } from '@/features/auth/auth-slice'
 import { LogoutButton } from '@/features/auth/logout-button'
@@ -31,6 +37,13 @@ const LINKS = [
     roles: MANAGERS,
   },
   {
+    to: '/admin/tips',
+    label: 'Bəxşişlər',
+    icon: HandCoins,
+    end: false,
+    roles: MANAGERS,
+  },
+  {
     to: '/admin/settings',
     label: 'Tənzimləmələr',
     icon: Settings,
@@ -38,7 +51,6 @@ const LINKS = [
     roles: MANAGERS,
   },
 ]
-
 /** Top navigation shared by the admin pages; shows only the pages the role may open. */
 export function AdminNav() {
   const role = useAppSelector((state) => state.auth.user?.role)

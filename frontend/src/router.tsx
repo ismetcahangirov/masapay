@@ -28,6 +28,11 @@ const SettingsPage = lazy(() =>
     default: m.SettingsPage,
   })),
 )
+const TipsPage = lazy(() =>
+  import('@/routes/admin/tips-page').then((m) => ({
+    default: m.TipsPage,
+  })),
+)
 
 export const router = createBrowserRouter([
   {
@@ -82,6 +87,17 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
         <Suspense fallback={null}>
           <SettingsPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // Tip report per waiter with CSV export (#48).
+    path: '/admin/tips',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
+        <Suspense fallback={null}>
+          <TipsPage />
         </Suspense>
       </RequireAuth>
     ),

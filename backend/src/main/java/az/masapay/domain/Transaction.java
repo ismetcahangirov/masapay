@@ -70,6 +70,10 @@ public class Transaction extends BaseEntity {
 	@Column(name = "payriff_payment_id", length = 128)
 	private String payriffPaymentId;
 
+	/** Payriff checkout session returned with the order (#33). */
+	@Column(name = "payriff_session_id", length = 128)
+	private String payriffSessionId;
+
 	@Column(name = "paid_at")
 	private Instant paidAt;
 }

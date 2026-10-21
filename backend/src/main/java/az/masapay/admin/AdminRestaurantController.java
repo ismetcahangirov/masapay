@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Restaurants the caller may manage: every restaurant for a SUPER_ADMIN, only their own for a
- * RESTO_MANAGER. The admin panel uses it to know which restaurant's settings to open (#46).
+ * RESTO_MANAGER or WAITER. The admin panel uses it to know which restaurant to open (#46, tables).
  */
 @RestController
 @RequestMapping("/api/admin/restaurants")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER','WAITER')")
 @ConditionalOnProperty(prefix = "masapay.auth", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AdminRestaurantController {
 

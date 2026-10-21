@@ -3,6 +3,8 @@ import { createBrowserRouter } from 'react-router-dom'
 import { LandingPage } from '@/routes/landing-page'
 import { TablePage } from '@/routes/table-page'
 import { NotFoundPage } from '@/routes/not-found-page'
+import { LoginPage } from '@/routes/admin/login-page'
+import { RequireAuth } from '@/features/auth/require-auth'
 
 // Admin panel is lazy-loaded so its charting bundle (recharts) stays out of the
 // customer PWA's initial download.
@@ -23,12 +25,18 @@ export const router = createBrowserRouter([
     element: <TablePage />,
   },
   {
-    // Admin panel. Role-based protection is added with the auth flow (#17).
+    path: '/admin/login',
+    element: <LoginPage />,
+  },
+  {
+    // Admin panel: only signed-in managers and super admins (#17).
     path: '/admin',
     element: (
-      <Suspense fallback={null}>
-        <DashboardPage />
-      </Suspense>
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
+        <Suspense fallback={null}>
+          <DashboardPage />
+        </Suspense>
+      </RequireAuth>
     ),
   },
   {

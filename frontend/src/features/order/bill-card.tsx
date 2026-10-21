@@ -1,4 +1,8 @@
-import { type Order, orderTotal, orderBalance } from '@/features/order/types'
+import {
+  type TableOrder,
+  orderTotal,
+  orderBalance,
+} from '@/features/order/types'
 import { formatCurrency } from '@/features/order/format'
 import { OrderStatusBadge } from '@/features/order/order-status-badge'
 import { OrderItemList } from '@/features/order/order-item-list'
@@ -44,9 +48,15 @@ function TotalRow({
   )
 }
 
-// Presentational live-bill card built from shadcn Card + Badge. Fed with mock
-// data today; wired to the RTK Query order feed in sub-issue 4.2.
-export function BillCard({ order }: { order: Order }) {
+// Presentational live-bill card built from shadcn Card + Badge, fed by the RTK
+// Query order feed (#20). Only rendered when the table has an open bill.
+export function BillCard({
+  table,
+  order,
+}: {
+  table: TableOrder
+  order: NonNullable<TableOrder['order']>
+}) {
   const total = orderTotal(order)
   const balance = orderBalance(order)
 
@@ -54,10 +64,10 @@ export function BillCard({ order }: { order: Order }) {
     <Card className="w-full max-w-md">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
-          <CardTitle>Masa {order.tableId}</CardTitle>
+          <CardTitle>{table.tableLabel}</CardTitle>
           <OrderStatusBadge status={order.status} />
         </div>
-        <CardDescription>{order.restaurantSlug}</CardDescription>
+        <CardDescription>{table.restaurantName}</CardDescription>
       </CardHeader>
 
       <CardContent>

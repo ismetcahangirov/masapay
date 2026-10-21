@@ -1,36 +1,54 @@
 import { useMemo } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { skipToken } from '@reduxjs/toolkit/query'
 import { validateTableToken } from '@/lib/table-session'
 import { InvalidTokenPage } from '@/routes/invalid-token-page'
 import { BillCard } from '@/features/order/bill-card'
-import { mockOrder } from '@/features/order/mock'
+import {
+  BillError,
+  BillSkeleton,
+  NoOpenBill,
+} from '@/features/order/bill-states'
+import { useGetTableOrderQuery } from '@/features/order/order-api'
 
 // Landing page reached by scanning a table QR code:
-//   /r/:restaurantSlug/t/:tableId?token=<token>
+//   /r/:restaurantId/t/:tableId?token=<qrToken>
 //
-// This route establishes the token gate (4.1) and renders the live-bill UI
-// (4.4). Data fetching (4.2) and real-time sync (4.3) replace the mock order in
-// later sub-issues.
+// The token gate (4.1) runs first; the live bill then comes from RTK Query
+// (4.2) with explicit loading, error and empty states.
 export function TablePage() {
-  const { restaurantSlug = '', tableId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
-
   const validation = useMemo(() => validateTableToken(token), [token])
 
-  // Swapped for the RTK Query order feed in sub-issue 4.2.
-  const order = useMemo(
-    () => mockOrder(restaurantSlug, tableId),
-    [restaurantSlug, tableId],
+  const { data, error, isLoading, refetch } = useGetTableOrderQuery(
+    validation.valid ? validation.qrToken : skipToken,
   )
 
   if (!validation.valid) {
     return <InvalidTokenPage reason={validation.reason} />
   }
 
+  let content
+  if (isLoading) {
+    content = <BillSkeleton />
+  } else if (error || !data) {
+    const notFound = !!error && 'status' in error && error.status === 404
+    content = <BillError notFound={notFound} onRetry={refetch} />
+  } else if (!data.order) {
+    content = (
+      <NoOpenBill
+        tableLabel={data.tableLabel}
+        restaurantName={data.restaurantName}
+      />
+    )
+  } else {
+    content = <BillCard table={data} order={data.order} />
+  }
+
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
-      <BillCard order={order} />
+      {content}
     </main>
   )
 }

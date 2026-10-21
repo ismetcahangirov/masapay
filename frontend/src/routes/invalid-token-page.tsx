@@ -22,11 +22,6 @@ const REASON_COPY: Record<
     description:
       'QR kod düzgün oxunmadı. Zəhmət olmasa masadakı QR kodu yenidən skan edin.',
   },
-  expired: {
-    title: 'Sessiyanın vaxtı bitib',
-    description:
-      'Bu QR sessiyasının vaxtı bitmişdir. Yeni sessiya üçün masadakı QR kodu yenidən skan edin.',
-  },
 }
 
 export function InvalidTokenPage({

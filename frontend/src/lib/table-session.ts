@@ -1,76 +1,32 @@
 // Table session token handling for the customer PWA.
 //
-// A masapay QR code encodes a URL of the shape
-//   /r/:restaurantSlug/t/:tableId?token=<token>
-// The token is a short-lived, signed capability that grants read access to the
-// live bill for a single table. The backend is the source of truth and will be
-// re-validated server-side once the order API (sub-issue 4.2) lands; this
-// module performs a cheap client-side pre-check so an obviously missing,
-// malformed or expired token renders an error page immediately instead of
-// firing a doomed request.
+// A masapay QR code (#47) encodes a URL of the shape
+//   /r/:restaurantId/t/:tableId?token=<qrToken>
+// The token is the table's random qrToken (a UUID). Knowing it is what grants
+// read access to the table's live bill; printed codes do not expire. The
+// backend is the source of truth (unknown token -> 404); this module only does a
+// cheap format check so an obviously broken link shows an error page at once
+// instead of firing a doomed request.
 
-export type TableTokenInvalidReason = 'missing' | 'malformed' | 'expired'
-
-export interface TableTokenClaims {
-  /** Table the token was minted for. */
-  tableId: string
-  /** Restaurant slug the token was minted for. */
-  restaurantSlug: string
-  /** Expiry as a Unix timestamp in seconds. */
-  exp: number
-}
+export type TableTokenInvalidReason = 'missing' | 'malformed'
 
 export type TableTokenValidation =
-  | { valid: true; claims: TableTokenClaims }
+  | { valid: true; qrToken: string }
   | { valid: false; reason: TableTokenInvalidReason }
 
-function decodeBase64Url(value: string): string {
-  const padded = value.replace(/-/g, '+').replace(/_/g, '/')
-  const withPadding = padded.padEnd(
-    padded.length + ((4 - (padded.length % 4)) % 4),
-    '=',
-  )
-  // atob is available in every browser and in the jsdom test environment.
-  return atob(withPadding)
-}
-
-function parseClaims(token: string): TableTokenClaims | null {
-  try {
-    const raw = JSON.parse(decodeBase64Url(token)) as Partial<TableTokenClaims>
-    if (
-      typeof raw.tableId === 'string' &&
-      typeof raw.restaurantSlug === 'string' &&
-      typeof raw.exp === 'number' &&
-      Number.isFinite(raw.exp)
-    ) {
-      return {
-        tableId: raw.tableId,
-        restaurantSlug: raw.restaurantSlug,
-        exp: raw.exp,
-      }
-    }
-    return null
-  } catch {
-    return null
-  }
-}
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * Validate a table-session token against the current time.
+ * Validate the table token from the QR URL query string.
  *
- * @param token   The raw token from the QR URL query string, if any.
- * @param nowMs   Current time in milliseconds; injectable for testing.
+ * @param token The raw `token` query parameter, if any.
  */
 export function validateTableToken(
   token: string | null | undefined,
-  nowMs: number = Date.now(),
 ): TableTokenValidation {
   if (!token) return { valid: false, reason: 'missing' }
-
-  const claims = parseClaims(token)
-  if (!claims) return { valid: false, reason: 'malformed' }
-
-  if (claims.exp * 1000 <= nowMs) return { valid: false, reason: 'expired' }
-
-  return { valid: true, claims }
+  const trimmed = token.trim()
+  if (!UUID_PATTERN.test(trimmed)) return { valid: false, reason: 'malformed' }
+  return { valid: true, qrToken: trimmed.toLowerCase() }
 }

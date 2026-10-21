@@ -54,7 +54,8 @@ function toOrder(dto: OrderDto, currency: string): Order {
     quantity: item.quantity,
     unitPrice: toMinor(item.unitPrice),
     total: toMinor(item.totalPrice),
-    paid: item.paid,
+    // A fully paid bill shows every line as paid (crossed out on the receipt).
+    paid: item.paid || dto.status === 'PAID',
   }))
   const totalAmount = toMinor(dto.totalAmount)
 

@@ -339,6 +339,20 @@ public class PaymentSettlementService {
 			BigDecimal base, int paidBefore, int paidAfter, BigDecimal amount, boolean settlesOrder) {
 	}
 
+	/**
+	 * Called once a Payriff payment is confirmed (#35): if the bill has nothing left to pay, the
+	 * order is marked paid (which closes it in the POS, #41) and table viewers are notified.
+	 * Runs inside the caller's transaction.
+	 */
+	public void settleIfFullyPaid(Order order) {
+		if (order.getStatus() == OrderStatus.OPEN && outstanding(order).signum() <= 0) {
+			markPaid(order);
+			orderRepository.save(order);
+		}
+		UUID qrToken = order.getTable().getQrToken();
+		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(qrToken));
+	}
+
 	/** Marks the order fully paid and announces it; POS closing happens after commit. */
 	private void markPaid(Order order) {
 		order.setStatus(OrderStatus.PAID);

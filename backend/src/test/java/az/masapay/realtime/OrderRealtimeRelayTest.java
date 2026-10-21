@@ -1,10 +1,13 @@
 package az.masapay.realtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import az.masapay.order.dto.OrderView;
 import az.masapay.order.dto.TableOrderResponse;
+import az.masapay.table.FloorStatus;
+import az.masapay.table.dto.FloorTableView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -42,9 +45,18 @@ class OrderRealtimeRelayTest {
 
 		ArgumentCaptor<String> destination = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
-		verify(messagingTemplate).convertAndSend(destination.capture(), payload.capture());
-		assertThat(destination.getValue()).isEqualTo("/topic/tables/" + qrToken);
-		assertThat(payload.getValue()).isInstanceOf(TableOrderResponse.class);
-		assertThat(((TableOrderResponse) payload.getValue()).order().status()).isEqualTo("OPEN");
+		verify(messagingTemplate, times(2)).convertAndSend(destination.capture(), payload.capture());
+		assertThat(destination.getAllValues().get(0)).isEqualTo("/topic/tables/" + qrToken);
+		assertThat(payload.getAllValues().get(0)).isInstanceOf(TableOrderResponse.class);
+		assertThat(((TableOrderResponse) payload.getAllValues().get(0)).order().status()).isEqualTo("OPEN");
+
+		// The same message also updates the restaurant's live floor plan (#44).
+		assertThat(destination.getAllValues().get(1))
+			.isEqualTo("/topic/restaurants/" + snapshot.restaurantId() + "/floor");
+		assertThat(payload.getAllValues().get(1)).isInstanceOfSatisfying(FloorTableView.class, entry -> {
+			assertThat(entry.tableId()).isEqualTo(snapshot.tableId());
+			assertThat(entry.status()).isEqualTo(FloorStatus.ACTIVE);
+			assertThat(entry.outstanding()).isEqualByComparingTo("7.00");
+		});
 	}
 }

@@ -13,22 +13,22 @@ import java.util.UUID;
  * is set only while the bill is still open.
  */
 public record FloorTableView(
-		UUID tableId, String label, FloorStatus status, BigDecimal totalAmount, BigDecimal paidAmount,
-		BigDecimal outstanding, Instant openedAt, Long minutesOpen) {
+		UUID tableId, String label, FloorStatus status, String currency, BigDecimal totalAmount,
+		BigDecimal paidAmount, BigDecimal outstanding, Instant openedAt, Long minutesOpen) {
 
 	/** Builds the floor entry from the same snapshot the table's customers see. */
 	public static FloorTableView of(TableOrderResponse snapshot, Instant now) {
 		OrderView order = snapshot.order();
 		if (order == null) {
-			return new FloorTableView(snapshot.tableId(), snapshot.tableLabel(), FloorStatus.EMPTY, null, null, null,
-				null, null);
+			return new FloorTableView(snapshot.tableId(), snapshot.tableLabel(), FloorStatus.EMPTY,
+				snapshot.currency(), null, null, null, null, null);
 		}
 		FloorStatus status = statusOf(order);
 		Long minutesOpen = status == FloorStatus.CLOSED || order.openedAt() == null
 			? null
 			: Math.max(0, Duration.between(order.openedAt(), now).toMinutes());
-		return new FloorTableView(snapshot.tableId(), snapshot.tableLabel(), status, order.totalAmount(),
-			order.paidAmount(), order.outstanding(), order.openedAt(), minutesOpen);
+		return new FloorTableView(snapshot.tableId(), snapshot.tableLabel(), status, snapshot.currency(),
+			order.totalAmount(), order.paidAmount(), order.outstanding(), order.openedAt(), minutesOpen);
 	}
 
 	/** A PAID bill is a closed table; otherwise any successful payment makes it partially paid. */

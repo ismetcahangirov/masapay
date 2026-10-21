@@ -33,6 +33,7 @@ class FloorTableViewTest {
 
 		assertThat(view.status()).isEqualTo(FloorStatus.EMPTY);
 		assertThat(view.label()).isEqualTo("Masa 3");
+		assertThat(view.currency()).isEqualTo("AZN");
 		assertThat(view.totalAmount()).isNull();
 		assertThat(view.minutesOpen()).isNull();
 	}

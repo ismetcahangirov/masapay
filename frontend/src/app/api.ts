@@ -12,7 +12,8 @@ import type { AuthState } from '@/features/auth/auth-slice'
 // with `api.injectEndpoints` so each feature owns its own requests.
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: '/api',
+  // Absolute so the same code also runs where fetch needs full URLs (unit tests in Node).
+  baseUrl: new URL('/api', window.location.origin).toString(),
   // Sends the httpOnly refresh cookie to /api/auth (same origin via the proxy).
   credentials: 'same-origin',
   prepareHeaders: (headers, { getState }) => {

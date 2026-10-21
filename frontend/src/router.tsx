@@ -23,9 +23,19 @@ const LiveTablesPage = lazy(() =>
     default: m.LiveTablesPage,
   })),
 )
+const TransactionsPage = lazy(() =>
+  import('@/routes/admin/transactions-page').then((m) => ({
+    default: m.TransactionsPage,
+  })),
+)
 const SettingsPage = lazy(() =>
   import('@/routes/admin/settings-page').then((m) => ({
     default: m.SettingsPage,
+  })),
+)
+const TipsPage = lazy(() =>
+  import('@/routes/admin/tips-page').then((m) => ({
+    default: m.TipsPage,
   })),
 )
 
@@ -77,11 +87,33 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    // Payments and refunds (#45).
+    path: '/admin/transactions',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
+        <Suspense fallback={null}>
+          <TransactionsPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
     path: '/admin/settings',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
         <Suspense fallback={null}>
           <SettingsPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // Tip report per waiter with CSV export (#48).
+    path: '/admin/tips',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
+        <Suspense fallback={null}>
+          <TipsPage />
         </Suspense>
       </RequireAuth>
     ),

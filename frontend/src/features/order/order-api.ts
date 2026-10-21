@@ -30,6 +30,7 @@ interface OrderDto {
   totalAmount: number
   items: OrderItemDto[]
   equalSplit: EqualSplitDto | null
+  serviceCharge: { amount: number; guests: number | null } | null
 }
 
 export interface TableOrderDto {
@@ -76,7 +77,21 @@ function toOrder(dto: OrderDto, currency: string): Order {
   else if (dto.status === 'CLOSED') status = 'awaiting_payment'
   else status = 'open'
 
-  return { id: dto.orderId, status, items, totalAmount, paidAmount, currency }
+  return {
+    id: dto.orderId,
+    status,
+    items,
+    totalAmount,
+    paidAmount,
+    currency,
+    equalSplit: dto.equalSplit,
+    serviceCharge: dto.serviceCharge
+      ? {
+          amount: toMinor(dto.serviceCharge.amount),
+          guests: dto.serviceCharge.guests,
+        }
+      : null,
+  }
 }
 
 /** Maps the backend response into the UI's TableOrder. */

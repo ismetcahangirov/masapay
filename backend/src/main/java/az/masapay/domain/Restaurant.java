@@ -42,4 +42,11 @@ public class Restaurant extends BaseEntity {
 
 	@Column(name = "iiko_payment_type_id")
 	private UUID iikoPaymentTypeId;
+
+	@Column(name = "payriff_merchant_id", length = 128)
+	private String payriffMerchantId;
+
+	/** Payriff secret key; never returned to clients in clear text. */
+	@Column(name = "payriff_secret_key", length = 512)
+	private String payriffSecretKey;
 }

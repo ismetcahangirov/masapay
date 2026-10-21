@@ -23,6 +23,7 @@ export function subscribeToTopic(
   destination: string,
   onMessage: (body: string) => void,
   onConnect?: () => void,
+  accessToken?: () => string | null,
 ): TopicSubscription {
   const client = new Client({
     brokerURL: stompUrl(),
@@ -30,6 +31,12 @@ export function subscribeToTopic(
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
   })
+  // Staff topics need the signed-in user's access token on CONNECT. It is read
+  // again before every (re)connect, so a silently refreshed token is used.
+  client.beforeConnect = () => {
+    const token = accessToken?.()
+    client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {}
+  }
   client.onConnect = () => {
     client.subscribe(destination, (message: IMessage) =>
       onMessage(message.body),

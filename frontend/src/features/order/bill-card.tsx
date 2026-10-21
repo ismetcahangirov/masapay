@@ -111,7 +111,30 @@ export function BillCard({
       </CardContent>
 
       <CardFooter className="flex-col items-stretch gap-2 border-t pt-6">
-        <TotalRow label="Cəmi" amount={total} currency={order.currency} />
+        {order.serviceCharge && (
+          <>
+            <TotalRow
+              label="Məhsullar"
+              amount={total - order.serviceCharge.amount}
+              currency={order.currency}
+            />
+            <TotalRow
+              label={
+                table.serviceChargePercent
+                  ? `Xidmət haqqı (${table.serviceChargePercent}%)`
+                  : 'Xidmət haqqı'
+              }
+              amount={order.serviceCharge.amount}
+              currency={order.currency}
+            />
+          </>
+        )}
+        <TotalRow
+          label="Cəmi"
+          amount={total}
+          currency={order.currency}
+          tone={order.serviceCharge ? 'emphasis' : 'muted'}
+        />
         {order.paidAmount > 0 && (
           <>
             <TotalRow

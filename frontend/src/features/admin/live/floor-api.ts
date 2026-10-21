@@ -1,5 +1,6 @@
 import { api } from '@/app/api'
 import { subscribeToTopic } from '@/lib/stomp'
+import type { RootState } from '@/app/store'
 
 // Live floor plan (#44): every table of a restaurant with its bill status.
 // Amounts arrive as decimals (12.5); null when the table has no bill.
@@ -39,7 +40,13 @@ export const floorApi = api.injectEndpoints({
       // patched into the cached list, so the tile changes colour at once.
       async onCacheEntryAdded(
         restaurantId,
-        { updateCachedData, cacheDataLoaded, cacheEntryRemoved, dispatch },
+        {
+          updateCachedData,
+          cacheDataLoaded,
+          cacheEntryRemoved,
+          dispatch,
+          getState,
+        },
       ) {
         try {
           await cacheDataLoaded
@@ -68,6 +75,8 @@ export const floorApi = api.injectEndpoints({
             }
             connectedBefore = true
           },
+          // The floor topic is staff-only: send the in-memory access token (#44).
+          () => (getState() as RootState).auth.accessToken,
         )
         await cacheEntryRemoved
         subscription.close()

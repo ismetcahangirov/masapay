@@ -33,16 +33,11 @@ export function PaymentActions({
         Tam ödə
       </Button>
       <div className="grid grid-cols-2 gap-3">
-        <Button
-          variant="outline"
-          className="h-12"
-          onClick={() => setMode('equal')}
-        >
+        <Button className="h-12" onClick={() => setMode('equal')}>
           <Users aria-hidden />
           Bərabər böl
         </Button>
         <Button
-          variant="outline"
           className="h-12"
           onClick={() => setMode('items')}
           disabled={splitStarted}
@@ -56,6 +51,12 @@ export function PaymentActions({
           Öz yediyim
         </Button>
       </div>
+      {splitStarted && (
+        <p className="text-center text-xs text-muted-foreground">
+          Hesab bərabər bölünür, ona görə "Öz yediyim" bağlıdır. Qalan hissəni
+          "Bərabər böl" və ya "Tam ödə" ilə ödəyin.
+        </p>
+      )}
 
       <FullPaymentDialog
         qrToken={qrToken}

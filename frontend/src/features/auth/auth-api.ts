@@ -26,6 +26,14 @@ export const authApi = api.injectEndpoints({
         body: { idToken },
       }),
     }),
+    /** LOCAL DEV ONLY: sign in as a seeded user by email (backend flag MASAPAY_DEV_LOGIN_ENABLED). */
+    devLogin: build.mutation<GoogleLoginResponse, string>({
+      query: (email) => ({
+        url: '/auth/dev-login',
+        method: 'POST',
+        body: { email },
+      }),
+    }),
     /** New access token from the httpOnly refresh cookie (silent, no body). */
     refreshSession: build.mutation<AuthTokensDto, void>({
       query: () => ({ url: '/auth/refresh', method: 'POST' }),
@@ -43,6 +51,7 @@ export const authApi = api.injectEndpoints({
 
 export const {
   useLoginWithGoogleMutation,
+  useDevLoginMutation,
   useRefreshSessionMutation,
   useLogoutMutation,
 } = authApi

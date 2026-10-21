@@ -2,6 +2,7 @@ package az.masapay.realtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,12 +31,17 @@ public class OrderRealtimeRelay implements MessageListener {
 		this.objectMapper = objectMapper;
 	}
 
+	/** STOMP topic a table's customers subscribe to. */
+	static String destination(UUID qrToken) {
+		return "/topic/tables/" + qrToken;
+	}
+
 	@Override
 	public void onMessage(Message message, byte[] pattern) {
 		try {
 			String body = new String(message.getBody(), StandardCharsets.UTF_8);
 			OrderUpdateMessage update = objectMapper.readValue(body, OrderUpdateMessage.class);
-			messagingTemplate.convertAndSend("/topic/tables/" + update.qrToken(), update.order());
+			messagingTemplate.convertAndSend(destination(update.qrToken()), update.order());
 		} catch (Exception e) {
 			log.error("Failed to relay order update from Redis to STOMP", e);
 		}

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, QrCode, Settings } from 'lucide-react'
+import { LayoutDashboard, QrCode, ReceiptText, Settings } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import type { UserRole } from '@/features/auth/auth-slice'
 import { LogoutButton } from '@/features/auth/logout-button'
@@ -22,6 +22,13 @@ const LINKS = [
     icon: QrCode,
     end: false,
     roles: STAFF,
+  },
+  {
+    to: '/admin/transactions',
+    label: 'Əməliyyatlar',
+    icon: ReceiptText,
+    end: false,
+    roles: MANAGERS,
   },
   {
     to: '/admin/settings',

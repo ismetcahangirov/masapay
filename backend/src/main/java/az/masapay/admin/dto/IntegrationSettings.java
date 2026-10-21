@@ -3,6 +3,7 @@ package az.masapay.admin.dto;
 import az.masapay.admin.SecretMasker;
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.enums.PosType;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -18,7 +19,8 @@ public record IntegrationSettings(
 		UUID iikoPaymentTypeId,
 		String payriffMerchantId,
 		String payriffSecretKey,
-		boolean payriffSecretKeySet) {
+		boolean payriffSecretKeySet,
+		BigDecimal serviceChargePercent) {
 
 	public static IntegrationSettings from(Restaurant restaurant) {
 		return new IntegrationSettings(
@@ -30,7 +32,8 @@ public record IntegrationSettings(
 			restaurant.getIikoPaymentTypeId(),
 			restaurant.getPayriffMerchantId(),
 			SecretMasker.mask(restaurant.getPayriffSecretKey()),
-			hasValue(restaurant.getPayriffSecretKey()));
+			hasValue(restaurant.getPayriffSecretKey()),
+			restaurant.getServiceChargePercent());
 	}
 
 	private static boolean hasValue(String value) {

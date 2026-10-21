@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,4 +50,8 @@ public class Restaurant extends BaseEntity {
 	/** Payriff secret key; never returned to clients in clear text. */
 	@Column(name = "payriff_secret_key", length = 512)
 	private String payriffSecretKey;
+
+	/** Service charge in percent of the items, e.g. 10.00; null when the restaurant charges none. */
+	@Column(name = "service_charge_percent", precision = 5, scale = 2)
+	private BigDecimal serviceChargePercent;
 }

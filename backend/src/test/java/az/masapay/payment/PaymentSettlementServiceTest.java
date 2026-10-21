@@ -625,4 +625,60 @@ class PaymentSettlementServiceTest {
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
 		verify(events, never()).publishEvent(any(OrderPaidEvent.class));
 	}
+
+	private Transaction pendingFull(String amount) {
+		order.setTable(table);
+		Transaction pending = new Transaction();
+		pending.setId(UUID.randomUUID());
+		pending.setOrder(order);
+		pending.setRestaurant(order.getRestaurant());
+		pending.setAmount(new BigDecimal(amount));
+		pending.setTotalAmount(new BigDecimal(amount));
+		pending.setSplitType(SplitType.FULL);
+		pending.setStatus(TransactionStatus.PENDING);
+		when(orderRepository.findOpenOrderForUpdate(tableId)).thenReturn(Optional.of(order));
+		when(transactionRepository.save(any(Transaction.class))).thenAnswer(inv -> inv.getArgument(0));
+		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
+			.thenReturn(List.of());
+		return pending;
+	}
+
+	@Test
+	void aConfirmedFullCheckoutPaysTheBill() {
+		Transaction pending = pendingFull("25.00");
+
+		service.settlePending(pending);
+
+		assertThat(pending.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
+		assertThat(pending.getPaidAt()).isNotNull();
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+		verify(events).publishEvent(new OrderPaidEvent(order.getId()));
+	}
+
+	@Test
+	void aConfirmedCheckoutForAnOutdatedAmountIsKeptButDoesNotCloseTheBill() {
+		// The guest was charged 20.00 but items were added meanwhile; the bill is 25.00.
+		Transaction pending = pendingFull("20.00");
+
+		service.settlePending(pending);
+
+		assertThat(pending.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
+		assertThat(pending.getAmount()).isEqualByComparingTo("20.00");
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
+	}
+
+	@Test
+	void aConfirmedEqualCheckoutCountsItsParts() {
+		Transaction pending = pendingFull("12.50");
+		pending.setSplitType(SplitType.EQUAL);
+		pending.setCheckoutParts(2);
+		pending.setCheckoutPartsToPay(1);
+		when(orderRepository.claimEqualParts(any(), anyInt(), any(), anyInt(), anyInt())).thenReturn(1);
+
+		service.settlePending(pending);
+
+		assertThat(pending.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
+		assertThat(order.getEqualSplitPaidParts()).isEqualTo(1);
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
+	}
 }

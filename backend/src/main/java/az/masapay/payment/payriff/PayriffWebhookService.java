@@ -4,7 +4,6 @@ import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.payment.PaymentSettlementService;
 import az.masapay.repository.TransactionRepository;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -56,10 +55,8 @@ public class PayriffWebhookService {
 		}
 
 		if (APPROVED.equals(payload.paymentStatus())) {
-			transaction.setStatus(TransactionStatus.SUCCESS);
-			transaction.setPaidAt(Instant.now());
-			transactionRepository.save(transaction);
-			settlementService.settleIfFullyPaid(transaction.getOrder());
+			// Applies the split the guest chose (items, equal parts or the whole bill) and marks it SUCCESS.
+			settlementService.settlePending(transaction);
 		} else if (FAILED.contains(payload.paymentStatus())) {
 			transaction.setStatus(TransactionStatus.FAILED);
 			transactionRepository.save(transaction);

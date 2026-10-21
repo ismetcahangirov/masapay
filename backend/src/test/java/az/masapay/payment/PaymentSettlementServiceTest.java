@@ -596,4 +596,33 @@ class PaymentSettlementServiceTest {
 
 		assertThat(receipt.amount()).isEqualByComparingTo("12.50");
 	}
+
+	@Test
+	void settleIfFullyPaidClosesTheBillOnceNothingIsLeft() {
+		order.setTable(table);
+		Transaction confirmed = new Transaction();
+		confirmed.setAmount(new BigDecimal("25.00"));
+		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
+			.thenReturn(List.of(confirmed));
+
+		service.settleIfFullyPaid(order);
+
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+		verify(orderRepository).save(order);
+		verify(events).publishEvent(new OrderPaidEvent(order.getId()));
+	}
+
+	@Test
+	void settleIfFullyPaidLeavesAPartlyPaidBillOpen() {
+		order.setTable(table);
+		Transaction confirmed = new Transaction();
+		confirmed.setAmount(new BigDecimal("10.00"));
+		when(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.SUCCESS))
+			.thenReturn(List.of(confirmed));
+
+		service.settleIfFullyPaid(order);
+
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.OPEN);
+		verify(events, never()).publishEvent(any(OrderPaidEvent.class));
+	}
 }

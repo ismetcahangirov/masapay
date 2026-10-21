@@ -12,6 +12,8 @@ public class PayriffClient {
 
 	private static final ParameterizedTypeReference<PayriffResponse<PayriffOrder>> ORDER_RESPONSE =
 			new ParameterizedTypeReference<>() {};
+	private static final ParameterizedTypeReference<PayriffResponse<Object>> EMPTY_RESPONSE =
+			new ParameterizedTypeReference<>() {};
 
 	private final RestClient restClient;
 
@@ -34,5 +36,18 @@ public class PayriffClient {
 					+ (response == null ? "empty response" : response.code() + " " + response.message()));
 		}
 		return response.payload();
+	}
+
+	/** Refunds a paid order (fully, or partly when {@code amount} is less than what was paid). */
+	public void refund(PayriffRefundRequest request) {
+		PayriffResponse<Object> response = restClient.post()
+				.uri("/api/v3/refund")
+				.body(request)
+				.retrieve()
+				.body(EMPTY_RESPONSE);
+		if (response == null || !response.succeeded()) {
+			throw new IllegalStateException("Payriff refund failed: "
+					+ (response == null ? "empty response" : response.code() + " " + response.message()));
+		}
 	}
 }

@@ -16,6 +16,20 @@ const BAR_COLOR = 'hsl(var(--success))'
 const GRID_COLOR = 'hsl(var(--border))'
 const AXIS_COLOR = 'hsl(var(--muted-foreground))'
 
+const DAY_FORMAT = new Intl.DateTimeFormat('az-AZ', {
+  day: 'numeric',
+  month: 'long',
+  weekday: 'short',
+  timeZone: 'UTC',
+})
+
+/** "2026-10-21" to a readable day with weekday and month name. */
+function formatDay(isoDate: string | undefined): string | undefined {
+  return isoDate
+    ? DAY_FORMAT.format(new Date(`${isoDate}T00:00:00Z`))
+    : undefined
+}
+
 export function RevenueChart({
   data,
   currency,
@@ -48,7 +62,11 @@ export function RevenueChart({
             formatCurrency(value, currency),
             'Dövriyyə',
           ]}
-          labelFormatter={(label: string) => `Saat ${label}:00`}
+          labelFormatter={(label: string, payload) =>
+            formatDay(
+              (payload?.[0]?.payload as RevenuePoint | undefined)?.date,
+            ) ?? label
+          }
           contentStyle={{
             borderRadius: 8,
             border: '1px solid hsl(var(--border))',

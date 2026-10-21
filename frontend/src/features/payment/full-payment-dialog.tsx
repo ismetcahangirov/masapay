@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -9,15 +8,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/features/order/format'
 import {
-  type Receipt,
-  usePayFullMutation,
+  useCheckoutFullMutation,
   useQuoteFullQuery,
+  goToPayment,
 } from '@/features/payment/payment-api'
-import {
-  AmountDue,
-  ErrorNote,
-  PaymentSuccess,
-} from '@/features/payment/payment-parts'
+import { AmountDue, ErrorNote } from '@/features/payment/payment-parts'
 import { paymentErrorMessage } from '@/features/payment/payment-errors'
 
 // "Tam ödə" (#24): one guest pays everything that is still outstanding.
@@ -33,12 +28,10 @@ export function FullPaymentDialog({
   onOpenChange: (open: boolean) => void
 }) {
   const quote = useQuoteFullQuery(qrToken, { skip: !open })
-  const [pay, payState] = usePayFullMutation()
-  const [receipt, setReceipt] = useState<Receipt | null>(null)
+  const [pay, payState] = useCheckoutFullMutation()
 
   function close(next: boolean) {
     if (!next) {
-      setReceipt(null)
       payState.reset()
     }
     onOpenChange(next)
@@ -46,7 +39,7 @@ export function FullPaymentDialog({
 
   async function onPay() {
     try {
-      setReceipt(await pay(qrToken).unwrap())
+      goToPayment(await pay(qrToken).unwrap())
     } catch {
       void quote.refetch()
     }
@@ -63,9 +56,7 @@ export function FullPaymentDialog({
             Hesabın qalan hissəsinin hamısını siz ödəyirsiniz.
           </DialogDescription>
         </DialogHeader>
-        {receipt ? (
-          <PaymentSuccess receipt={receipt} onClose={() => close(false)} />
-        ) : (
+        {
           <div className="space-y-4">
             <AmountDue
               amount={quote.data?.amount}
@@ -79,13 +70,13 @@ export function FullPaymentDialog({
               onClick={() => void onPay()}
             >
               {payState.isLoading
-                ? 'Ödənilir...'
+                ? 'Payriff-ə yönləndirilir...'
                 : quote.data
                   ? `${formatCurrency(quote.data.amount, currency)} ödə`
                   : 'Ödə'}
             </Button>
           </div>
-        )}
+        }
       </DialogContent>
     </Dialog>
   )

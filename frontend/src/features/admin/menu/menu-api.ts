@@ -19,6 +19,21 @@ export interface MenuDish {
   price: number
   /** A combo's contents, such as a business lunch; empty for an ordinary dish. */
   components: ComboComponent[]
+  /** Daily menu settings (#139); days are ISO dates in Baku time. */
+  active: boolean
+  offOn: string | null
+  availableFrom: string | null
+  availableUntil: string | null
+  /** Whether customers can order it right now. */
+  availableToday: boolean
+}
+
+export type AvailabilityMode = 'ALWAYS' | 'OFF' | 'OFF_TODAY' | 'DATES'
+
+export interface AvailabilityInput {
+  mode: AvailabilityMode
+  from: string | null
+  until: string | null
 }
 
 export interface MenuCategory {
@@ -117,6 +132,19 @@ export const menuApi = api.injectEndpoints({
         { type: 'Menu', id: restaurantId },
       ],
     }),
+    setAvailability: build.mutation<
+      MenuDish,
+      { restaurantId: string; dishId: string; body: AvailabilityInput }
+    >({
+      query: ({ restaurantId, dishId, body }) => ({
+        url: `${menuUrl(restaurantId)}/items/${dishId}/availability`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Menu', id: restaurantId },
+      ],
+    }),
     deleteDish: build.mutation<void, { restaurantId: string; dishId: string }>({
       query: ({ restaurantId, dishId }) => ({
         url: `${menuUrl(restaurantId)}/items/${dishId}`,
@@ -136,5 +164,6 @@ export const {
   useDeleteCategoryMutation,
   useCreateDishMutation,
   useUpdateDishMutation,
+  useSetAvailabilityMutation,
   useDeleteDishMutation,
 } = menuApi

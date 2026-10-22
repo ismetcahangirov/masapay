@@ -3,8 +3,10 @@ package az.masapay.menu;
 import az.masapay.domain.MenuCategory;
 import az.masapay.domain.MenuItem;
 import az.masapay.domain.Restaurant;
+import az.masapay.domain.RestaurantTable;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
+import az.masapay.menu.dto.AvailabilityRequest;
 import az.masapay.menu.dto.ComboComponentRequest;
 import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
@@ -14,15 +16,21 @@ import az.masapay.repository.MenuCategoryRepository;
 import az.masapay.repository.MenuComboComponentRepository;
 import az.masapay.repository.MenuItemRepository;
 import az.masapay.repository.RestaurantRepository;
+import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -38,32 +46,106 @@ import org.springframework.web.server.ResponseStatusException;
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MenuService {
 
+	/** Daily-menu days are Asia/Baku calendar days, like the dashboard and tip report. */
+	public static final ZoneId MENU_ZONE = ZoneId.of("Asia/Baku");
+
 	private final MenuCategoryRepository categoryRepository;
 	private final MenuItemRepository itemRepository;
 	private final MenuComboComponentRepository componentRepository;
 	private final RestaurantRepository restaurantRepository;
+	private final RestaurantTableRepository tableRepository;
 	private final UserRepository userRepository;
+	private final Clock clock;
 
+	@Autowired
 	public MenuService(MenuCategoryRepository categoryRepository, MenuItemRepository itemRepository,
 			MenuComboComponentRepository componentRepository, RestaurantRepository restaurantRepository,
-			UserRepository userRepository) {
+			RestaurantTableRepository tableRepository, UserRepository userRepository) {
+		this(categoryRepository, itemRepository, componentRepository, restaurantRepository, tableRepository,
+			userRepository, Clock.systemUTC());
+	}
+
+	MenuService(MenuCategoryRepository categoryRepository, MenuItemRepository itemRepository,
+			MenuComboComponentRepository componentRepository, RestaurantRepository restaurantRepository,
+			RestaurantTableRepository tableRepository, UserRepository userRepository, Clock clock) {
 		this.categoryRepository = categoryRepository;
 		this.itemRepository = itemRepository;
 		this.componentRepository = componentRepository;
 		this.restaurantRepository = restaurantRepository;
+		this.tableRepository = tableRepository;
 		this.userRepository = userRepository;
+		this.clock = clock;
 	}
 
+	/** The whole menu for staff, including dishes that are off today. */
 	@Transactional(readOnly = true)
 	public List<MenuCategoryView> menu(UUID restaurantId, AuthenticatedUser caller) {
 		checkSameRestaurant(caller, restaurantId);
+		return menuOf(restaurantId, today(), item -> true);
+	}
+
+	/**
+	 * What a customer at the table can order today (#139): dishes that are off or out of their
+	 * dates are left out, and so are categories left empty.
+	 */
+	@Transactional(readOnly = true)
+	public List<MenuCategoryView> customerMenu(UUID qrToken) {
+		RestaurantTable table = tableRepository.findByQrToken(qrToken)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+		LocalDate today = today();
+		return menuOf(table.getRestaurant().getId(), today, item -> item.isAvailableOn(today)).stream()
+			.filter(category -> !category.items().isEmpty())
+			.toList();
+	}
+
+	private List<MenuCategoryView> menuOf(UUID restaurantId, LocalDate today, Predicate<MenuItem> shown) {
 		Map<UUID, List<MenuItemView>> itemsByCategory = itemRepository.findByRestaurantIdOrderByNameAsc(restaurantId)
 			.stream()
-			.map(MenuItemView::of)
+			.filter(shown)
+			.map(item -> MenuItemView.of(item, today))
 			.collect(Collectors.groupingBy(MenuItemView::categoryId));
 		return categoryRepository.findByRestaurantIdOrderBySortOrderAscNameAsc(restaurantId).stream()
 			.map(category -> MenuCategoryView.of(category, itemsByCategory.getOrDefault(category.getId(), List.of())))
 			.toList();
+	}
+
+	/** Puts a dish on or off the daily menu (#139). */
+	@Transactional
+	public MenuItemView setAvailability(UUID restaurantId, UUID itemId, AvailabilityRequest request,
+			AuthenticatedUser caller) {
+		checkManager(caller, restaurantId);
+		MenuItem item = item(restaurantId, itemId);
+		LocalDate today = today();
+		switch (request.mode()) {
+			case ALWAYS -> setAvailability(item, true, null, null, null);
+			case OFF -> setAvailability(item, false, null, null, null);
+			case OFF_TODAY -> setAvailability(item, true, today, item.getAvailableFrom(), item.getAvailableUntil());
+			case DATES -> {
+				if (request.from() == null && request.until() == null) {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Give a first or a last day");
+				}
+				if (request.from() != null && request.until() != null && request.from().isAfter(request.until())) {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The first day is after the last day");
+				}
+				if (request.until() != null && request.until().isBefore(today)) {
+					throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The last day is in the past");
+				}
+				setAvailability(item, true, null, request.from(), request.until());
+			}
+		}
+		return MenuItemView.of(item, today);
+	}
+
+	private static void setAvailability(MenuItem item, boolean active, LocalDate offOn, LocalDate from,
+			LocalDate until) {
+		item.setActive(active);
+		item.setOffOn(offOn);
+		item.setAvailableFrom(from);
+		item.setAvailableUntil(until);
+	}
+
+	private LocalDate today() {
+		return LocalDate.now(clock.withZone(MENU_ZONE));
 	}
 
 	@Transactional
@@ -117,7 +199,7 @@ public class MenuService {
 		item.setRestaurant(category.getRestaurant());
 		apply(item, category, request);
 		item.replaceComponents(components);
-		return MenuItemView.of(itemRepository.save(item));
+		return MenuItemView.of(itemRepository.save(item), today());
 	}
 
 	@Transactional
@@ -128,7 +210,7 @@ public class MenuService {
 		Map<MenuItem, Integer> components = components(restaurantId, item, request.components());
 		apply(item, category(restaurantId, request.categoryId()), request);
 		item.replaceComponents(components);
-		return MenuItemView.of(item);
+		return MenuItemView.of(item, today());
 	}
 
 	/** A dish that is part of a combo stays until the combo no longer contains it. */

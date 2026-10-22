@@ -9,6 +9,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,21 @@ public class MenuItem extends BaseEntity {
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal price;
 
+	/** False while the manager has switched the dish off (#139). */
+	@Column(nullable = false)
+	private boolean active = true;
+
+	/** The one Asia/Baku day the dish is off, e.g. today because the chef decided so. */
+	@Column(name = "off_on")
+	private LocalDate offOn;
+
+	/** First and last day the dish is served, both included; null is open-ended. */
+	@Column(name = "available_from")
+	private LocalDate availableFrom;
+
+	@Column(name = "available_until")
+	private LocalDate availableUntil;
+
 	/** The dishes a combo is made of (#138); empty for an ordinary dish. */
 	@OneToMany(mappedBy = "combo", cascade = CascadeType.ALL, orphanRemoval = true)
 	@BatchSize(size = 50)
@@ -55,6 +71,18 @@ public class MenuItem extends BaseEntity {
 
 	public boolean isCombo() {
 		return !components.isEmpty();
+	}
+
+	/**
+	 * Whether customers can see and order the dish on {@code day}. A combo also needs every dish
+	 * inside it: a business lunch without its soup cannot be served.
+	 */
+	public boolean isAvailableOn(LocalDate day) {
+		boolean own = active
+			&& !day.equals(offOn)
+			&& (availableFrom == null || !day.isBefore(availableFrom))
+			&& (availableUntil == null || !day.isAfter(availableUntil));
+		return own && components.stream().allMatch(row -> row.getComponent().isAvailableOn(day));
 	}
 
 	/**

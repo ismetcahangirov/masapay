@@ -1,7 +1,16 @@
 import { useState } from 'react'
-import { Layers, LoaderCircle, Pencil, Plus, Trash2 } from 'lucide-react'
+import {
+  CalendarClock,
+  Layers,
+  LoaderCircle,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import { AdminNav } from '@/features/admin/admin-nav'
+import { availabilityLabel } from '@/features/admin/menu/availability'
+import { AvailabilityDialog } from '@/features/admin/menu/availability-dialog'
 import { CategoryDialog } from '@/features/admin/menu/category-dialog'
 import { DeleteDialog } from '@/features/admin/menu/delete-dialog'
 import { DishDialog } from '@/features/admin/menu/dish-dialog'
@@ -19,6 +28,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { cn } from '@/lib/utils'
 
 type Removing =
   | { kind: 'category'; category: MenuCategory }
@@ -49,6 +59,7 @@ export function MenuPage() {
     combo: boolean
   } | null>(null)
   const [removing, setRemoving] = useState<Removing | null>(null)
+  const [scheduling, setScheduling] = useState<MenuDish | null>(null)
 
   const [deleteCategory, deleteCategoryState] = useDeleteCategoryMutation()
   const [deleteDish, deleteDishState] = useDeleteDishMutation()
@@ -205,66 +216,91 @@ export function MenuPage() {
                 </p>
               ) : (
                 <ul className="divide-y">
-                  {category.items.map((dish) => (
-                    <li
-                      key={dish.id}
-                      className="flex items-start justify-between gap-4 py-3"
-                    >
-                      <div className="min-w-0 space-y-0.5">
-                        <p className="flex flex-wrap items-center gap-2 font-medium">
-                          {dish.name}
-                          {dish.components.length > 0 && (
-                            <Badge variant="secondary">Kombo</Badge>
+                  {category.items.map((dish) => {
+                    const status = availabilityLabel(dish)
+                    return (
+                      <li
+                        key={dish.id}
+                        className="flex items-start justify-between gap-4 py-3"
+                      >
+                        <div
+                          className={cn(
+                            'min-w-0 space-y-0.5',
+                            !dish.availableToday && 'opacity-60',
                           )}
-                        </p>
-                        {dish.components.length > 0 && (
-                          <p className="text-sm">
-                            {dish.components
-                              .map((c) => `${c.quantity} x ${c.name}`)
-                              .join(', ')}
+                        >
+                          <p className="flex flex-wrap items-center gap-2 font-medium">
+                            {dish.name}
+                            {dish.components.length > 0 && (
+                              <Badge variant="secondary">Kombo</Badge>
+                            )}
+                            {status && (
+                              <Badge variant="outline">
+                                <CalendarClock
+                                  className="mr-1 size-3"
+                                  aria-hidden
+                                />
+                                {status}
+                              </Badge>
+                            )}
                           </p>
-                        )}
-                        {dish.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {dish.description}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <span className="mr-2 font-medium tabular-nums">
-                          {formatAmount(dish.price, 'AZN')}
-                        </span>
-                        {canEdit && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                setDishDialog({
-                                  dish,
-                                  categoryId: null,
-                                  combo: dish.components.length > 0,
-                                })
-                              }
-                              aria-label={`${dish.name} redaktə et`}
-                            >
-                              <Pencil aria-hidden />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                setRemoving({ kind: 'dish', dish })
-                              }
-                              aria-label={`${dish.name} sil`}
-                            >
-                              <Trash2 aria-hidden />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </li>
-                  ))}
+                          {dish.components.length > 0 && (
+                            <p className="text-sm">
+                              {dish.components
+                                .map((c) => `${c.quantity} x ${c.name}`)
+                                .join(', ')}
+                            </p>
+                          )}
+                          {dish.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {dish.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <span className="mr-2 font-medium tabular-nums">
+                            {formatAmount(dish.price, 'AZN')}
+                          </span>
+                          {canEdit && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setScheduling(dish)}
+                                aria-label={`${dish.name} mövcudluğu`}
+                              >
+                                <CalendarClock aria-hidden />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  setDishDialog({
+                                    dish,
+                                    categoryId: null,
+                                    combo: dish.components.length > 0,
+                                  })
+                                }
+                                aria-label={`${dish.name} redaktə et`}
+                              >
+                                <Pencil aria-hidden />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  setRemoving({ kind: 'dish', dish })
+                                }
+                                aria-label={`${dish.name} sil`}
+                              >
+                                <Trash2 aria-hidden />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </CardContent>
@@ -289,6 +325,11 @@ export function MenuPage() {
             categories={categories}
             defaultCategoryId={dishDialog?.categoryId ?? null}
             onClose={() => setDishDialog(null)}
+          />
+          <AvailabilityDialog
+            restaurantId={restaurantId}
+            dish={scheduling}
+            onClose={() => setScheduling(null)}
           />
         </>
       )}

@@ -24,9 +24,14 @@ import az.masapay.repository.MenuCategoryRepository;
 import az.masapay.repository.MenuComboComponentRepository;
 import az.masapay.repository.MenuItemRepository;
 import az.masapay.repository.RestaurantRepository;
+import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,8 +49,12 @@ class MenuServiceTest {
 	private final MenuComboComponentRepository componentRepository = mock(MenuComboComponentRepository.class);
 	private final RestaurantRepository restaurantRepository = mock(RestaurantRepository.class);
 	private final UserRepository userRepository = mock(UserRepository.class);
+	private final RestaurantTableRepository tableRepository = mock(RestaurantTableRepository.class);
+	/** 01:30 on the 22nd in Baku is still the 21st in UTC, so a UTC "today" would be a day early. */
+	private static final LocalDate TODAY = LocalDate.of(2026, 10, 22);
+	private final Clock clock = Clock.fixed(Instant.parse("2026-10-21T21:30:00Z"), ZoneOffset.UTC);
 	private final MenuService service = new MenuService(categoryRepository, itemRepository, componentRepository,
-			restaurantRepository, userRepository);
+			restaurantRepository, tableRepository, userRepository, clock);
 
 	private final Restaurant restaurant = new Restaurant();
 	private final Restaurant otherRestaurant = new Restaurant();

@@ -1,5 +1,6 @@
 package az.masapay.menu;
 
+import az.masapay.menu.dto.AvailabilityRequest;
 import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
@@ -77,6 +78,13 @@ public class AdminMenuController {
 	public MenuItemView updateItem(@PathVariable UUID restaurantId, @PathVariable UUID itemId,
 			@Valid @RequestBody MenuItemRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
 		return menuService.updateItem(restaurantId, itemId, request, caller);
+	}
+
+	@PutMapping("/items/{itemId}/availability")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER')")
+	public MenuItemView setAvailability(@PathVariable UUID restaurantId, @PathVariable UUID itemId,
+			@Valid @RequestBody AvailabilityRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
+		return menuService.setAvailability(restaurantId, itemId, request, caller);
 	}
 
 	@DeleteMapping("/items/{itemId}")

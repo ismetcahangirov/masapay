@@ -1,5 +1,6 @@
 package az.masapay.table;
 
+import az.masapay.order.dto.TableOrderResponse;
 import az.masapay.security.AuthenticatedUser;
 import az.masapay.table.dto.FloorTableView;
 import java.util.List;
@@ -29,5 +30,12 @@ public class AdminFloorController {
 	public List<FloorTableView> floor(@PathVariable UUID restaurantId,
 			@AuthenticationPrincipal AuthenticatedUser caller) {
 		return floorService.floor(restaurantId, caller);
+	}
+
+	/** The full bill of every table that has one, for the staff orders screen (#143). */
+	@GetMapping("/bills")
+	public List<TableOrderResponse> bills(@PathVariable UUID restaurantId,
+			@AuthenticationPrincipal AuthenticatedUser caller) {
+		return floorService.bills(restaurantId, caller);
 	}
 }

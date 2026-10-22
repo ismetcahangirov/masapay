@@ -28,6 +28,7 @@ const order: Order = {
       unitPrice: 1800,
       total: 1800,
       paid: false,
+      kitchenStatus: null,
     },
     {
       id: 'sorba',
@@ -36,6 +37,7 @@ const order: Order = {
       unitPrice: 900,
       total: 900,
       paid: true,
+      kitchenStatus: null,
     },
   ],
 }

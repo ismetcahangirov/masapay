@@ -94,4 +94,28 @@ class FloorServiceTest {
 						e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
 		verify(customerOrderService, never()).getCurrentOrder(any());
 	}
+
+	@Test
+	void theOrdersScreenGetsTheFullBillOfEveryTableThatHasOne() {
+		RestaurantTable empty = table("Masa 1");
+		RestaurantTable busy = table("Masa 2");
+		when(tableRepository.findByRestaurantIdOrderByLabelAsc(restaurant.getId())).thenReturn(List.of(empty, busy));
+		when(customerOrderService.getCurrentOrder(empty.getQrToken())).thenReturn(snapshot(empty, null));
+		OrderView open = new OrderView(UUID.randomUUID(), "OPEN", new BigDecimal("20.00"), new BigDecimal("5.00"),
+			new BigDecimal("15.00"), Instant.now(), List.of(), null, null);
+		TableOrderResponse busyBill = snapshot(busy, open);
+		when(customerOrderService.getCurrentOrder(busy.getQrToken())).thenReturn(busyBill);
+
+		List<TableOrderResponse> bills = service.bills(restaurant.getId(), waiter);
+
+		assertThat(bills).containsExactly(busyBill);
+	}
+
+	@Test
+	void staffOfAnotherRestaurantCannotSeeItsBills() {
+		assertThatThrownBy(() -> service.bills(UUID.randomUUID(), waiter))
+				.isInstanceOfSatisfying(ResponseStatusException.class,
+						e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+		verify(customerOrderService, never()).getCurrentOrder(any());
+	}
 }

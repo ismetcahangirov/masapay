@@ -20,6 +20,7 @@ function table(overrides: Partial<NonNullable<TableOrder['order']>> = {}) {
         unitPrice: 1800,
         total: 1800,
         paid: false,
+        kitchenStatus: null,
       },
       {
         id: 'b',
@@ -28,6 +29,7 @@ function table(overrides: Partial<NonNullable<TableOrder['order']>> = {}) {
         unitPrice: 900,
         total: 900,
         paid: true,
+        kitchenStatus: null,
       },
     ],
     ...overrides,

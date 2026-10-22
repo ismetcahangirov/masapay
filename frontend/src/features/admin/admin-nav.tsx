@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   BookOpen,
   ChefHat,
+  ClipboardList,
   HandCoins,
   LayoutDashboard,
   LayoutGrid,
@@ -37,6 +38,13 @@ const LINKS = [
     to: '/admin/tables',
     label: 'Masalar',
     icon: QrCode,
+    end: false,
+    roles: STAFF,
+  },
+  {
+    to: '/admin/orders',
+    label: 'Sifarişlər',
+    icon: ClipboardList,
     end: false,
     roles: STAFF,
   },

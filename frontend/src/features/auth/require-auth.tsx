@@ -12,7 +12,7 @@ import {
 
 /** Where a role lands when it opens a page it may not use (e.g. the dashboard). */
 const ROLE_HOME: Partial<Record<UserRole, string>> = {
-  WAITER: '/admin/tables',
+  WAITER: '/admin/orders',
   CHEF: '/admin/kitchen',
 }
 

@@ -65,6 +65,19 @@ masapay:
     # secrets below. Off by default, so a deployment that forgets to set them fails at startup
     # instead of accepting forged tokens. Dev login implies it.
     allow-dev-secrets: ${MASAPAY_ALLOW_DEV_SECRETS:${MASAPAY_DEV_LOGIN_ENABLED:false}}
+  rate-limit:
+    # Fixed one-minute (and one-day) windows kept in memory per instance. Behind a reverse
+    # proxy also set SERVER_FORWARD_HEADERS_STRATEGY=framework so the client IP is real.
+    enabled: ${MASAPAY_RATE_LIMIT_ENABLED:true}
+    # Sign-in, refresh and logout, per IP.
+    auth-per-minute: ${MASAPAY_RATE_LIMIT_AUTH_PER_MINUTE:20}
+    # Customer endpoints reached through a table QR code, per IP.
+    public-per-minute: ${MASAPAY_RATE_LIMIT_PUBLIC_PER_MINUTE:120}
+    # Starting a payment creates a Payriff order, so it gets its own, tighter limits per IP.
+    payment-per-minute: ${MASAPAY_RATE_LIMIT_PAYMENT_PER_MINUTE:10}
+    payment-per-day: ${MASAPAY_RATE_LIMIT_PAYMENT_PER_DAY:100}
+    # Signed-in staff, per user.
+    staff-per-minute: ${MASAPAY_RATE_LIMIT_STAFF_PER_MINUTE:300}
   orders:
     # Enables the customer-facing order endpoints; disabled in the infra-free smoke test.
     enabled: ${MASAPAY_ORDERS_ENABLED:true}

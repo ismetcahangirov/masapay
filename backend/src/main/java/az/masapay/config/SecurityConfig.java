@@ -1,10 +1,15 @@
 package az.masapay.config;
 
+import az.masapay.security.FixedWindowRateLimiter;
 import az.masapay.security.JwtAuthenticationFilter;
 import az.masapay.security.JwtService;
+import az.masapay.security.RateLimitFilter;
+import az.masapay.security.RateLimitProperties;
 import az.masapay.security.RestAuthenticationEntryPoint;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
+import java.time.Clock;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,11 +28,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @EnableMethodSecurity
+@EnableConfigurationProperties(RateLimitProperties.class)
 public class SecurityConfig {
 
 	@Bean
-	public SecurityFilterChain securityFilterChain(
-			HttpSecurity http, JwtService jwtService, ObjectMapper objectMapper) throws Exception {
+	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
+			ObjectMapper objectMapper, RateLimitProperties rateLimits) throws Exception {
 		http
 			.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -45,6 +51,13 @@ public class SecurityConfig {
 			.addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable);
+
+		// After the JWT filter, so staff are limited per user rather than per shared office IP.
+		if (rateLimits.enabled()) {
+			http.addFilterAfter(
+				new RateLimitFilter(rateLimits, new FixedWindowRateLimiter(Clock.systemUTC()), objectMapper),
+				JwtAuthenticationFilter.class);
+		}
 
 		return http.build();
 	}

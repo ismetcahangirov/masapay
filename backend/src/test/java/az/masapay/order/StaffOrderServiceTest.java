@@ -38,6 +38,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -74,6 +75,8 @@ class StaffOrderServiceTest {
 	private final AddOrderItemRequest kabab =
 			new AddOrderItemRequest("Kabab", new BigDecimal("2"), new BigDecimal("14.50"));
 
+	private final List<OrderItem> savedLines = new ArrayList<>();
+
 	@BeforeEach
 	@SuppressWarnings("unchecked")
 	void setUp() {
@@ -85,6 +88,12 @@ class StaffOrderServiceTest {
 		waiterUser.setRestaurant(restaurant);
 		when(userRepository.findById(waiter.id())).thenReturn(Optional.of(waiterUser));
 		when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+		// The bill total is recomputed from its lines: hand back what was saved.
+		when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> {
+			savedLines.add(inv.getArgument(0));
+			return inv.getArgument(0);
+		});
+		when(orderItemRepository.findByOrderId(any())).thenAnswer(inv -> new ArrayList<>(savedLines));
 		doAnswer(inv -> {
 			((Consumer<OrderRealtimeBroadcaster>) inv.getArgument(0)).accept(realtime);
 			return null;
@@ -95,6 +104,7 @@ class StaffOrderServiceTest {
 	void addsTheItemToTheOpenBillUpdatesTheTotalAndPushesIt() {
 		Order order = new Order();
 		order.setTotalAmount(new BigDecimal("6.50"));
+		savedLines.add(line("6.50"));
 		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
 
 		service.addItem(table.getId(), kabab, waiter);
@@ -145,16 +155,19 @@ class StaffOrderServiceTest {
 	}
 
 	@Test
-	void aTableSetToZeroIsChargedNoServiceCharge() {
+	void aTableSwitchedToZeroDropsTheChargeAlreadyOnTheBill() {
 		restaurant.setServiceChargePercent(new BigDecimal("10.00"));
 		table.setServiceChargePercent(BigDecimal.ZERO);
+		// Earlier the table was at 15%: one 10.00 line plus a 1.50 charge.
 		Order order = new Order();
-		order.setTotalAmount(new BigDecimal("6.50"));
+		order.setTotalAmount(new BigDecimal("11.50"));
+		savedLines.add(line("10.00"));
 		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
 
 		service.addItem(table.getId(), kabab, waiter);
 
-		assertThat(order.getTotalAmount()).isEqualByComparingTo("35.50");
+		// 10.00 + 29.00 and no charge at all: the old 1.50 is gone too.
+		assertThat(order.getTotalAmount()).isEqualByComparingTo("39.00");
 	}
 
 	@Test
@@ -185,6 +198,12 @@ class StaffOrderServiceTest {
 	}
 
 	// Manager / staff view of a table (#144)
+
+	private OrderItem line(String total) {
+		OrderItem item = new OrderItem();
+		item.setTotalPrice(new BigDecimal(total));
+		return item;
+	}
 
 	private MenuItem dish(Restaurant owner, String name, String price) {
 		MenuItem item = new MenuItem();

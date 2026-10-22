@@ -10,6 +10,8 @@ xətt və qövs skeletlərindən qurulur, xəttin qalınlığı çəkini təyin 
   işarələri, `₼ • × ± → … ·`, copyright işarəsi. Olmayan simvollar saytda Helvetica Neue ilə
   göstərilir.
 - Kerning: `build.py` → `KERN` (T, V, W, Y, A, L, F, P cütləri).
+- Rəqəmlər default tabulardır (qiymət sütunları üçün). İri başlıq rəqəmlərində
+  `pnum` xüsusiyyəti var: Tailwind `proportional-nums`.
 
 ## Yenidən yığmaq
 

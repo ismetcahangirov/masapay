@@ -7,7 +7,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/masapay-sans-400.woff2') format('woff2');
+  src: url('/fonts/masapay-sans-400.woff2?v=2') format('woff2');
 }
 
 @font-face {
@@ -15,7 +15,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('/fonts/masapay-sans-500.woff2') format('woff2');
+  src: url('/fonts/masapay-sans-500.woff2?v=2') format('woff2');
 }
 
 @font-face {
@@ -23,7 +23,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('/fonts/masapay-sans-600.woff2') format('woff2');
+  src: url('/fonts/masapay-sans-600.woff2?v=2') format('woff2');
 }
 
 @font-face {
@@ -31,7 +31,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/masapay-sans-700.woff2') format('woff2');
+  src: url('/fonts/masapay-sans-700.woff2?v=2') format('woff2');
 }
 
 /* Helvetica Neue — self-hosted (woff2, subset of weights actually used).

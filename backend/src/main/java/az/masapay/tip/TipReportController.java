@@ -59,4 +59,13 @@ public class TipReportController {
 				ContentDisposition.attachment().filename(filename).build().toString())
 			.body(TipReportCsvWriter.write(report).getBytes(StandardCharsets.UTF_8));
 	}
+
+	/** The same report as a formatted Excel workbook (#170). */
+	@GetMapping("/export/xlsx")
+	public ResponseEntity<byte[]> exportExcel(@AuthenticationPrincipal AuthenticatedUser principal,
+		@PathVariable UUID restaurantId,
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		return tipReportService.excel(principal, restaurantId, from, to).asXlsxDownload();
+	}
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   ChevronLeft,
   ChevronRight,
+  FileSpreadsheet,
   LoaderCircle,
   Search,
   Undo2,
@@ -15,6 +16,7 @@ import {
   SPLIT_LABELS,
   STATUS_LABELS,
 } from '@/features/admin/transactions/format'
+import { saveFile } from '@/features/admin/tables/tables-api'
 import { RefundDialog } from '@/features/admin/transactions/refund-dialog'
 import { TransactionStatusBadge } from '@/features/admin/transactions/transaction-status'
 import {
@@ -22,6 +24,7 @@ import {
   type TransactionRow,
   type TransactionStatus,
   useRestaurantTransactionsQuery,
+  useTransactionsExcelMutation,
 } from '@/features/admin/transactions/transactions-api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -107,6 +110,25 @@ export function TransactionsPage() {
     setPage(0)
   }
 
+  // The download follows the same filters as the table (#170).
+  const [downloadExcel, excelState] = useTransactionsExcelMutation()
+  async function onExcel() {
+    if (!restaurantId) return
+    try {
+      const file = await downloadExcel({
+        restaurantId,
+        status: status === ALL ? undefined : status,
+        splitType: splitType === ALL ? undefined : splitType,
+        from: from || undefined,
+        to: to || undefined,
+        q: q || undefined,
+      }).unwrap()
+      saveFile(file.blob, file.filename)
+    } catch {
+      // excelState.isError is shown under the header.
+    }
+  }
+
   const data = transactions.data
   const total = data?.totalElements ?? 0
   const first = total === 0 ? 0 : page * PAGE_SIZE + 1
@@ -115,13 +137,27 @@ export function TransactionsPage() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
       <AdminNav />
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Əməliyyatlar</h1>
-        <p className="text-sm text-muted-foreground">
-          Bütün Payriff ödənişləri. Uğurlu ödənişi buradan geri qaytara
-          bilərsiniz.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Əməliyyatlar
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Bütün Payriff ödənişləri. Uğurlu ödənişi buradan geri qaytara
+            bilərsiniz.
+          </p>
+        </div>
+        <Button
+          onClick={() => void onExcel()}
+          disabled={!restaurantId || total === 0 || excelState.isLoading}
+        >
+          <FileSpreadsheet aria-hidden />
+          {excelState.isLoading ? 'Hazırlanır...' : 'Excel yüklə'}
+        </Button>
       </header>
+      {excelState.isError && (
+        <p className="text-sm text-destructive">Excel yükləmək alınmadı.</p>
+      )}
 
       {restaurants.data && restaurants.data.length > 1 && (
         <ToggleGroup

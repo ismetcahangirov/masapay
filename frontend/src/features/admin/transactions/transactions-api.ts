@@ -1,4 +1,5 @@
 import { api } from '@/app/api'
+import { asDownload, type DownloadedFile } from '@/lib/download'
 
 // Admin transactions table (#45): every payment of a restaurant, searchable
 // and paged on the server, with a one-click full refund.
@@ -80,8 +81,26 @@ export const transactionsApi = api.injectEndpoints({
         { type: 'Transactions', id: restaurantId },
       ],
     }),
+    /** Everything the same filters match, as a formatted Excel workbook (#170). */
+    transactionsExcel: build.mutation<
+      DownloadedFile,
+      Omit<TransactionSearch, 'page' | 'size'>
+    >({
+      query: ({ restaurantId, ...params }) => ({
+        url: `/admin/restaurants/${restaurantId}/transactions/export/xlsx`,
+        params: Object.fromEntries(
+          Object.entries(params).filter(
+            ([, value]) => value !== undefined && value !== '',
+          ),
+        ),
+        responseHandler: asDownload('emeliyyatlar.xlsx'),
+      }),
+    }),
   }),
 })
 
-export const { useRestaurantTransactionsQuery, useRefundTransactionMutation } =
-  transactionsApi
+export const {
+  useRestaurantTransactionsQuery,
+  useRefundTransactionMutation,
+  useTransactionsExcelMutation,
+} = transactionsApi

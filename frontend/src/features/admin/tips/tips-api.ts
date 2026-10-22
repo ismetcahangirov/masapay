@@ -1,8 +1,10 @@
 import { api } from '@/app/api'
 import { toMinor } from '@/features/order/order-api'
+import { asDownload, type DownloadedFile } from '@/lib/download'
 
 // Per-waiter tip report of a restaurant (#48). Managers and super admins read
-// it for a date range (inclusive ISO dates, Asia/Baku) and export it as CSV.
+// it for a date range (inclusive ISO dates, Asia/Baku) and export it as CSV or
+// as a formatted Excel workbook (#170).
 
 export interface TipRange {
   restaurantId: string
@@ -81,7 +83,19 @@ export const tipsApi = api.injectEndpoints({
         responseHandler: (response) => response.blob(),
       }),
     }),
+    /** The same report as a formatted Excel workbook (#170). */
+    tipReportExcel: build.mutation<DownloadedFile, TipRange>({
+      query: ({ restaurantId, from, to }) => ({
+        url: `/admin/restaurants/${restaurantId}/tips/export/xlsx`,
+        params: { from, to },
+        responseHandler: asDownload(`bexsisler-${from}-${to}.xlsx`),
+      }),
+    }),
   }),
 })
 
-export const { useTipReportQuery, useTipReportCsvMutation } = tipsApi
+export const {
+  useTipReportQuery,
+  useTipReportCsvMutation,
+  useTipReportExcelMutation,
+} = tipsApi

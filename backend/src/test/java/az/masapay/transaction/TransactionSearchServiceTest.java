@@ -15,17 +15,22 @@ import az.masapay.domain.User;
 import az.masapay.domain.enums.SplitType;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.domain.enums.UserRole;
+import az.masapay.report.ReportFile;
+import az.masapay.report.XlsxReport;
+import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.TransactionRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import az.masapay.transaction.dto.TransactionPage;
 import az.masapay.transaction.dto.TransactionRow;
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +54,9 @@ class TransactionSearchServiceTest {
 	@Mock
 	private UserRepository userRepository;
 
+	@Mock
+	private RestaurantRepository restaurantRepository;
+
 	private TransactionSearchService service;
 
 	private final UUID restaurantId = UUID.randomUUID();
@@ -59,7 +67,7 @@ class TransactionSearchServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new TransactionSearchService(transactionRepository, userRepository);
+		service = new TransactionSearchService(transactionRepository, userRepository, restaurantRepository);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -206,5 +214,44 @@ class TransactionSearchServiceTest {
 
 		verifyNoInteractions(userRepository);
 		verify(transactionRepository).findAll(any(Specification.class), any(Pageable.class));
+	}
+
+	@Test
+	void theExcelFileHasTheFilteredRowsAndSaysHowTheyWereCut() throws Exception {
+		Transaction paid = transaction(TransactionStatus.SUCCESS, "PRF-1");
+		paid.setCreatedAt(Instant.parse("2026-10-22T08:00:00Z"));
+		paid.setRefundedAmount(BigDecimal.ZERO);
+		ArgumentCaptor<Pageable> pageable = stubPage(List.of(paid));
+		Restaurant dolma = new Restaurant();
+		dolma.setName("Dolma Restoran");
+		when(restaurantRepository.findById(restaurantId)).thenReturn(Optional.of(dolma));
+
+		ReportFile file = service.excel(superAdmin, restaurantId, TransactionStatus.SUCCESS, SplitType.EQUAL,
+			LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 22), " Masa 7 ");
+
+		assertThat(pageable.getValue().getPageSize()).isEqualTo(TransactionSearchService.EXPORT_LIMIT);
+		assertThat(file.nameParts()).containsExactly("Dolma Restoran", "emeliyyatlar", LocalDate.of(2026, 10, 1),
+			LocalDate.of(2026, 10, 22));
+		try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(file.body()))) {
+			var sheet = workbook.getSheet("Əməliyyatlar");
+			assertThat(sheet.getRow(2).getCell(0).getStringCellValue()).isEqualTo(
+				"Tarix: 01.10.2026 - 22.10.2026 · Status: Uğurlu · Ödəniş tipi: Bərabər · Axtarış: Masa 7");
+			var row = sheet.getRow(XlsxReport.FIRST_DATA_ROW);
+			assertThat(row.getCell(1).getStringCellValue()).isEqualTo("Masa 7");
+			assertThat(row.getCell(2).getStringCellValue()).isEqualTo("Bərabər");
+			assertThat(row.getCell(3).getStringCellValue()).isEqualTo("Uğurlu");
+			assertThat(row.getCell(6).getNumericCellValue()).isEqualTo(44.0);
+			assertThat(row.getCell(8).getStringCellValue()).isEqualTo("PRF-1");
+		}
+	}
+
+	@Test
+	void aManagerCannotExportAnotherRestaurant() {
+		managerOf(UUID.randomUUID());
+
+		assertThatThrownBy(() -> service.excel(manager, restaurantId, null, null, null, null, null))
+			.isInstanceOfSatisfying(ResponseStatusException.class,
+				e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+		verifyNoInteractions(transactionRepository);
 	}
 }

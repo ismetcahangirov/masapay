@@ -4,6 +4,7 @@ import az.masapay.domain.Restaurant;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.domain.enums.UserRole;
+import az.masapay.report.ReportFile;
 import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.TransactionRepository;
 import az.masapay.repository.UserRepository;
@@ -78,6 +79,15 @@ public class TipReportService {
 
 		return new TipReport(restaurantId, restaurant.getCurrency(), start, end, REPORT_ZONE.getId(),
 			waiters, totalCount, totalAmount);
+	}
+
+	/** The same report as a formatted Excel file (#170), named after the restaurant and the period. */
+	@Transactional(readOnly = true)
+	public ReportFile excel(AuthenticatedUser principal, UUID restaurantId, LocalDate from, LocalDate to) {
+		TipReport report = report(principal, restaurantId, from, to);
+		String restaurantName = restaurantRepository.findById(restaurantId).map(Restaurant::getName).orElse("");
+		return new ReportFile(TipReportXlsx.write(report, restaurantName, clock.instant()),
+			List.of(restaurantName, "bexsisler", report.from(), report.to()));
 	}
 
 	/** SUPER_ADMIN sees every restaurant; a RESTO_MANAGER only the one they belong to. */

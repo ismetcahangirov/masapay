@@ -45,7 +45,8 @@ public class GoogleAuthService {
 		GoogleUserInfo info = tokenVerifier.verify(idToken);
 
 		User user = userRepository.findByGoogleSub(info.subject())
-			.or(() -> userRepository.findByEmail(info.email()))
+			// A manager may have invited this email in any letter case (#145).
+			.or(() -> userRepository.findByEmailIgnoreCase(info.email()))
 			.orElseGet(User::new);
 
 		if (user.getGoogleSub() == null) {

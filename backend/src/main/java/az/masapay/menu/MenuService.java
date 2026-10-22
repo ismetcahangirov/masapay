@@ -12,6 +12,7 @@ import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
 import az.masapay.menu.dto.MenuItemView;
+import az.masapay.menu.dto.SuggestionsRequest;
 import az.masapay.repository.MenuCategoryRepository;
 import az.masapay.repository.MenuComboComponentRepository;
 import az.masapay.repository.MenuItemRepository;
@@ -107,6 +108,28 @@ public class MenuService {
 		return categoryRepository.findByRestaurantIdOrderBySortOrderAscNameAsc(restaurantId).stream()
 			.map(category -> MenuCategoryView.of(category, itemsByCategory.getOrDefault(category.getId(), List.of())))
 			.toList();
+	}
+
+	/**
+	 * Sets the extras offered with a dish before the customer confirms (#141). Only dishes of the
+	 * same restaurant, never the dish itself, each once. A suggestion that is off today is simply
+	 * not offered: the customer menu leaves it out.
+	 */
+	@Transactional
+	public MenuItemView setSuggestions(UUID restaurantId, UUID itemId, SuggestionsRequest request,
+			AuthenticatedUser caller) {
+		checkManager(caller, restaurantId);
+		MenuItem item = item(restaurantId, itemId);
+		if (new HashSet<>(request.itemIds()).size() != request.itemIds().size()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A dish is suggested twice");
+		}
+		if (request.itemIds().contains(itemId)) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A dish cannot suggest itself");
+		}
+		List<MenuItem> suggestions = request.itemIds().stream().map(id -> item(restaurantId, id)).toList();
+		item.getSuggestions().clear();
+		item.getSuggestions().addAll(suggestions);
+		return MenuItemView.of(item, today());
 	}
 
 	/** Puts a dish on or off the daily menu (#139). */

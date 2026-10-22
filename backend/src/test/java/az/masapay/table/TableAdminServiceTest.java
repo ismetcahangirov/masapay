@@ -3,6 +3,7 @@ package az.masapay.table;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import az.masapay.table.dto.TableSummary;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -106,5 +108,38 @@ class TableAdminServiceTest {
 		assertThatThrownBy(() -> service.list(UUID.randomUUID(), waiter))
 				.isInstanceOfSatisfying(ResponseStatusException.class,
 						e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+	}
+
+	@Test
+	void aManagerSetsATablesOwnServiceChargeAndCanHandItBackToTheRestaurant() {
+		restaurant.setServiceChargePercent(new BigDecimal("10.00"));
+		RestaurantTable vip = table("VIP");
+		when(tableRepository.findById(vip.getId())).thenReturn(Optional.of(vip));
+		// An existing table keeps its id when saved (setUp gives new tables one). doReturn, because
+		// when(save(vip)) would call that setUp answer while stubbing and change the id.
+		doReturn(vip).when(tableRepository).save(vip);
+
+		TableSummary set = service.setServiceCharge(restaurant.getId(), vip.getId(), new BigDecimal("15.00"), manager);
+		assertThat(set.serviceChargePercent()).isEqualByComparingTo("15.00");
+		assertThat(set.effectiveServiceChargePercent()).isEqualByComparingTo("15.00");
+
+		TableSummary back = service.setServiceCharge(restaurant.getId(), vip.getId(), null, manager);
+		assertThat(back.serviceChargePercent()).isNull();
+		assertThat(back.effectiveServiceChargePercent()).isEqualByComparingTo("10.00");
+	}
+
+	@Test
+	void waitersAndOtherRestaurantsCannotChangeATablesServiceCharge() {
+		RestaurantTable vip = table("VIP");
+		when(tableRepository.findById(vip.getId())).thenReturn(Optional.of(vip));
+		UUID otherRestaurant = UUID.randomUUID();
+
+		assertThatThrownBy(() -> service.setServiceCharge(restaurant.getId(), vip.getId(), BigDecimal.ZERO, waiter))
+				.isInstanceOfSatisfying(ResponseStatusException.class,
+						e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+		assertThatThrownBy(() -> service.setServiceCharge(otherRestaurant, vip.getId(), BigDecimal.ZERO, manager))
+				.isInstanceOfSatisfying(ResponseStatusException.class,
+						e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+		assertThat(vip.getServiceChargePercent()).isNull();
 	}
 }

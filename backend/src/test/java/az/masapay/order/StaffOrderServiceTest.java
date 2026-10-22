@@ -128,6 +128,36 @@ class StaffOrderServiceTest {
 	}
 
 	@Test
+	void aTableWithItsOwnServiceChargeIsChargedThatInstead() {
+		restaurant.setServiceChargePercent(new BigDecimal("10.00"));
+		table.setServiceChargePercent(new BigDecimal("15.00"));
+		Order order = new Order();
+		order.setId(UUID.randomUUID());
+		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
+		OrderItem added = new OrderItem();
+		added.setTotalPrice(new BigDecimal("29.00"));
+		when(orderItemRepository.findByOrderId(order.getId())).thenReturn(List.of(added));
+
+		service.addItem(table.getId(), kabab, waiter);
+
+		// 29.00 + 15% (4.35), not the restaurant's 10%.
+		assertThat(order.getTotalAmount()).isEqualByComparingTo("33.35");
+	}
+
+	@Test
+	void aTableSetToZeroIsChargedNoServiceCharge() {
+		restaurant.setServiceChargePercent(new BigDecimal("10.00"));
+		table.setServiceChargePercent(BigDecimal.ZERO);
+		Order order = new Order();
+		order.setTotalAmount(new BigDecimal("6.50"));
+		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
+
+		service.addItem(table.getId(), kabab, waiter);
+
+		assertThat(order.getTotalAmount()).isEqualByComparingTo("35.50");
+	}
+
+	@Test
 	void opensABillWhenTheTableHasNone() {
 		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.empty());
 

@@ -13,6 +13,7 @@ import az.masapay.payment.payriff.PayriffService;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.TransactionRepository;
+import az.masapay.restaurant.RestaurantGate;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -38,18 +39,21 @@ public class PaymentCheckoutService {
 	private final RestaurantTableRepository tableRepository;
 	private final OrderRepository orderRepository;
 	private final TransactionRepository transactionRepository;
+	private final RestaurantGate gate;
 
 	public PaymentCheckoutService(PaymentSettlementService settlementService, PayriffService payriffService,
 			RestaurantTableRepository tableRepository, OrderRepository orderRepository,
-			TransactionRepository transactionRepository) {
+			TransactionRepository transactionRepository, RestaurantGate gate) {
 		this.settlementService = settlementService;
 		this.payriffService = payriffService;
 		this.tableRepository = tableRepository;
 		this.orderRepository = orderRepository;
 		this.transactionRepository = transactionRepository;
+		this.gate = gate;
 	}
 
 	public CheckoutResponse checkoutFull(UUID qrToken) {
+		gate.checkTakesPayments(qrToken);
 		BigDecimal amount = settlementService.quoteFullPayment(qrToken).amount();
 		if (amount.signum() <= 0) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Order has nothing left to pay");
@@ -58,6 +62,7 @@ public class PaymentCheckoutService {
 	}
 
 	public CheckoutResponse checkoutItems(UUID qrToken, List<UUID> itemIds, Integer guests) {
+		gate.checkTakesPayments(qrToken);
 		List<UUID> ids = itemIds.stream().distinct().toList();
 		BigDecimal amount = settlementService.quoteItemPayment(qrToken, ids, guests).amount();
 		Transaction transaction = pending(qrToken, amount, SplitType.ITEM);
@@ -67,6 +72,7 @@ public class PaymentCheckoutService {
 	}
 
 	public CheckoutResponse checkoutEqual(UUID qrToken, int parts, int partsToPay) {
+		gate.checkTakesPayments(qrToken);
 		BigDecimal amount = settlementService.quoteEqualPayment(qrToken, parts, partsToPay).amount();
 		Transaction transaction = pending(qrToken, amount, SplitType.EQUAL);
 		transaction.setCheckoutParts(parts);

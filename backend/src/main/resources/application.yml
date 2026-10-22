@@ -14,6 +14,13 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:masapay}
     password: ${SPRING_DATASOURCE_PASSWORD:masapay}
 
+  # Errors from ResponseStatusException go out as RFC 7807 problem details, with our short
+  # reason in "detail" (e.g. RESTAURANT_CLOSED, #147) for the client to act on. Unexpected
+  # exceptions still show no message.
+  mvc:
+    problemdetails:
+      enabled: true
+
   jpa:
     hibernate:
       ddl-auto: validate

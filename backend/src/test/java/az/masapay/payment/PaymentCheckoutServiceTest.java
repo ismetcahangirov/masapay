@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import az.masapay.domain.Order;
@@ -23,6 +24,7 @@ import az.masapay.payment.payriff.PayriffService;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.TransactionRepository;
+import az.masapay.restaurant.RestaurantGate;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +43,7 @@ class PaymentCheckoutServiceTest {
 	private final OrderRepository orderRepository = mock(OrderRepository.class);
 	private final TransactionRepository transactionRepository = mock(TransactionRepository.class);
 	private final PaymentCheckoutService service = new PaymentCheckoutService(settlementService, payriffService,
-			tableRepository, orderRepository, transactionRepository);
+			tableRepository, orderRepository, transactionRepository, new RestaurantGate(tableRepository));
 
 	private final UUID qrToken = UUID.randomUUID();
 	private final RestaurantTable table = new RestaurantTable();
@@ -53,6 +55,7 @@ class PaymentCheckoutServiceTest {
 		restaurant.setId(UUID.randomUUID());
 		table.setId(UUID.randomUUID());
 		table.setRestaurant(restaurant);
+		when(tableRepository.findRestaurantByQrToken(qrToken)).thenReturn(Optional.of(restaurant));
 		order.setId(UUID.randomUUID());
 		order.setRestaurant(restaurant);
 		order.setTable(table);
@@ -137,5 +140,20 @@ class PaymentCheckoutServiceTest {
 
 		assertThat(status.status()).isEqualTo("SUCCESS");
 		assertThat(status.qrToken()).isEqualTo(table.getQrToken());
+	}
+
+	@Test
+	void aSwitchedOffRestaurantStartsNoPayment() {
+		Restaurant closed = new Restaurant();
+		closed.setActive(false);
+		when(tableRepository.findRestaurantByQrToken(qrToken)).thenReturn(Optional.of(closed));
+
+		assertThatThrownBy(() -> service.checkoutFull(qrToken))
+			.isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+				assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+				assertThat(e.getReason()).isEqualTo(RestaurantGate.CLOSED);
+			});
+		assertThatThrownBy(() -> service.checkoutEqual(qrToken, 2, 1)).isInstanceOf(ResponseStatusException.class);
+		verifyNoInteractions(payriffService, transactionRepository);
 	}
 }

@@ -7,6 +7,7 @@ import az.masapay.order.dto.PlaceOrderRequest;
 import az.masapay.order.dto.TableOrderResponse;
 import az.masapay.repository.MenuItemRepository;
 import az.masapay.repository.RestaurantTableRepository;
+import az.masapay.restaurant.RestaurantGate;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -58,6 +59,8 @@ public class CustomerOrderingService {
 	public TableOrderResponse placeOrder(UUID qrToken, PlaceOrderRequest request) {
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+		// A restaurant the super admin switched off takes no orders (#147).
+		RestaurantGate.checkActive(table.getRestaurant());
 
 		// The same dish twice in one basket becomes one line with the quantities added up.
 		Map<UUID, Integer> quantities = request.items().stream()

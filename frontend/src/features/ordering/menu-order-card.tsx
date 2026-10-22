@@ -18,6 +18,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { formatCurrency } from '@/features/order/format'
+import { isRestaurantClosed } from '@/lib/api-errors'
 import { ConfirmOrderDialog } from './confirm-order-dialog'
 import {
   type CustomerDish,
@@ -109,9 +110,11 @@ export function MenuOrderCard({
     placeState.error.status === 409
   const orderError = !placeState.isError
     ? null
-    : conflict
-      ? 'Bəzi məhsullar artıq mövcud deyil. Menyu yeniləndi, səbəti yoxlayın.'
-      : 'Sifarişi göndərmək alınmadı. Yenidən cəhd edin.'
+    : isRestaurantClosed(placeState.error)
+      ? 'Restoran hazırda onlayn sifariş qəbul etmir. Zəhmət olmasa ofisianta müraciət edin.'
+      : conflict
+        ? 'Bəzi məhsullar artıq mövcud deyil. Menyu yeniləndi, səbəti yoxlayın.'
+        : 'Sifarişi göndərmək alınmadı. Yenidən cəhd edin.'
 
   return (
     <Card className="w-full max-w-md">

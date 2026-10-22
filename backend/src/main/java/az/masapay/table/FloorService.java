@@ -3,6 +3,7 @@ package az.masapay.table;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.order.CustomerOrderService;
+import az.masapay.order.dto.TableOrderResponse;
 import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
@@ -41,6 +42,20 @@ public class FloorService {
 		Instant now = Instant.now();
 		return tableRepository.findByRestaurantIdOrderByLabelAsc(restaurantId).stream()
 			.map(table -> FloorTableView.of(customerOrderService.getCurrentOrder(table.getQrToken()), now))
+			.toList();
+	}
+
+	/**
+	 * The bill of every table that has one (#143), in table order: what was ordered, the kitchen
+	 * state of each dish, what is paid and what is left. The same snapshot the table's customers
+	 * see, so staff and customers never disagree.
+	 */
+	@Transactional(readOnly = true)
+	public List<TableOrderResponse> bills(UUID restaurantId, AuthenticatedUser caller) {
+		checkSameRestaurant(caller, restaurantId);
+		return tableRepository.findByRestaurantIdOrderByLabelAsc(restaurantId).stream()
+			.map(table -> customerOrderService.getCurrentOrder(table.getQrToken()))
+			.filter(snapshot -> snapshot.order() != null)
 			.toList();
 	}
 

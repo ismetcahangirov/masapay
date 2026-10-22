@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import az.masapay.domain.Order;
@@ -139,5 +140,20 @@ class PaymentCheckoutServiceTest {
 
 		assertThat(status.status()).isEqualTo("SUCCESS");
 		assertThat(status.qrToken()).isEqualTo(table.getQrToken());
+	}
+
+	@Test
+	void aSwitchedOffRestaurantStartsNoPayment() {
+		Restaurant closed = new Restaurant();
+		closed.setActive(false);
+		when(tableRepository.findRestaurantByQrToken(qrToken)).thenReturn(Optional.of(closed));
+
+		assertThatThrownBy(() -> service.checkoutFull(qrToken))
+			.isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+				assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+				assertThat(e.getReason()).isEqualTo(RestaurantGate.CLOSED);
+			});
+		assertThatThrownBy(() -> service.checkoutEqual(qrToken, 2, 1)).isInstanceOf(ResponseStatusException.class);
+		verifyNoInteractions(payriffService, transactionRepository);
 	}
 }

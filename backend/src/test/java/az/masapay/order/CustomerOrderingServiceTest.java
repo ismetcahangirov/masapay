@@ -23,6 +23,7 @@ import az.masapay.repository.MenuItemRepository;
 import az.masapay.repository.OrderItemRepository;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
+import az.masapay.restaurant.RestaurantGate;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -198,5 +199,19 @@ class CustomerOrderingServiceTest {
 		assertThatThrownBy(() -> service.placeOrder(UUID.randomUUID(), basket(UUID.randomUUID(), 1)))
 			.isInstanceOfSatisfying(ResponseStatusException.class,
 				e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+	}
+
+	@Test
+	void aSwitchedOffRestaurantTakesNoOrder() {
+		restaurant.setActive(false);
+		MenuItem dolma = dish(restaurant, "Dolma", "9.00");
+		onMenu(dolma);
+
+		assertThatThrownBy(() -> service.placeOrder(table.getQrToken(), basket(dolma.getId(), 1)))
+			.isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+				assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+				assertThat(e.getReason()).isEqualTo(RestaurantGate.CLOSED);
+			});
+		verify(orderItemRepository, never()).save(any());
 	}
 }

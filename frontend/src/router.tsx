@@ -40,6 +40,11 @@ const TipsPage = lazy(() =>
     default: m.TipsPage,
   })),
 )
+const StaffPage = lazy(() =>
+  import('@/routes/admin/staff-page').then((m) => ({
+    default: m.StaffPage,
+  })),
+)
 const OrdersPage = lazy(() =>
   import('@/routes/admin/orders-page').then((m) => ({
     default: m.OrdersPage,
@@ -98,6 +103,17 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
         <Suspense fallback={null}>
           <TablesPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // Waiters and chefs of the restaurant: managers (#145).
+    path: '/admin/staff',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
+        <Suspense fallback={null}>
+          <StaffPage />
         </Suspense>
       </RequireAuth>
     ),

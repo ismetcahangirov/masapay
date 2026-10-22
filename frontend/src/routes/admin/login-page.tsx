@@ -97,7 +97,8 @@ export function LoginPage() {
           {problem === 'pending' && (
             <p className="flex items-start gap-2 text-sm text-muted-foreground">
               <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
-              Hesabınız yaradıldı və administratorun təsdiqini gözləyir.
+              Hesabınız yaradıldı və restoran menecerinin və ya administratorun
+              təsdiqini gözləyir. Təsdiqdən sonra yenidən daxil olun.
             </p>
           )}
           {problem === 'failed' && (

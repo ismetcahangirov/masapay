@@ -9,6 +9,14 @@ import { mockApi, renderWithProviders } from '@/test/utils'
 
 const MENU_URL = '/api/admin/restaurants/r1/menu'
 
+const ON_MENU = {
+  active: true,
+  offOn: null,
+  availableFrom: null,
+  availableUntil: null,
+  availableToday: true,
+}
+
 const menu = [
   {
     id: 'c1',
@@ -22,6 +30,7 @@ const menu = [
         description: 'Toyuq, kahı',
         price: 8.5,
         components: [],
+        ...ON_MENU,
       },
     ],
   },
@@ -38,6 +47,37 @@ const menu = [
         description: null,
         price: 12,
         components: [{ itemId: 'd1', name: 'Sezar', quantity: 2 }],
+        ...ON_MENU,
+      },
+    ],
+  },
+  {
+    id: 'c4',
+    name: 'Günün yeməyi',
+    sortOrder: 3,
+    items: [
+      {
+        id: 'd3',
+        categoryId: 'c4',
+        name: 'Dovğa',
+        description: null,
+        price: 3,
+        components: [],
+        ...ON_MENU,
+        offOn: '2026-10-22',
+        availableToday: false,
+      },
+      {
+        id: 'd4',
+        categoryId: 'c4',
+        name: 'Dolma',
+        description: null,
+        price: 9,
+        components: [],
+        ...ON_MENU,
+        availableFrom: '2026-10-24',
+        availableUntil: '2026-10-26',
+        availableToday: false,
       },
     ],
   },
@@ -209,5 +249,41 @@ describe('MenuPage (#137)', () => {
     expect(
       screen.queryByRole('button', { name: 'Sezar redaktə et' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('marks dishes that are off today or only on some days (#139)', async () => {
+    backend()
+    renderWithProviders(<MenuPage />)
+
+    const today = await screen.findByRole('region', { name: 'Günün yeməyi' })
+    expect(within(today).getByText('Bu gün yoxdur')).toBeInTheDocument()
+    expect(within(today).getByText('24.10 - 26.10')).toBeInTheDocument()
+  })
+
+  it('saves a dish date range from the daily menu dialog (#139)', async () => {
+    let sent: unknown = null
+    backend({
+      [`PUT ${MENU_URL}/items/d4/availability`]: async (request: Request) => {
+        sent = await request.json()
+        return menu[3].items[1]
+      },
+    })
+    renderWithProviders(<MenuPage />)
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Dolma mövcudluğu' }),
+    )
+    const until = screen.getByLabelText('Son gün')
+    expect(screen.getByLabelText('Başlanğıc')).toHaveValue('2026-10-24')
+    await userEvent.clear(until)
+    await userEvent.type(until, '2026-10-27')
+    await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }))
+
+    await screen.findByRole('region', { name: 'Günün yeməyi' })
+    expect(sent).toEqual({
+      mode: 'DATES',
+      from: '2026-10-24',
+      until: '2026-10-27',
+    })
   })
 })

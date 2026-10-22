@@ -60,4 +60,9 @@ public class OrderItem extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "kitchen_status", length = 20)
 	private KitchenStatus kitchenStatus;
+
+	/** The staff member who added the line (#144); null for customers and POS syncs. */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "added_by")
+	private User addedBy;
 }

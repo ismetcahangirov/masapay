@@ -10,6 +10,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
+/** Where a role lands when it opens a page it may not use (e.g. the dashboard). */
+const ROLE_HOME: Partial<Record<UserRole, string>> = {
+  WAITER: '/admin/tables',
+  CHEF: '/admin/kitchen',
+}
+
 /**
  * Guards admin routes (#17): without a session the user is sent to the login
  * page (and brought back afterwards); a signed-in user without one of the
@@ -40,9 +46,10 @@ export function RequireAuth({
     return <Navigate to="/admin/login" replace state={{ from: location }} />
   }
 
-  // Waiters have no dashboard; their home in the panel is the tables page.
-  if (user.role === 'WAITER' && !roles.includes('WAITER')) {
-    return <Navigate to="/admin/tables" replace />
+  // Waiters and chefs have no dashboard; each has a home page in the panel.
+  const home = user.role ? ROLE_HOME[user.role] : undefined
+  if (home && user.role && !roles.includes(user.role)) {
+    return <Navigate to={home} replace />
   }
 
   if (!user.role || !roles.includes(user.role)) {

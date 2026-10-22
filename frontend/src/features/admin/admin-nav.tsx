@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   BookOpen,
+  ChefHat,
   HandCoins,
   LayoutDashboard,
   LayoutGrid,
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils'
 
 const MANAGERS: UserRole[] = ['SUPER_ADMIN', 'RESTO_MANAGER']
 const STAFF: UserRole[] = [...MANAGERS, 'WAITER']
+const KITCHEN: UserRole[] = [...MANAGERS, 'CHEF']
 
 const LINKS = [
   {
@@ -37,6 +39,13 @@ const LINKS = [
     icon: QrCode,
     end: false,
     roles: STAFF,
+  },
+  {
+    to: '/admin/kitchen',
+    label: 'Mətbəx',
+    icon: ChefHat,
+    end: false,
+    roles: KITCHEN,
   },
   {
     to: '/admin/menu',

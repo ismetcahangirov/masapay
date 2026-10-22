@@ -112,12 +112,13 @@ masapay:
     mock-page-url: ${MASAPAY_PAYRIFF_MOCK_PAGE_URL:http://localhost:5173/payment/mock}
 
 springdoc:
-  # OpenAPI spec and Swagger UI for trying the API by hand. Set MASAPAY_API_DOCS_ENABLED=false
-  # in production so the endpoint map is not published.
+  # OpenAPI spec and Swagger UI for trying the API by hand. Off unless asked for
+  # (MASAPAY_API_DOCS_ENABLED=true) or in local dev-login mode, so a deployment does not
+  # publish the endpoint map by default.
   api-docs:
-    enabled: ${MASAPAY_API_DOCS_ENABLED:true}
+    enabled: ${MASAPAY_API_DOCS_ENABLED:${MASAPAY_DEV_LOGIN_ENABLED:false}}
   swagger-ui:
-    enabled: ${MASAPAY_API_DOCS_ENABLED:true}
+    enabled: ${MASAPAY_API_DOCS_ENABLED:${MASAPAY_DEV_LOGIN_ENABLED:false}}
 
 server:
   port: ${SERVER_PORT:8080}

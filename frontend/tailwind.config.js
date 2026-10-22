@@ -14,7 +14,13 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['"Helvetica Neue"', 'Arial', 'system-ui', 'sans-serif'],
+        sans: [
+          '"Masapay Sans"',
+          '"Helvetica Neue"',
+          'Arial',
+          'system-ui',
+          'sans-serif',
+        ],
       },
       colors: {
         brand: {

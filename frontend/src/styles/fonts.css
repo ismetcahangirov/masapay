@@ -1,3 +1,39 @@
+/* Masapay Sans — the brand typeface (source: docs/brand/font), self-hosted
+   woff2. Weights: 400 Regular, 500 Medium, 600 SemiBold, 700 Bold.
+   Helvetica Neue stays below as the fallback for glyphs Masapay Sans lacks. */
+
+@font-face {
+  font-family: 'Masapay Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/masapay-sans-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Masapay Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/masapay-sans-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Masapay Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/masapay-sans-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Masapay Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/masapay-sans-700.woff2') format('woff2');
+}
+
 /* Helvetica Neue — self-hosted (woff2, subset of weights actually used).
    Files live in /public/fonts and are served from the site root.
    Weights: 300 Light, 400 Roman, 500 Medium, 700 Bold. */

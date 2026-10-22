@@ -9,10 +9,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import az.masapay.domain.MenuCategory;
+import az.masapay.domain.MenuComboComponent;
 import az.masapay.domain.MenuItem;
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
+import az.masapay.menu.dto.ComboComponentRequest;
+import az.masapay.menu.dto.ComboComponentView;
 import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
@@ -25,8 +28,10 @@ import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -221,5 +226,107 @@ class MenuServiceTest {
 		assertThat(updated.description()).isEqualTo("Toyuq, kahı");
 		assertThat(updated.price()).isEqualByComparingTo("9.90");
 		verify(itemRepository).delete(dish);
+	}
+
+	// Combos and business lunches (#138)
+
+	private MenuItemRequest combo(MenuCategory category, String name, String price,
+			ComboComponentRequest... components) {
+		return new MenuItemRequest(category.getId(), name, null, new BigDecimal(price), List.of(components));
+	}
+
+	private void assertStatus(ThrowingCallable call, HttpStatus status) {
+		assertThatThrownBy(call).isInstanceOfSatisfying(ResponseStatusException.class,
+			e -> assertThat(e.getStatusCode()).isEqualTo(status));
+	}
+
+	@Test
+	void aManagerCreatesABusinessLunchFromDishesWithItsOwnPrice() {
+		MenuCategory lunch = category(restaurant, "Biznes lanç", 0);
+		MenuItem soup = item(category(restaurant, "Şorbalar", 1), "Mərci");
+		MenuItem tea = item(category(restaurant, "İçkilər", 2), "Çay");
+
+		MenuItemView created = service.createItem(restaurant.getId(), combo(lunch, "Biznes lanç 1", "12.00",
+				new ComboComponentRequest(soup.getId(), 1), new ComboComponentRequest(tea.getId(), 2)), manager);
+
+		assertThat(created.price()).isEqualByComparingTo("12.00");
+		assertThat(created.components()).containsExactly(new ComboComponentView(soup.getId(), "Mərci", 1),
+				new ComboComponentView(tea.getId(), "Çay", 2));
+	}
+
+	@Test
+	void editingAComboUpdatesQuantitiesInPlaceAndDropsRemovedDishes() {
+		MenuCategory lunch = category(restaurant, "Biznes lanç", 0);
+		MenuItem soup = item(category(restaurant, "Şorbalar", 1), "Mərci");
+		MenuItem tea = item(category(restaurant, "İçkilər", 2), "Çay");
+		MenuItem combo = item(lunch, "Biznes lanç 1");
+		combo.replaceComponents(Map.of(soup, 1, tea, 1));
+		MenuComboComponent soupRow = combo.getComponents().stream()
+			.filter(row -> row.getComponent() == soup)
+			.findFirst()
+			.orElseThrow();
+
+		MenuItemView updated = service.updateItem(restaurant.getId(), combo.getId(),
+				combo(lunch, "Biznes lanç 1", "11.00", new ComboComponentRequest(soup.getId(), 2)), manager);
+
+		assertThat(updated.components()).containsExactly(new ComboComponentView(soup.getId(), "Mərci", 2));
+		assertThat(combo.getComponents()).singleElement().isSameAs(soupRow);
+	}
+
+	@Test
+	void sendingNoComponentsTurnsAComboBackIntoAnOrdinaryDish() {
+		MenuCategory lunch = category(restaurant, "Biznes lanç", 0);
+		MenuItem soup = item(category(restaurant, "Şorbalar", 1), "Mərci");
+		MenuItem combo = item(lunch, "Biznes lanç 1");
+		combo.replaceComponents(Map.of(soup, 1));
+
+		MenuItemView updated = service.updateItem(restaurant.getId(), combo.getId(),
+				new MenuItemRequest(lunch.getId(), "Biznes lanç 1", null, new BigDecimal("10.00")), manager);
+
+		assertThat(updated.components()).isEmpty();
+	}
+
+	@Test
+	void aComboCannotContainAnotherComboItselfOrTheSameDishTwice() {
+		MenuCategory lunch = category(restaurant, "Biznes lanç", 0);
+		MenuItem soup = item(category(restaurant, "Şorbalar", 1), "Mərci");
+		MenuItem inner = item(lunch, "Kiçik lanç");
+		inner.replaceComponents(Map.of(soup, 1));
+		MenuItem outer = item(lunch, "Böyük lanç");
+
+		assertStatus(() -> service.createItem(restaurant.getId(),
+				combo(lunch, "X", "1.00", new ComboComponentRequest(inner.getId(), 1)), manager),
+			HttpStatus.BAD_REQUEST);
+		assertStatus(() -> service.updateItem(restaurant.getId(), outer.getId(),
+				combo(lunch, "Böyük lanç", "1.00", new ComboComponentRequest(outer.getId(), 1)), manager),
+			HttpStatus.BAD_REQUEST);
+		assertStatus(() -> service.createItem(restaurant.getId(), combo(lunch, "X", "1.00",
+				new ComboComponentRequest(soup.getId(), 1), new ComboComponentRequest(soup.getId(), 1)), manager),
+			HttpStatus.BAD_REQUEST);
+		verify(itemRepository, never()).save(any());
+	}
+
+	@Test
+	void aDishInsideAComboCannotBecomeAComboOrBeDeleted() {
+		MenuCategory lunch = category(restaurant, "Biznes lanç", 0);
+		MenuItem soup = item(category(restaurant, "Şorbalar", 1), "Mərci");
+		MenuItem tea = item(category(restaurant, "İçkilər", 2), "Çay");
+		when(componentRepository.existsByComponentId(soup.getId())).thenReturn(true);
+
+		assertStatus(() -> service.updateItem(restaurant.getId(), soup.getId(),
+				combo(lunch, "Mərci", "3.00", new ComboComponentRequest(tea.getId(), 1)), manager),
+			HttpStatus.BAD_REQUEST);
+		assertStatus(() -> service.deleteItem(restaurant.getId(), soup.getId(), manager), HttpStatus.CONFLICT);
+		verify(itemRepository, never()).delete(any());
+	}
+
+	@Test
+	void aComboCannotUseADishOfAnotherRestaurant() {
+		MenuCategory lunch = category(restaurant, "Biznes lanç", 0);
+		MenuItem foreign = item(category(otherRestaurant, "Şorbalar", 0), "Mərci");
+
+		assertStatus(() -> service.createItem(restaurant.getId(),
+				combo(lunch, "X", "1.00", new ComboComponentRequest(foreign.getId(), 1)), manager),
+			HttpStatus.NOT_FOUND);
 	}
 }

@@ -41,6 +41,8 @@ export const settingsApi = api.injectEndpoints({
     /** Restaurants this admin may manage (all for a super admin). */
     myRestaurants: build.query<RestaurantSummary[], void>({
       query: () => '/admin/restaurants',
+      // Refreshed when the super admin opens or renames a restaurant (#147).
+      providesTags: [{ type: 'Platform', id: 'restaurants' }],
     }),
     integrationSettings: build.query<IntegrationSettings, string>({
       query: (restaurantId) =>

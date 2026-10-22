@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   BookOpen,
+  Building2,
   ChefHat,
   ClipboardList,
   HandCoins,
@@ -20,8 +21,16 @@ import { cn } from '@/lib/utils'
 const MANAGERS: UserRole[] = ['SUPER_ADMIN', 'RESTO_MANAGER']
 const STAFF: UserRole[] = [...MANAGERS, 'WAITER']
 const KITCHEN: UserRole[] = [...MANAGERS, 'CHEF']
+const PLATFORM: UserRole[] = ['SUPER_ADMIN']
 
 const LINKS = [
+  {
+    to: '/admin/restaurants',
+    label: 'Restoranlar',
+    icon: Building2,
+    end: false,
+    roles: PLATFORM,
+  },
   {
     to: '/admin',
     label: 'Dashboard',

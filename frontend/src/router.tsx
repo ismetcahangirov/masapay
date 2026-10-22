@@ -40,6 +40,11 @@ const TipsPage = lazy(() =>
     default: m.TipsPage,
   })),
 )
+const RestaurantsPage = lazy(() =>
+  import('@/routes/admin/restaurants-page').then((m) => ({
+    default: m.RestaurantsPage,
+  })),
+)
 const StaffPage = lazy(() =>
   import('@/routes/admin/staff-page').then((m) => ({
     default: m.StaffPage,
@@ -103,6 +108,17 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
         <Suspense fallback={null}>
           <TablesPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // The platform's restaurants: super admin only (#147).
+    path: '/admin/restaurants',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN']}>
+        <Suspense fallback={null}>
+          <RestaurantsPage />
         </Suspense>
       </RequireAuth>
     ),

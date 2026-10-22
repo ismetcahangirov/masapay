@@ -11,6 +11,9 @@ export type OrderStatus =
   /** Fully settled. */
   | 'paid'
 
+/** Kitchen progress of an ordered dish (#142). */
+export type KitchenStatus = 'NEW' | 'PREPARING' | 'READY'
+
 export interface OrderItem {
   id: string
   name: string
@@ -21,6 +24,8 @@ export interface OrderItem {
   total: number
   /** Already settled by an item payment. */
   paid: boolean
+  /** Where the dish is in the kitchen (#142); null when it never goes there. */
+  kitchenStatus: KitchenStatus | null
 }
 
 export interface Order {

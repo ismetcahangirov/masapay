@@ -3,6 +3,7 @@ import { subscribeToTopic } from '@/lib/stomp'
 import type {
   Order,
   OrderItem,
+  KitchenStatus,
   OrderStatus,
   TableOrder,
 } from '@/features/order/types'
@@ -17,6 +18,7 @@ interface OrderItemDto {
   unitPrice: number
   totalPrice: number
   paid: boolean
+  kitchenStatus?: KitchenStatus | null
 }
 
 interface EqualSplitDto {
@@ -61,6 +63,7 @@ function toOrder(dto: OrderDto, currency: string): Order {
     total: toMinor(item.totalPrice),
     // A fully paid bill shows every line as paid (crossed out on the receipt).
     paid: item.paid || dto.status === 'PAID',
+    kitchenStatus: item.kitchenStatus ?? null,
   }))
   const totalAmount = toMinor(dto.totalAmount)
 

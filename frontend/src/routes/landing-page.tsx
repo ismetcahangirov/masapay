@@ -154,10 +154,10 @@ export function LandingPage() {
             {STEPS.map((step, index) => (
               <Reveal key={step.n} delay={index * 0.08}>
                 <div>
-                  <div className="text-sm font-medium text-white/40">
+                  <div className="text-5xl font-normal leading-none tracking-tight text-white/40 proportional-nums">
                     {step.n}
                   </div>
-                  <h3 className="mt-4 text-2xl font-normal tracking-tight">
+                  <h3 className="mt-6 text-2xl font-normal tracking-tight">
                     {step.title}
                   </h3>
                   <p className="mt-2 text-white/60">{step.body}</p>

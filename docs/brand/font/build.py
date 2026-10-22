@@ -118,6 +118,21 @@ def load_outlines(svg_file, metrics, scale):
     return out
 
 
+DIGITS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+PNUM_SIDE = 45
+
+
+def pnum_feature(metrics, outlines):
+    rules = []
+    for name in DIGITS:
+        xmin, _, xmax, _ = outlines[name].bounds
+        adv = metrics[name]["adv"]
+        new_adv = round(xmax - xmin + 2 * PNUM_SIDE)
+        dx = round(PNUM_SIDE - xmin)
+        rules.append(f"  pos {name} <{dx} 0 {new_adv - adv} 0>;")
+    return "feature pnum {\n" + "\n".join(rules) + "\n} pnum;\n"
+
+
 def notdef(pen):
     pen.moveTo((50, 0))
     pen.lineTo((450, 0))
@@ -181,8 +196,9 @@ def build(weight, svg_file, skeleton_file, metrics_file, out_dir):
         achVendID="MSPY",
     )
     fb.setupPost()
+    fea = KERN + pnum_feature(metrics, outlines)
     fb.font["head"].macStyle = 1 if weight >= 700 else 0
-    addOpenTypeFeaturesFromString(fb.font, KERN)
+    addOpenTypeFeaturesFromString(fb.font, fea)
     out = FsPath(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     otf = out / f"masapay-sans-{weight}.otf"

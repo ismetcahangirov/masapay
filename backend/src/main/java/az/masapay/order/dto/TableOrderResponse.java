@@ -6,7 +6,8 @@ import java.util.UUID;
 /**
  * Response for a QR scan: the table context plus its current order. {@code order}
  * is null when the table has no open bill yet (a valid empty state, not an error).
- * {@code serviceChargePercent} is the restaurant's service charge (null when it charges none),
+ * {@code serviceChargePercent} is the service charge at this table (the table's own, #146, or the
+ * restaurant's; null when none is charged),
  * so the receipt can label the charge line, e.g. "Xidmət haqqı (10%)".
  */
 public record TableOrderResponse(

@@ -70,7 +70,7 @@ public class OpenBillWriter {
 			added = added.add(item.getTotalPrice());
 		}
 
-		order.setTotalAmount(newTotal(order, added, table.getRestaurant().getServiceChargePercent()));
+		order.setTotalAmount(newTotal(order, added, table.effectiveServiceChargePercent()));
 		orderRepository.save(order);
 
 		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(table.getQrToken()));

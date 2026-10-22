@@ -60,7 +60,7 @@ public class CustomerOrderService {
 
 		return new TableOrderResponse(
 			table.getId(), table.getLabel(), restaurant.getId(), restaurant.getName(),
-			restaurant.getCurrency(), restaurant.getServiceChargePercent(), orderView);
+			restaurant.getCurrency(), table.effectiveServiceChargePercent(), orderView);
 	}
 
 	private OrderView toOrderView(Order order) {

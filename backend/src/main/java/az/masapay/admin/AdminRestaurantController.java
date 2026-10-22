@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/admin/restaurants")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER','WAITER')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER','WAITER','CHEF')")
 @ConditionalOnProperty(prefix = "masapay.auth", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AdminRestaurantController {
 

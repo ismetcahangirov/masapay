@@ -18,6 +18,8 @@ export interface CustomerDish {
   price: number
   /** A combo's contents, e.g. "1 x Mərci"; empty for an ordinary dish. */
   components: { name: string; quantity: number }[]
+  /** Extras the restaurant offers with it before confirming (#141). */
+  suggestionIds: string[]
 }
 
 export interface CustomerCategory {
@@ -35,6 +37,7 @@ interface CategoryDto {
     description: string | null
     price: number
     components: { name: string; quantity: number }[]
+    suggestionIds?: string[]
   }[]
 }
 
@@ -63,6 +66,7 @@ export const customerMenuApi = api.injectEndpoints({
               name,
               quantity,
             })),
+            suggestionIds: item.suggestionIds ?? [],
           })),
         })),
       providesTags: (_r, _e, qrToken) => [

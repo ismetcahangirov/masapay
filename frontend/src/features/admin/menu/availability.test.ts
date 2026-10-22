@@ -14,6 +14,7 @@ const dish = (overrides: Partial<MenuDish>): MenuDish => ({
   availableFrom: null,
   availableUntil: null,
   availableToday: true,
+  suggestionIds: [],
   ...overrides,
 })
 

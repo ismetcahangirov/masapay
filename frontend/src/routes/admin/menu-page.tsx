@@ -5,6 +5,7 @@ import {
   LoaderCircle,
   Pencil,
   Plus,
+  Sparkles,
   Trash2,
 } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
@@ -14,6 +15,7 @@ import { AvailabilityDialog } from '@/features/admin/menu/availability-dialog'
 import { CategoryDialog } from '@/features/admin/menu/category-dialog'
 import { DeleteDialog } from '@/features/admin/menu/delete-dialog'
 import { DishDialog } from '@/features/admin/menu/dish-dialog'
+import { SuggestionsDialog } from '@/features/admin/menu/suggestions-dialog'
 import {
   type MenuCategory,
   type MenuDish,
@@ -60,6 +62,10 @@ export function MenuPage() {
   } | null>(null)
   const [removing, setRemoving] = useState<Removing | null>(null)
   const [scheduling, setScheduling] = useState<MenuDish | null>(null)
+  const [suggesting, setSuggesting] = useState<MenuDish | null>(null)
+  const dishNames = new Map(
+    categories.flatMap((c) => c.items).map((item) => [item.id, item.name]),
+  )
 
   const [deleteCategory, deleteCategoryState] = useDeleteCategoryMutation()
   const [deleteDish, deleteDishState] = useDeleteDishMutation()
@@ -256,6 +262,16 @@ export function MenuPage() {
                               {dish.description}
                             </p>
                           )}
+                          {dish.suggestionIds.length > 0 && (
+                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Sparkles className="size-3" aria-hidden />
+                              Təklif:{' '}
+                              {dish.suggestionIds
+                                .map((id) => dishNames.get(id))
+                                .filter(Boolean)
+                                .join(', ')}
+                            </p>
+                          )}
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
                           <span className="mr-2 font-medium tabular-nums">
@@ -270,6 +286,14 @@ export function MenuPage() {
                                 aria-label={`${dish.name} mövcudluğu`}
                               >
                                 <CalendarClock aria-hidden />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setSuggesting(dish)}
+                                aria-label={`${dish.name} əlavə təklifləri`}
+                              >
+                                <Sparkles aria-hidden />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -330,6 +354,12 @@ export function MenuPage() {
             restaurantId={restaurantId}
             dish={scheduling}
             onClose={() => setScheduling(null)}
+          />
+          <SuggestionsDialog
+            restaurantId={restaurantId}
+            dish={suggesting}
+            categories={categories}
+            onClose={() => setSuggesting(null)}
           />
         </>
       )}

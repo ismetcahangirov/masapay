@@ -175,4 +175,124 @@ describe('MenuOrderCard (#140)', () => {
       ).toHaveLength(2),
     )
   })
+
+  describe('upsell before confirming (#141)', () => {
+    const withExtras = [
+      {
+        id: 'c1',
+        name: 'Əsas',
+        items: [
+          {
+            id: 'd1',
+            name: 'Dolma',
+            description: null,
+            price: 9,
+            components: [],
+            suggestionIds: ['d2', 's1'],
+          },
+          {
+            id: 'd2',
+            name: 'Ayran',
+            description: null,
+            price: 1.5,
+            components: [],
+            suggestionIds: [],
+          },
+          {
+            id: 's1',
+            name: 'Qatıq sousu',
+            description: null,
+            price: 0.5,
+            components: [],
+            suggestionIds: [],
+          },
+        ],
+      },
+    ]
+
+    it('adds a suggested extra in one click and then asks "Əminsiniz?"', async () => {
+      let sent: unknown = null
+      mockApi({
+        [`GET ${BASE}/menu`]: withExtras,
+        [`POST ${BASE}/order/items`]: async (request: Request) => {
+          sent = await request.json()
+          return bill
+        },
+      })
+      renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'Dolma əlavə et' }),
+      )
+      await userEvent.click(
+        screen.getByRole('button', { name: /Sifarişi təsdiqlə/ }),
+      )
+
+      const upsell = screen.getByRole('dialog', { name: 'Bunu da istərdiniz?' })
+      expect(
+        screen.queryByRole('dialog', { name: 'Əminsiniz?' }),
+      ).not.toBeInTheDocument()
+      await userEvent.click(
+        within(upsell).getByRole('button', { name: 'Ayran əlavə et' }),
+      )
+      expect(
+        within(upsell).getByRole('button', { name: 'Ayran əlavə olundu' }),
+      ).toBeDisabled()
+      await userEvent.click(
+        within(upsell).getByRole('button', { name: 'Davam et' }),
+      )
+
+      const confirm = screen.getByRole('dialog', { name: 'Əminsiniz?' })
+      expect(within(confirm).getByText('1 x Ayran')).toBeInTheDocument()
+      await userEvent.click(
+        within(confirm).getByRole('button', { name: 'Bəli, təsdiqlə' }),
+      )
+
+      await screen.findByText('Sifarişiniz masanın hesabına əlavə olundu.')
+      expect(sent).toEqual({
+        items: [
+          { menuItemId: 'd1', quantity: 1 },
+          { menuItemId: 'd2', quantity: 1 },
+        ],
+      })
+    })
+
+    it('goes on without extras after "Xeyr, təşəkkürlər"', async () => {
+      mockApi({ [`GET ${BASE}/menu`]: withExtras })
+      renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'Dolma əlavə et' }),
+      )
+      await userEvent.click(
+        screen.getByRole('button', { name: /Sifarişi təsdiqlə/ }),
+      )
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Xeyr, təşəkkürlər' }),
+      )
+
+      const confirm = screen.getByRole('dialog', { name: 'Əminsiniz?' })
+      expect(within(confirm).getByText('1 x Dolma')).toBeInTheDocument()
+      expect(within(confirm).queryByText(/Ayran/)).not.toBeInTheDocument()
+    })
+
+    it('skips the offer when the basket has nothing to suggest', async () => {
+      mockApi({ [`GET ${BASE}/menu`]: withExtras })
+      renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'Ayran əlavə et' }),
+      )
+      await userEvent.click(
+        screen.getByRole('button', { name: /Sifarişi təsdiqlə/ }),
+      )
+
+      expect(
+        screen.getByRole('dialog', { name: 'Əminsiniz?' }),
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole('dialog', { name: 'Bunu da istərdiniz?' }),
+      ).not.toBeInTheDocument()
+    })
+  })
 })

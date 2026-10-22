@@ -5,8 +5,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -68,6 +71,14 @@ public class MenuItem extends BaseEntity {
 	@OneToMany(mappedBy = "combo", cascade = CascadeType.ALL, orphanRemoval = true)
 	@BatchSize(size = 50)
 	private List<MenuComboComponent> components = new ArrayList<>();
+
+	/** Extras offered with this dish before the customer confirms (#141), in the manager's order. */
+	@ManyToMany
+	@JoinTable(name = "menu_item_suggestions", joinColumns = @JoinColumn(name = "item_id"),
+		inverseJoinColumns = @JoinColumn(name = "suggested_id"))
+	@OrderColumn(name = "sort_order")
+	@BatchSize(size = 50)
+	private List<MenuItem> suggestions = new ArrayList<>();
 
 	public boolean isCombo() {
 		return !components.isEmpty();

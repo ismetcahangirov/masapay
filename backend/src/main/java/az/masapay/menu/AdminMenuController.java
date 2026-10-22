@@ -5,6 +5,7 @@ import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
 import az.masapay.menu.dto.MenuItemView;
+import az.masapay.menu.dto.SuggestionsRequest;
 import az.masapay.security.AuthenticatedUser;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -85,6 +86,13 @@ public class AdminMenuController {
 	public MenuItemView setAvailability(@PathVariable UUID restaurantId, @PathVariable UUID itemId,
 			@Valid @RequestBody AvailabilityRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
 		return menuService.setAvailability(restaurantId, itemId, request, caller);
+	}
+
+	@PutMapping("/items/{itemId}/suggestions")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER')")
+	public MenuItemView setSuggestions(@PathVariable UUID restaurantId, @PathVariable UUID itemId,
+			@Valid @RequestBody SuggestionsRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
+		return menuService.setSuggestions(restaurantId, itemId, request, caller);
 	}
 
 	@DeleteMapping("/items/{itemId}")

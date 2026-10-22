@@ -22,6 +22,7 @@ import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
 import az.masapay.menu.dto.MenuItemView;
+import az.masapay.menu.dto.SuggestionsRequest;
 import az.masapay.repository.MenuCategoryRepository;
 import az.masapay.repository.MenuComboComponentRepository;
 import az.masapay.repository.MenuItemRepository;
@@ -444,5 +445,63 @@ class MenuServiceTest {
 	@Test
 	void anUnknownQrTokenHasNoMenu() {
 		assertStatus(() -> service.customerMenu(UUID.randomUUID()), HttpStatus.NOT_FOUND);
+	}
+
+	// Upsell (#141)
+
+	@Test
+	void aManagerSetsTheExtrasOfferedWithADishInOrder() {
+		MenuItem kebab = item(category(restaurant, "Əsas", 0), "Kabab");
+		MenuItem sauce = item(category(restaurant, "Souslar", 1), "Sarımsaqlı sous");
+		MenuItem ayran = item(category(restaurant, "İçkilər", 2), "Ayran");
+
+		MenuItemView view = service.setSuggestions(restaurant.getId(), kebab.getId(),
+				new SuggestionsRequest(List.of(ayran.getId(), sauce.getId())), manager);
+
+		assertThat(view.suggestionIds()).containsExactly(ayran.getId(), sauce.getId());
+		assertThat(kebab.getSuggestions()).containsExactly(ayran, sauce);
+
+		MenuItemView cleared = service.setSuggestions(restaurant.getId(), kebab.getId(),
+				new SuggestionsRequest(List.of()), manager);
+		assertThat(cleared.suggestionIds()).isEmpty();
+	}
+
+	@Test
+	void badSuggestionsAreRejectedAndNothingChanges() {
+		MenuCategory mains = category(restaurant, "Əsas", 0);
+		MenuItem kebab = item(mains, "Kabab");
+		MenuItem ayran = item(mains, "Ayran");
+		MenuItem foreign = item(category(otherRestaurant, "İçkilər", 0), "Kola");
+
+		assertStatus(() -> service.setSuggestions(restaurant.getId(), kebab.getId(),
+				new SuggestionsRequest(List.of(kebab.getId())), manager), HttpStatus.BAD_REQUEST);
+		assertStatus(() -> service.setSuggestions(restaurant.getId(), kebab.getId(),
+				new SuggestionsRequest(List.of(ayran.getId(), ayran.getId())), manager), HttpStatus.BAD_REQUEST);
+		assertStatus(() -> service.setSuggestions(restaurant.getId(), kebab.getId(),
+				new SuggestionsRequest(List.of(foreign.getId())), manager), HttpStatus.NOT_FOUND);
+		assertStatus(() -> service.setSuggestions(restaurant.getId(), kebab.getId(),
+				new SuggestionsRequest(List.of(ayran.getId())), waiter), HttpStatus.FORBIDDEN);
+		assertThat(kebab.getSuggestions()).isEmpty();
+	}
+
+	@Test
+	void theCustomerMenuCarriesEachDishsSuggestions() {
+		MenuCategory mains = category(restaurant, "Əsas", 0);
+		MenuItem kebab = item(mains, "Kabab");
+		MenuItem ayran = item(mains, "Ayran");
+		kebab.getSuggestions().add(ayran);
+		RestaurantTable table = new RestaurantTable();
+		table.setRestaurant(restaurant);
+		when(tableRepository.findByQrToken(table.getQrToken())).thenReturn(Optional.of(table));
+		when(categoryRepository.findByRestaurantIdOrderBySortOrderAscNameAsc(restaurant.getId()))
+			.thenReturn(List.of(mains));
+		List<MenuItem> dishes = List.of(ayran, kebab);
+		when(itemRepository.findByRestaurantIdOrderByNameAsc(restaurant.getId())).thenReturn(dishes);
+
+		List<MenuCategoryView> menu = service.customerMenu(table.getQrToken());
+
+		assertThat(menu.get(0).items()).filteredOn(item -> item.name().equals("Kabab"))
+			.singleElement()
+			.satisfies(item -> assertThat(item.suggestionIds()).containsExactly(ayran.getId()));
 	}
 }

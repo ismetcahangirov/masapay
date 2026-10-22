@@ -287,4 +287,35 @@ describe('MenuPage (#137)', () => {
       until: '2026-10-27',
     })
   })
+
+  it('picks the extras offered with a dish, in click order (#141)', async () => {
+    let sent: unknown = null
+    backend({
+      [`PUT ${MENU_URL}/items/d1/suggestions`]: async (request: Request) => {
+        sent = await request.json()
+        return menu[0].items[0]
+      },
+    })
+    renderWithProviders(<MenuPage />)
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Sezar əlavə təklifləri' }),
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Əlavə təkliflər' })
+    // The dish itself is not offered as its own extra.
+    expect(within(dialog).queryByText('Sezar')).not.toBeInTheDocument()
+    const rowOf = (name: string) =>
+      within(dialog).getByText(name).closest('li') as HTMLElement
+    await userEvent.click(within(rowOf('Dolma')).getByRole('button'))
+    await userEvent.click(within(rowOf('Dovğa')).getByRole('button'))
+    expect(
+      within(dialog).getByRole('list', { name: 'Seçilmiş təkliflər' }),
+    ).toHaveTextContent('DolmaDovğa')
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: 'Yadda saxla' }),
+    )
+
+    await screen.findByRole('region', { name: 'Salatlar' })
+    expect(sent).toEqual({ itemIds: ['d4', 'd3'] })
+  })
 })

@@ -29,6 +29,9 @@ const order: Order = {
       total: 1800,
       paid: false,
       kitchenStatus: null,
+      source: 'STAFF',
+      addedBy: null,
+      addedAt: null,
     },
     {
       id: 'sorba',
@@ -38,6 +41,9 @@ const order: Order = {
       total: 900,
       paid: true,
       kitchenStatus: null,
+      source: 'STAFF',
+      addedBy: null,
+      addedAt: null,
     },
   ],
 }

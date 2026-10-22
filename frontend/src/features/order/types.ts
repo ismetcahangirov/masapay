@@ -14,6 +14,8 @@ export type OrderStatus =
 /** Kitchen progress of an ordered dish (#142). */
 export type KitchenStatus = 'NEW' | 'PREPARING' | 'READY'
 
+export type LineSource = 'STAFF' | 'CUSTOMER' | 'POS'
+
 export interface OrderItem {
   id: string
   name: string
@@ -26,6 +28,11 @@ export interface OrderItem {
   paid: boolean
   /** Where the dish is in the kitchen (#142); null when it never goes there. */
   kitchenStatus: KitchenStatus | null
+  /** Who put it on the bill (#144): staff (by name), a customer from the menu, or the POS. */
+  source: LineSource
+  addedBy: string | null
+  /** When it was added (ISO time). */
+  addedAt: string | null
 }
 
 export interface Order {

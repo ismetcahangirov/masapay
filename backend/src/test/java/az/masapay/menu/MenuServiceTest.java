@@ -12,8 +12,10 @@ import az.masapay.domain.MenuCategory;
 import az.masapay.domain.MenuComboComponent;
 import az.masapay.domain.MenuItem;
 import az.masapay.domain.Restaurant;
+import az.masapay.domain.RestaurantTable;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
+import az.masapay.menu.dto.AvailabilityRequest;
 import az.masapay.menu.dto.ComboComponentRequest;
 import az.masapay.menu.dto.ComboComponentView;
 import az.masapay.menu.dto.MenuCategoryRequest;
@@ -337,5 +339,110 @@ class MenuServiceTest {
 		assertStatus(() -> service.createItem(restaurant.getId(),
 				combo(lunch, "X", "1.00", new ComboComponentRequest(foreign.getId(), 1)), manager),
 			HttpStatus.NOT_FOUND);
+	}
+
+	// Daily menu (#139)
+
+	private AvailabilityRequest mode(AvailabilityRequest.Mode mode) {
+		return new AvailabilityRequest(mode, null, null);
+	}
+
+	private AvailabilityRequest dates(LocalDate from, LocalDate until) {
+		return new AvailabilityRequest(AvailabilityRequest.Mode.DATES, from, until);
+	}
+
+	@Test
+	void offTodayUsesTheBakuDateAndComesBackTomorrow() {
+		MenuItem soup = item(category(restaurant, "Şorbalar", 0), "Mərci");
+
+		MenuItemView view = service.setAvailability(restaurant.getId(), soup.getId(),
+				mode(AvailabilityRequest.Mode.OFF_TODAY), manager);
+
+		assertThat(view.offOn()).isEqualTo(TODAY);
+		assertThat(view.availableToday()).isFalse();
+		assertThat(soup.isAvailableOn(TODAY.plusDays(1))).isTrue();
+	}
+
+	@Test
+	void offStaysOffUntilSwitchedBackOn() {
+		MenuItem soup = item(category(restaurant, "Şorbalar", 0), "Mərci");
+
+		service.setAvailability(restaurant.getId(), soup.getId(), mode(AvailabilityRequest.Mode.OFF), manager);
+		assertThat(soup.isAvailableOn(TODAY.plusDays(30))).isFalse();
+
+		MenuItemView back = service.setAvailability(restaurant.getId(), soup.getId(),
+				mode(AvailabilityRequest.Mode.ALWAYS), manager);
+		assertThat(back.active()).isTrue();
+		assertThat(back.availableToday()).isTrue();
+	}
+
+	@Test
+	void aDateRangeIncludesBothEnds() {
+		MenuItem dolma = item(category(restaurant, "Əsas", 0), "Dolma");
+		LocalDate tomorrow = TODAY.plusDays(1);
+
+		MenuItemView view = service.setAvailability(restaurant.getId(), dolma.getId(),
+				dates(tomorrow, tomorrow.plusDays(2)), manager);
+
+		assertThat(view.availableToday()).isFalse();
+		assertThat(dolma.isAvailableOn(tomorrow)).isTrue();
+		assertThat(dolma.isAvailableOn(tomorrow.plusDays(2))).isTrue();
+		assertThat(dolma.isAvailableOn(tomorrow.plusDays(3))).isFalse();
+	}
+
+	@Test
+	void badDateRangesAreRejected() {
+		MenuItem dolma = item(category(restaurant, "Əsas", 0), "Dolma");
+
+		assertStatus(() -> service.setAvailability(restaurant.getId(), dolma.getId(), dates(null, null), manager),
+			HttpStatus.BAD_REQUEST);
+		assertStatus(() -> service.setAvailability(restaurant.getId(), dolma.getId(),
+				dates(TODAY.plusDays(3), TODAY.plusDays(1)), manager), HttpStatus.BAD_REQUEST);
+		assertStatus(() -> service.setAvailability(restaurant.getId(), dolma.getId(),
+				dates(null, TODAY.minusDays(1)), manager), HttpStatus.BAD_REQUEST);
+		assertThat(dolma.isActive()).isTrue();
+		assertThat(dolma.getAvailableUntil()).isNull();
+	}
+
+	@Test
+	void aWaiterCannotChangeAvailability() {
+		MenuItem soup = item(category(restaurant, "Şorbalar", 0), "Mərci");
+
+		assertStatus(() -> service.setAvailability(restaurant.getId(), soup.getId(),
+				mode(AvailabilityRequest.Mode.OFF), waiter), HttpStatus.FORBIDDEN);
+		assertThat(soup.isActive()).isTrue();
+	}
+
+	@Test
+	void theCustomerMenuHidesOffDishesCombosMissingADishAndEmptyCategories() {
+		MenuCategory soups = category(restaurant, "Şorbalar", 0);
+		MenuCategory lunch = category(restaurant, "Biznes lanç", 1);
+		MenuCategory drinks = category(restaurant, "İçkilər", 2);
+		MenuItem lentil = item(soups, "Mərci");
+		MenuItem dovga = item(soups, "Dovğa");
+		dovga.setOffOn(TODAY);
+		MenuItem combo = item(lunch, "Lanç 1");
+		combo.replaceComponents(Map.of(dovga, 1));
+		MenuItem ayran = item(drinks, "Ayran");
+		ayran.setActive(false);
+		RestaurantTable table = new RestaurantTable();
+		table.setRestaurant(restaurant);
+		when(tableRepository.findByQrToken(table.getQrToken())).thenReturn(Optional.of(table));
+		when(categoryRepository.findByRestaurantIdOrderBySortOrderAscNameAsc(restaurant.getId()))
+			.thenReturn(List.of(soups, lunch, drinks));
+		List<MenuItem> dishes = List.of(ayran, dovga, combo, lentil);
+		when(itemRepository.findByRestaurantIdOrderByNameAsc(restaurant.getId())).thenReturn(dishes);
+
+		List<MenuCategoryView> menu = service.customerMenu(table.getQrToken());
+
+		assertThat(menu).singleElement().satisfies(category -> {
+			assertThat(category.name()).isEqualTo("Şorbalar");
+			assertThat(category.items()).extracting(MenuItemView::name).containsExactly("Mərci");
+		});
+	}
+
+	@Test
+	void anUnknownQrTokenHasNoMenu() {
+		assertStatus(() -> service.customerMenu(UUID.randomUUID()), HttpStatus.NOT_FOUND);
 	}
 }

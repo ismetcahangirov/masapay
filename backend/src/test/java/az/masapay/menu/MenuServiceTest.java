@@ -18,6 +18,7 @@ import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
 import az.masapay.menu.dto.MenuItemView;
 import az.masapay.repository.MenuCategoryRepository;
+import az.masapay.repository.MenuComboComponentRepository;
 import az.masapay.repository.MenuItemRepository;
 import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.UserRepository;
@@ -35,10 +36,11 @@ class MenuServiceTest {
 
 	private final MenuCategoryRepository categoryRepository = mock(MenuCategoryRepository.class);
 	private final MenuItemRepository itemRepository = mock(MenuItemRepository.class);
+	private final MenuComboComponentRepository componentRepository = mock(MenuComboComponentRepository.class);
 	private final RestaurantRepository restaurantRepository = mock(RestaurantRepository.class);
 	private final UserRepository userRepository = mock(UserRepository.class);
-	private final MenuService service = new MenuService(categoryRepository, itemRepository, restaurantRepository,
-			userRepository);
+	private final MenuService service = new MenuService(categoryRepository, itemRepository, componentRepository,
+			restaurantRepository, userRepository);
 
 	private final Restaurant restaurant = new Restaurant();
 	private final Restaurant otherRestaurant = new Restaurant();

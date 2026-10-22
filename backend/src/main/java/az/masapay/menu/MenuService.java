@@ -5,17 +5,22 @@ import az.masapay.domain.MenuItem;
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
+import az.masapay.menu.dto.ComboComponentRequest;
 import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
 import az.masapay.menu.dto.MenuItemView;
 import az.masapay.repository.MenuCategoryRepository;
+import az.masapay.repository.MenuComboComponentRepository;
 import az.masapay.repository.MenuItemRepository;
 import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -35,13 +40,16 @@ public class MenuService {
 
 	private final MenuCategoryRepository categoryRepository;
 	private final MenuItemRepository itemRepository;
+	private final MenuComboComponentRepository componentRepository;
 	private final RestaurantRepository restaurantRepository;
 	private final UserRepository userRepository;
 
 	public MenuService(MenuCategoryRepository categoryRepository, MenuItemRepository itemRepository,
-			RestaurantRepository restaurantRepository, UserRepository userRepository) {
+			MenuComboComponentRepository componentRepository, RestaurantRepository restaurantRepository,
+			UserRepository userRepository) {
 		this.categoryRepository = categoryRepository;
 		this.itemRepository = itemRepository;
+		this.componentRepository = componentRepository;
 		this.restaurantRepository = restaurantRepository;
 		this.userRepository = userRepository;
 	}
@@ -104,9 +112,11 @@ public class MenuService {
 	public MenuItemView createItem(UUID restaurantId, MenuItemRequest request, AuthenticatedUser caller) {
 		checkManager(caller, restaurantId);
 		MenuCategory category = category(restaurantId, request.categoryId());
+		Map<MenuItem, Integer> components = components(restaurantId, null, request.components());
 		MenuItem item = new MenuItem();
 		item.setRestaurant(category.getRestaurant());
 		apply(item, category, request);
+		item.replaceComponents(components);
 		return MenuItemView.of(itemRepository.save(item));
 	}
 
@@ -115,14 +125,21 @@ public class MenuService {
 			AuthenticatedUser caller) {
 		checkManager(caller, restaurantId);
 		MenuItem item = item(restaurantId, itemId);
+		Map<MenuItem, Integer> components = components(restaurantId, item, request.components());
 		apply(item, category(restaurantId, request.categoryId()), request);
+		item.replaceComponents(components);
 		return MenuItemView.of(item);
 	}
 
+	/** A dish that is part of a combo stays until the combo no longer contains it. */
 	@Transactional
 	public void deleteItem(UUID restaurantId, UUID itemId, AuthenticatedUser caller) {
 		checkManager(caller, restaurantId);
-		itemRepository.delete(item(restaurantId, itemId));
+		MenuItem item = item(restaurantId, itemId);
+		if (componentRepository.existsByComponentId(itemId)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "The dish is part of a combo");
+		}
+		itemRepository.delete(item);
 	}
 
 	private static void apply(MenuItem item, MenuCategory category, MenuItemRequest request) {
@@ -131,6 +148,37 @@ public class MenuService {
 		item.setName(request.name().trim());
 		item.setDescription(description == null || description.isEmpty() ? null : description);
 		item.setPrice(request.price());
+	}
+
+	/**
+	 * Resolves a combo's contents. Only one level is allowed: a combo holds plain dishes of the
+	 * same restaurant, never itself or another combo, and a dish already inside a combo cannot
+	 * become a combo. {@code self} is the item being edited, null on create.
+	 */
+	private Map<MenuItem, Integer> components(UUID restaurantId, MenuItem self, List<ComboComponentRequest> wanted) {
+		if (wanted == null || wanted.isEmpty()) {
+			return Map.of();
+		}
+		if (self != null && componentRepository.existsByComponentId(self.getId())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+				"A dish inside a combo cannot become a combo");
+		}
+		Map<MenuItem, Integer> components = new LinkedHashMap<>();
+		Set<UUID> seen = new HashSet<>();
+		for (ComboComponentRequest row : wanted) {
+			if (!seen.add(row.itemId())) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A dish is listed twice in the combo");
+			}
+			if (self != null && row.itemId().equals(self.getId())) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A combo cannot contain itself");
+			}
+			MenuItem dish = item(restaurantId, row.itemId());
+			if (dish.isCombo()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A combo cannot contain another combo");
+			}
+			components.put(dish, row.quantity());
+		}
+		return components;
 	}
 
 	private MenuCategory category(UUID restaurantId, UUID categoryId) {

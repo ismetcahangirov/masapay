@@ -113,3 +113,6 @@ iyerarxiyası ilə). Repo: [ismetcahangirov/masapay](https://github.com/ismetcah
 | #52 | 10.3 Backend unit/integration testləri | YunisPashayev | devops, backend |
 | #53 | 10.4 Frontend component testləri | ismetcahangirov | devops, frontend |
 | #54 | 10.5 Production deployment sənədləşdirilməsi | YunisPashayev | devops |
+| #156 | 10.6 Production təhlükəsizlik parametrləri (secret-lər, proxy, cookie, Swagger) | codelady-ship | devops, auth |
+| #157 | 10.7 Payriff və iiko açarlarını DB-də şifrələmək (AES-GCM) | codelady-ship | backend, database, payment, pos-integration |
+| #158 | 10.8 Rate limit sayğaclarını Redis-ə köçürmək | codelady-ship | backend, devops |

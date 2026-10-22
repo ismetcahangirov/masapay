@@ -2,6 +2,13 @@ spring:
   application:
     name: masapay-backend
 
+  # Outgoing calls (Payriff, iiko) give up instead of holding a request thread forever when
+  # the other side hangs; applies to every RestClient built from the auto-configured builder.
+  http:
+    client:
+      connect-timeout: ${MASAPAY_HTTP_CONNECT_TIMEOUT:5s}
+      read-timeout: ${MASAPAY_HTTP_READ_TIMEOUT:20s}
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/masapay}
     username: ${SPRING_DATASOURCE_USERNAME:masapay}
@@ -53,6 +60,24 @@ masapay:
       # LOCAL DEVELOPMENT ONLY. Enables POST /api/auth/dev-login, which signs in as an existing
       # enabled user by email without Google. Never set this in a deployed environment.
       enabled: ${MASAPAY_DEV_LOGIN_ENABLED:false}
+  security:
+    # LOCAL DEVELOPMENT ONLY. Lets the app start with the public default JWT and webhook
+    # secrets below. Off by default, so a deployment that forgets to set them fails at startup
+    # instead of accepting forged tokens. Dev login implies it.
+    allow-dev-secrets: ${MASAPAY_ALLOW_DEV_SECRETS:${MASAPAY_DEV_LOGIN_ENABLED:false}}
+  rate-limit:
+    # Fixed one-minute (and one-day) windows kept in memory per instance. Behind a reverse
+    # proxy also set SERVER_FORWARD_HEADERS_STRATEGY=framework so the client IP is real.
+    enabled: ${MASAPAY_RATE_LIMIT_ENABLED:true}
+    # Sign-in, refresh and logout, per IP.
+    auth-per-minute: ${MASAPAY_RATE_LIMIT_AUTH_PER_MINUTE:20}
+    # Customer endpoints reached through a table QR code, per IP.
+    public-per-minute: ${MASAPAY_RATE_LIMIT_PUBLIC_PER_MINUTE:120}
+    # Starting a payment creates a Payriff order, so it gets its own, tighter limits per IP.
+    payment-per-minute: ${MASAPAY_RATE_LIMIT_PAYMENT_PER_MINUTE:10}
+    payment-per-day: ${MASAPAY_RATE_LIMIT_PAYMENT_PER_DAY:100}
+    # Signed-in staff, per user.
+    staff-per-minute: ${MASAPAY_RATE_LIMIT_STAFF_PER_MINUTE:300}
   orders:
     # Enables the customer-facing order endpoints; disabled in the infra-free smoke test.
     enabled: ${MASAPAY_ORDERS_ENABLED:true}
@@ -87,12 +112,13 @@ masapay:
     mock-page-url: ${MASAPAY_PAYRIFF_MOCK_PAGE_URL:http://localhost:5173/payment/mock}
 
 springdoc:
-  # OpenAPI spec and Swagger UI for trying the API by hand. Set MASAPAY_API_DOCS_ENABLED=false
-  # in production so the endpoint map is not published.
+  # OpenAPI spec and Swagger UI for trying the API by hand. Off unless asked for
+  # (MASAPAY_API_DOCS_ENABLED=true) or in local dev-login mode, so a deployment does not
+  # publish the endpoint map by default.
   api-docs:
-    enabled: ${MASAPAY_API_DOCS_ENABLED:true}
+    enabled: ${MASAPAY_API_DOCS_ENABLED:${MASAPAY_DEV_LOGIN_ENABLED:false}}
   swagger-ui:
-    enabled: ${MASAPAY_API_DOCS_ENABLED:true}
+    enabled: ${MASAPAY_API_DOCS_ENABLED:${MASAPAY_DEV_LOGIN_ENABLED:false}}
 
 server:
   port: ${SERVER_PORT:8080}

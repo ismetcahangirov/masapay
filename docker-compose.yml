@@ -40,6 +40,10 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       MASAPAY_GOOGLE_CLIENT_ID: ${MASAPAY_GOOGLE_CLIENT_ID:-}
+      # This compose file is for local development, so the public dev JWT and webhook secrets
+      # are allowed here. A deployment sets MASAPAY_JWT_SECRET and MASAPAY_PAYRIFF_WEBHOOK_SECRET
+      # and leaves this false, otherwise the backend refuses to start.
+      MASAPAY_ALLOW_DEV_SECRETS: ${MASAPAY_ALLOW_DEV_SECRETS:-true}
     ports:
       - "8080:8080"
     depends_on:

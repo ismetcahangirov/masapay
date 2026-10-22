@@ -5,6 +5,8 @@ import az.masapay.domain.User;
 import az.masapay.domain.enums.SplitType;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.domain.enums.UserRole;
+import az.masapay.report.ReportFile;
+import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.TransactionRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
@@ -13,6 +15,9 @@ import az.masapay.transaction.dto.TransactionRow;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
@@ -39,13 +44,19 @@ public class TransactionSearchService {
 
 	static final int DEFAULT_SIZE = 20;
 	static final int MAX_SIZE = 100;
+	/** At most this many rows go into one Excel export (#170). */
+	static final int EXPORT_LIMIT = 50_000;
+	private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
 	private final TransactionRepository transactionRepository;
 	private final UserRepository userRepository;
+	private final RestaurantRepository restaurantRepository;
 
-	public TransactionSearchService(TransactionRepository transactionRepository, UserRepository userRepository) {
+	public TransactionSearchService(TransactionRepository transactionRepository, UserRepository userRepository,
+			RestaurantRepository restaurantRepository) {
 		this.transactionRepository = transactionRepository;
 		this.userRepository = userRepository;
+		this.restaurantRepository = restaurantRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -60,6 +71,40 @@ public class TransactionSearchService {
 			.findAll(TransactionSpecifications.matching(filter), pageRequest)
 			.map(TransactionRow::of);
 		return new TransactionPage(rows.getContent(), rows.getTotalElements(), rows.getNumber(), rows.getSize());
+	}
+
+	/**
+	 * Every transaction matching the filters, newest first, as a formatted Excel file (#170). Capped
+	 * at {@link #EXPORT_LIMIT} rows so one click cannot load a restaurant's whole history at once.
+	 */
+	@Transactional(readOnly = true)
+	public ReportFile excel(AuthenticatedUser principal, UUID restaurantId, TransactionStatus status,
+		SplitType splitType, LocalDate from, LocalDate to, String query) {
+		checkAccess(principal, restaurantId);
+		TransactionFilter filter = toFilter(restaurantId, status, splitType, from, to, query);
+		List<TransactionRow> rows = transactionRepository
+			.findAll(TransactionSpecifications.matching(filter),
+				PageRequest.of(0, EXPORT_LIMIT, Sort.by(Sort.Direction.DESC, "createdAt")))
+			.map(TransactionRow::of)
+			.getContent();
+		String restaurantName = restaurantRepository.findById(restaurantId).map(Restaurant::getName).orElse("");
+
+		List<String> filters = new ArrayList<>();
+		if (from != null || to != null) {
+			filters.add("Tarix: " + (from == null ? "..." : DAY.format(from)) + " - "
+				+ (to == null ? "..." : DAY.format(to)));
+		}
+		if (status != null) {
+			filters.add("Status: " + TransactionsXlsx.STATUS_LABELS.get(status));
+		}
+		if (splitType != null) {
+			filters.add("Ödəniş tipi: " + TransactionsXlsx.SPLIT_LABELS.get(splitType));
+		}
+		if (filter.query() != null) {
+			filters.add("Axtarış: " + filter.query());
+		}
+		return new ReportFile(TransactionsXlsx.write(rows, restaurantName, filters, Instant.now()),
+			List.of(restaurantName, "emeliyyatlar", from == null ? "" : from, to == null ? "" : to));
 	}
 
 	/** Turns request parameters into criteria: Baku days to instants, blank text to none. */

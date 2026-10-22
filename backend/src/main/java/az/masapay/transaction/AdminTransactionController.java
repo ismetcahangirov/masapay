@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,5 +45,18 @@ public class AdminTransactionController {
 		@RequestParam(defaultValue = "20") int size) {
 		return transactionSearchService.search(principal, restaurantId, status, splitType, from, to, q, page,
 			size);
+	}
+
+	/** Everything the same filters match, as a formatted Excel workbook (#170). */
+	@GetMapping("/export/xlsx")
+	public ResponseEntity<byte[]> exportExcel(@AuthenticationPrincipal AuthenticatedUser principal,
+		@PathVariable UUID restaurantId,
+		@RequestParam(required = false) TransactionStatus status,
+		@RequestParam(required = false) SplitType splitType,
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+		@RequestParam(required = false) String q) {
+		return transactionSearchService.excel(principal, restaurantId, status, splitType, from, to, q)
+			.asXlsxDownload();
 	}
 }

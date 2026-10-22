@@ -15,6 +15,7 @@ import az.masapay.domain.User;
 import az.masapay.domain.enums.SplitType;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.domain.enums.UserRole;
+import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.TransactionRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
@@ -49,6 +50,9 @@ class TransactionSearchServiceTest {
 	@Mock
 	private UserRepository userRepository;
 
+	@Mock
+	private RestaurantRepository restaurantRepository;
+
 	private TransactionSearchService service;
 
 	private final UUID restaurantId = UUID.randomUUID();
@@ -59,7 +63,7 @@ class TransactionSearchServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new TransactionSearchService(transactionRepository, userRepository);
+		service = new TransactionSearchService(transactionRepository, userRepository, restaurantRepository);
 	}
 
 	@SuppressWarnings("unchecked")

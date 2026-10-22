@@ -5,6 +5,7 @@ import az.masapay.table.dto.FloorTableView;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +45,21 @@ public class OrderRealtimeRelay implements MessageListener {
 		return "/topic/restaurants/" + restaurantId + "/floor";
 	}
 
-	/** Sends the snapshot to the table's customers and the table's floor entry to its restaurant's floor. */
+	/** STOMP topic a restaurant's kitchen screens subscribe to (#142). */
+	static String kitchenDestination(UUID restaurantId) {
+		return "/topic/restaurants/" + restaurantId + "/kitchen";
+	}
+
+	/**
+	 * Sends the snapshot to the table's customers, the table's floor entry to its restaurant's
+	 * floor, and a "this table changed" ping to the kitchen screens, which then reload their list.
+	 */
 	static void deliver(SimpMessagingTemplate messagingTemplate, UUID qrToken, TableOrderResponse snapshot) {
 		messagingTemplate.convertAndSend(destination(qrToken), snapshot);
 		messagingTemplate.convertAndSend(floorDestination(snapshot.restaurantId()),
 			FloorTableView.of(snapshot, Instant.now()));
+		messagingTemplate.convertAndSend(kitchenDestination(snapshot.restaurantId()),
+			Map.of("tableId", snapshot.tableId()));
 	}
 
 	@Override

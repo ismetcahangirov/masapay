@@ -83,6 +83,8 @@ class StaffOrderServiceTest {
 		verify(orderItemRepository).save(saved.capture());
 		assertThat(saved.getValue().getTotalPrice()).isEqualByComparingTo("29.00");
 		assertThat(saved.getValue().getOrder()).isSameAs(order);
+		// A line typed in by staff does not go to the kitchen screen (#142).
+		assertThat(saved.getValue().getKitchenStatus()).isNull();
 		assertThat(order.getTotalAmount()).isEqualByComparingTo("35.50");
 		verify(realtime).broadcastOrderUpdate(table.getQrToken());
 	}

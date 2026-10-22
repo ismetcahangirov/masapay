@@ -13,6 +13,7 @@ const TEST_USERS = [
   { email: 'admin@masapay.local', label: 'Test admini (SUPER_ADMIN)' },
   { email: 'manager@dolma.local', label: 'Test meneceri (Dolma Restoran)' },
   { email: 'waiter@dolma.local', label: 'Test ofisiantı (Dolma Restoran)' },
+  { email: 'chef@dolma.local', label: 'Test aşpazı (Dolma Restoran)' },
 ]
 
 export function DevLoginButtons({

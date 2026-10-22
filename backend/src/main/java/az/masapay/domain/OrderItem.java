@@ -1,7 +1,10 @@
 package az.masapay.domain;
 
+import az.masapay.domain.enums.KitchenStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -52,4 +55,9 @@ public class OrderItem extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "menu_item_id")
 	private MenuItem menuItem;
+
+	/** Kitchen progress (#142); null for lines that never go to the kitchen. */
+	@Enumerated(EnumType.STRING)
+	@Column(name = "kitchen_status", length = 20)
+	private KitchenStatus kitchenStatus;
 }

@@ -23,7 +23,8 @@ public record OrderView(
 	public static OrderView of(Order order, List<OrderItem> items, BigDecimal paidAmount) {
 		List<OrderItemView> itemViews = items.stream()
 			.map(i -> new OrderItemView(
-				i.getId(), i.getName(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(), i.isPaid()))
+				i.getId(), i.getName(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(), i.isPaid(),
+				i.getKitchenStatus()))
 			.toList();
 		EqualSplitView equalSplit = order.getEqualSplitParts() == null
 			? null

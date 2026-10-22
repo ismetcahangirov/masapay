@@ -4,6 +4,7 @@ import az.masapay.domain.MenuItem;
 import az.masapay.domain.Order;
 import az.masapay.domain.OrderItem;
 import az.masapay.domain.RestaurantTable;
+import az.masapay.domain.enums.KitchenStatus;
 import az.masapay.realtime.OrderRealtimeBroadcaster;
 import az.masapay.repository.OrderItemRepository;
 import az.masapay.repository.OrderRepository;
@@ -57,6 +58,8 @@ public class OpenBillWriter {
 			item.setUnitPrice(line.unitPrice());
 			item.setTotalPrice(line.quantity().multiply(line.unitPrice()).setScale(2, RoundingMode.HALF_UP));
 			item.setMenuItem(line.menuItem());
+			// Dishes ordered from the menu go to the kitchen screen (#142).
+			item.setKitchenStatus(line.menuItem() == null ? null : KitchenStatus.NEW);
 			orderItemRepository.save(item);
 			added = added.add(item.getTotalPrice());
 		}

@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +46,7 @@ class OrderRealtimeRelayTest {
 
 		ArgumentCaptor<String> destination = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
-		verify(messagingTemplate, times(2)).convertAndSend(destination.capture(), payload.capture());
+		verify(messagingTemplate, times(3)).convertAndSend(destination.capture(), payload.capture());
 		assertThat(destination.getAllValues().get(0)).isEqualTo("/topic/tables/" + qrToken);
 		assertThat(payload.getAllValues().get(0)).isInstanceOf(TableOrderResponse.class);
 		assertThat(((TableOrderResponse) payload.getAllValues().get(0)).order().status()).isEqualTo("OPEN");
@@ -58,5 +59,10 @@ class OrderRealtimeRelayTest {
 			assertThat(entry.status()).isEqualTo(FloorStatus.ACTIVE);
 			assertThat(entry.outstanding()).isEqualByComparingTo("7.00");
 		});
+
+		// ... and pings the kitchen screens to reload (#142).
+		assertThat(destination.getAllValues().get(2))
+			.isEqualTo("/topic/restaurants/" + snapshot.restaurantId() + "/kitchen");
+		assertThat(payload.getAllValues().get(2)).isEqualTo(Map.of("tableId", snapshot.tableId()));
 	}
 }

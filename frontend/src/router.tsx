@@ -40,6 +40,11 @@ const TipsPage = lazy(() =>
     default: m.TipsPage,
   })),
 )
+const KitchenPage = lazy(() =>
+  import('@/routes/admin/kitchen-page').then((m) => ({
+    default: m.KitchenPage,
+  })),
+)
 const MenuPage = lazy(() =>
   import('@/routes/admin/menu-page').then((m) => ({
     default: m.MenuPage,
@@ -88,6 +93,17 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
         <Suspense fallback={null}>
           <TablesPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // Kitchen screen: chefs and managers (#142).
+    path: '/admin/kitchen',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'CHEF']}>
+        <Suspense fallback={null}>
+          <KitchenPage />
         </Suspense>
       </RequireAuth>
     ),

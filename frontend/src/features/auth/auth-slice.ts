@@ -5,7 +5,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 // stored login. The refresh token is an httpOnly cookie the browser sends to
 // /api/auth by itself; a page reload restores the session through it.
 
-export type UserRole = 'SUPER_ADMIN' | 'RESTO_MANAGER' | 'WAITER'
+export type UserRole = 'SUPER_ADMIN' | 'RESTO_MANAGER' | 'WAITER' | 'CHEF'
 
 export interface AuthUser {
   id: string

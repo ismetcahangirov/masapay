@@ -1,10 +1,9 @@
 package az.masapay.security;
 
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +31,7 @@ public class InsecureDefaultsGuard {
 		this.allowDevSecrets = allowDevSecrets;
 	}
 
-	@EventListener(ApplicationStartedEvent.class)
+	@PostConstruct
 	public void check() {
 		if (allowDevSecrets) {
 			return;

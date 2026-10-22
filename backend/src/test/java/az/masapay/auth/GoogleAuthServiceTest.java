@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import az.masapay.domain.Restaurant;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.repository.UserRepository;
@@ -41,7 +42,7 @@ class GoogleAuthServiceTest {
 	void firstLoginProvisionsDisabledUserWithoutRole() {
 		when(tokenVerifier.verify("token")).thenReturn(INFO);
 		when(userRepository.findByGoogleSub("google-sub-123")).thenReturn(Optional.empty());
-		when(userRepository.findByEmail("diner@example.com")).thenReturn(Optional.empty());
+		when(userRepository.findByEmailIgnoreCase("diner@example.com")).thenReturn(Optional.empty());
 		when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
 		service.authenticate("token");
@@ -56,6 +57,27 @@ class GoogleAuthServiceTest {
 		assertThat(saved.getLastLoginAt()).isNotNull();
 		assertThat(saved.isEnabled()).isFalse();
 		assertThat(saved.getRole()).isNull();
+	}
+
+	@Test
+	void anInvitedWaiterIsLinkedOnFirstLoginAndStillWaitsForApproval() {
+		Restaurant dolma = new Restaurant();
+		User invited = new User();
+		invited.setEmail("diner@example.com");
+		invited.setRole(UserRole.WAITER);
+		invited.setRestaurant(dolma);
+		when(tokenVerifier.verify("token")).thenReturn(INFO);
+		when(userRepository.findByGoogleSub("google-sub-123")).thenReturn(Optional.empty());
+		when(userRepository.findByEmailIgnoreCase("diner@example.com")).thenReturn(Optional.of(invited));
+		when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		User user = service.authenticate("token");
+
+		assertThat(user).isSameAs(invited);
+		assertThat(user.getGoogleSub()).isEqualTo("google-sub-123");
+		assertThat(user.getRole()).isEqualTo(UserRole.WAITER);
+		assertThat(user.getRestaurant()).isSameAs(dolma);
+		assertThat(user.isEnabled()).isFalse();
 	}
 
 	@Test
@@ -84,7 +106,7 @@ class GoogleAuthServiceTest {
 			new GoogleUserInfo("admin-sub", "Admin@Masapay.az", "Platform Admin", null);
 		when(tokenVerifier.verify("token")).thenReturn(admin);
 		when(userRepository.findByGoogleSub("admin-sub")).thenReturn(Optional.empty());
-		when(userRepository.findByEmail("Admin@Masapay.az")).thenReturn(Optional.empty());
+		when(userRepository.findByEmailIgnoreCase("Admin@Masapay.az")).thenReturn(Optional.empty());
 		when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
 		User result = service.authenticate("token");

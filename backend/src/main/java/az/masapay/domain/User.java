@@ -22,8 +22,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class User extends BaseEntity {
 
-	/** Google subject identifier ("sub" claim); stable per Google account. */
-	@Column(name = "google_sub", nullable = false, length = 128)
+	/**
+	 * Google subject identifier ("sub" claim); stable per Google account. Null for staff a manager
+	 * invited by email who have not signed in yet (#145).
+	 */
+	@Column(name = "google_sub", length = 128)
 	private String googleSub;
 
 	@Column(nullable = false, length = 320)
@@ -51,4 +54,8 @@ public class User extends BaseEntity {
 
 	@Column(name = "last_login_at")
 	private Instant lastLoginAt;
+
+	/** When a manager switched the account off (#145); null while active or still waiting. */
+	@Column(name = "deactivated_at")
+	private Instant deactivatedAt;
 }

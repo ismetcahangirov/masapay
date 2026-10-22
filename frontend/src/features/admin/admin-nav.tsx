@@ -9,6 +9,7 @@ import {
   QrCode,
   ReceiptText,
   Settings,
+  Users,
 } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import type { UserRole } from '@/features/auth/auth-slice'
@@ -66,6 +67,13 @@ const LINKS = [
     to: '/admin/transactions',
     label: 'Əməliyyatlar',
     icon: ReceiptText,
+    end: false,
+    roles: MANAGERS,
+  },
+  {
+    to: '/admin/staff',
+    label: 'İşçilər',
+    icon: Users,
     end: false,
     roles: MANAGERS,
   },

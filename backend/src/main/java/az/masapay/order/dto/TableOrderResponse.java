@@ -12,4 +12,13 @@ import java.util.UUID;
 public record TableOrderResponse(
 		UUID tableId, String tableLabel, UUID restaurantId, String restaurantName, String currency,
 		BigDecimal serviceChargePercent, OrderView order) {
+
+	/**
+	 * What goes out on customer channels (the public endpoints and the table's live topic): the
+	 * same bill, but without the names of the staff who added lines (#144).
+	 */
+	public TableOrderResponse forCustomers() {
+		return order == null ? this : new TableOrderResponse(tableId, tableLabel, restaurantId, restaurantName,
+			currency, serviceChargePercent, order.withoutStaffNames());
+	}
 }

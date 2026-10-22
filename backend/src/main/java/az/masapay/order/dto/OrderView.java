@@ -37,4 +37,10 @@ public record OrderView(
 			order.getId(), order.getStatus().name(), order.getTotalAmount(), paidAmount, outstanding,
 			order.getOpenedAt(), itemViews, equalSplit, serviceCharge);
 	}
+
+	/** The same bill without staff names, for customers (#144). */
+	public OrderView withoutStaffNames() {
+		return new OrderView(orderId, status, totalAmount, paidAmount, outstanding, openedAt,
+			items.stream().map(OrderItemView::withoutStaffName).toList(), equalSplit, serviceCharge);
+	}
 }

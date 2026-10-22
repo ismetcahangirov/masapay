@@ -30,4 +30,10 @@ public record OrderItemView(
 		return new OrderItemView(item.getId(), item.getName(), item.getQuantity(), item.getUnitPrice(),
 			item.getTotalPrice(), item.isPaid(), item.getKitchenStatus(), source, addedBy, item.getCreatedAt());
 	}
+
+	/** Customers see that staff added a line, not who: names stay with the restaurant. */
+	public OrderItemView withoutStaffName() {
+		return new OrderItemView(id, name, quantity, unitPrice, totalPrice, paid, kitchenStatus, source, null,
+			addedAt);
+	}
 }

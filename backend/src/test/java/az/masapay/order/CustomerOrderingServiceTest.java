@@ -16,6 +16,7 @@ import az.masapay.domain.Order;
 import az.masapay.domain.OrderItem;
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.RestaurantTable;
+import az.masapay.domain.enums.KitchenStatus;
 import az.masapay.order.dto.PlaceOrderRequest;
 import az.masapay.realtime.OrderRealtimeBroadcaster;
 import az.masapay.repository.MenuItemRepository;
@@ -120,6 +121,8 @@ class CustomerOrderingServiceTest {
 		List<OrderItem> lines = savedLines(2);
 		assertThat(lines).extracting(OrderItem::getName).containsExactly("Dolma", "Ayran");
 		assertThat(lines.get(0).getMenuItem()).isSameAs(dolma);
+		// Straight onto the kitchen screen (#142).
+		assertThat(lines).extracting(OrderItem::getKitchenStatus).containsOnly(KitchenStatus.NEW);
 		assertThat(lines.get(0).getTotalPrice()).isEqualByComparingTo("18.00");
 		assertThat(lines.get(1).getTotalPrice()).isEqualByComparingTo("4.50");
 		assertThat(order.getTotalAmount()).isEqualByComparingTo("22.50");

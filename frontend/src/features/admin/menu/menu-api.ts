@@ -26,6 +26,8 @@ export interface MenuDish {
   availableUntil: string | null
   /** Whether customers can order it right now. */
   availableToday: boolean
+  /** Extras offered with it before the customer confirms (#141), in order. */
+  suggestionIds: string[]
 }
 
 export type AvailabilityMode = 'ALWAYS' | 'OFF' | 'OFF_TODAY' | 'DATES'
@@ -132,6 +134,19 @@ export const menuApi = api.injectEndpoints({
         { type: 'Menu', id: restaurantId },
       ],
     }),
+    setSuggestions: build.mutation<
+      MenuDish,
+      { restaurantId: string; dishId: string; itemIds: string[] }
+    >({
+      query: ({ restaurantId, dishId, itemIds }) => ({
+        url: `${menuUrl(restaurantId)}/items/${dishId}/suggestions`,
+        method: 'PUT',
+        body: { itemIds },
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Menu', id: restaurantId },
+      ],
+    }),
     setAvailability: build.mutation<
       MenuDish,
       { restaurantId: string; dishId: string; body: AvailabilityInput }
@@ -165,5 +180,6 @@ export const {
   useCreateDishMutation,
   useUpdateDishMutation,
   useSetAvailabilityMutation,
+  useSetSuggestionsMutation,
   useDeleteDishMutation,
 } = menuApi

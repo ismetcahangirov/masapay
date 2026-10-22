@@ -15,6 +15,7 @@ const ON_MENU = {
   availableFrom: null,
   availableUntil: null,
   availableToday: true,
+  suggestionIds: [],
 }
 
 const menu = [

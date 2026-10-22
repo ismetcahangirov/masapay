@@ -32,6 +32,7 @@ public class Restaurant extends BaseEntity {
 	@Column(nullable = false, length = 3)
 	private String currency = "AZN";
 
+	/** A super admin switches a restaurant off (#147): its customers can then neither order nor pay. */
 	@Column(nullable = false)
 	private boolean active = true;
 

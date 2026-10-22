@@ -1,0 +1,278 @@
+import { useState } from 'react'
+import { LoaderCircle, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useAppSelector } from '@/app/hooks'
+import { AdminNav } from '@/features/admin/admin-nav'
+import { CategoryDialog } from '@/features/admin/menu/category-dialog'
+import { DeleteDialog } from '@/features/admin/menu/delete-dialog'
+import { DishDialog } from '@/features/admin/menu/dish-dialog'
+import {
+  type MenuCategory,
+  type MenuDish,
+  useDeleteCategoryMutation,
+  useDeleteDishMutation,
+  useRestaurantMenuQuery,
+} from '@/features/admin/menu/menu-api'
+import { isConflict } from '@/features/admin/menu/menu-errors'
+import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
+import { formatAmount } from '@/features/admin/transactions/format'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+
+type Removing =
+  | { kind: 'category'; category: MenuCategory }
+  | { kind: 'dish'; dish: MenuDish }
+
+// The restaurant menu (#137). Managers add, edit and delete categories and
+// dishes; waiters see the same menu read-only. The customer menu is built from
+// this data later (#140).
+export function MenuPage() {
+  const role = useAppSelector((state) => state.auth.user?.role)
+  const canEdit = role === 'SUPER_ADMIN' || role === 'RESTO_MANAGER'
+
+  const restaurants = useMyRestaurantsQuery()
+  const [chosen, setChosen] = useState<string | null>(null)
+  const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
+
+  const menu = useRestaurantMenuQuery(restaurantId ?? '', {
+    skip: !restaurantId,
+  })
+  const categories = menu.data ?? []
+
+  const [categoryDialog, setCategoryDialog] = useState<{
+    category: MenuCategory | null
+  } | null>(null)
+  const [dishDialog, setDishDialog] = useState<{
+    dish: MenuDish | null
+    categoryId: string | null
+  } | null>(null)
+  const [removing, setRemoving] = useState<Removing | null>(null)
+
+  const [deleteCategory, deleteCategoryState] = useDeleteCategoryMutation()
+  const [deleteDish, deleteDishState] = useDeleteDishMutation()
+  const deleteState =
+    removing?.kind === 'category' ? deleteCategoryState : deleteDishState
+
+  const nextSortOrder =
+    categories.reduce((max, c) => Math.max(max, c.sortOrder), -1) + 1
+
+  function closeDelete() {
+    deleteCategoryState.reset()
+    deleteDishState.reset()
+    setRemoving(null)
+  }
+
+  async function onConfirmDelete() {
+    if (!restaurantId || !removing) return
+    try {
+      if (removing.kind === 'category') {
+        await deleteCategory({
+          restaurantId,
+          categoryId: removing.category.id,
+        }).unwrap()
+      } else {
+        await deleteDish({ restaurantId, dishId: removing.dish.id }).unwrap()
+      }
+      closeDelete()
+    } catch {
+      // deleteState.error is shown in the dialog.
+    }
+  }
+
+  const deleteError = !deleteState.isError
+    ? null
+    : removing?.kind === 'category' && isConflict(deleteState.error)
+      ? 'Bu kateqoriyada məhsul var. Əvvəlcə məhsulları silin və ya başqa kateqoriyaya köçürün.'
+      : 'Silmək alınmadı.'
+
+  return (
+    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
+      <AdminNav />
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Menyu</h1>
+          <p className="text-sm text-muted-foreground">
+            Kateqoriyalar və məhsullar. Müştəri menyusu bu siyahıdan gəlir.
+          </p>
+        </div>
+        {canEdit && restaurantId && (
+          <Button onClick={() => setCategoryDialog({ category: null })}>
+            <Plus aria-hidden />
+            Kateqoriya əlavə et
+          </Button>
+        )}
+      </header>
+
+      {restaurants.data && restaurants.data.length > 1 && (
+        <ToggleGroup
+          type="single"
+          value={restaurantId ?? undefined}
+          onValueChange={(value) => value && setChosen(value)}
+          className="flex-wrap justify-start"
+        >
+          {restaurants.data.map((restaurant) => (
+            <ToggleGroupItem key={restaurant.id} value={restaurant.id}>
+              {restaurant.name}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      )}
+
+      {menu.isLoading && (
+        <LoaderCircle
+          className="size-6 animate-spin text-muted-foreground"
+          aria-label="Yüklənir"
+        />
+      )}
+      {menu.isError && (
+        <p className="text-sm text-destructive">Menyunu yükləmək alınmadı.</p>
+      )}
+      {menu.data?.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Menyu hələ boşdur.
+          {canEdit && ' İlk kateqoriyanı əlavə edin, sonra ona məhsullar.'}
+        </p>
+      )}
+
+      <div className="space-y-4">
+        {categories.map((category) => (
+          <Card
+            key={category.id}
+            role="region"
+            aria-labelledby={`category-${category.id}`}
+          >
+            <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
+              <CardTitle className="text-lg">
+                <h2 id={`category-${category.id}`}>{category.name}</h2>
+              </CardTitle>
+              {canEdit && (
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setDishDialog({ dish: null, categoryId: category.id })
+                    }
+                  >
+                    <Plus aria-hidden />
+                    Məhsul
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setCategoryDialog({ category })}
+                    aria-label={`${category.name} kateqoriyasını redaktə et`}
+                  >
+                    <Pencil aria-hidden />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setRemoving({ kind: 'category', category })}
+                    aria-label={`${category.name} kateqoriyasını sil`}
+                  >
+                    <Trash2 aria-hidden />
+                  </Button>
+                </div>
+              )}
+            </CardHeader>
+            <CardContent>
+              {category.items.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Bu kateqoriyada məhsul yoxdur.
+                </p>
+              ) : (
+                <ul className="divide-y">
+                  {category.items.map((dish) => (
+                    <li
+                      key={dish.id}
+                      className="flex items-start justify-between gap-4 py-3"
+                    >
+                      <div className="min-w-0 space-y-0.5">
+                        <p className="font-medium">{dish.name}</p>
+                        {dish.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {dish.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <span className="mr-2 font-medium tabular-nums">
+                          {formatAmount(dish.price, 'AZN')}
+                        </span>
+                        {canEdit && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                setDishDialog({ dish, categoryId: null })
+                              }
+                              aria-label={`${dish.name} redaktə et`}
+                            >
+                              <Pencil aria-hidden />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                setRemoving({ kind: 'dish', dish })
+                              }
+                              aria-label={`${dish.name} sil`}
+                            >
+                              <Trash2 aria-hidden />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {restaurantId && (
+        <>
+          <CategoryDialog
+            restaurantId={restaurantId}
+            open={categoryDialog !== null}
+            category={categoryDialog?.category ?? null}
+            nextSortOrder={nextSortOrder}
+            onClose={() => setCategoryDialog(null)}
+          />
+          <DishDialog
+            restaurantId={restaurantId}
+            open={dishDialog !== null}
+            dish={dishDialog?.dish ?? null}
+            categories={categories}
+            defaultCategoryId={dishDialog?.categoryId ?? null}
+            onClose={() => setDishDialog(null)}
+          />
+        </>
+      )}
+      <DeleteDialog
+        title={
+          removing === null
+            ? null
+            : removing.kind === 'category'
+              ? 'Kateqoriyanı sil'
+              : 'Məhsulu sil'
+        }
+        description={
+          removing === null
+            ? ''
+            : removing.kind === 'category'
+              ? `"${removing.category.name}" kateqoriyası silinəcək. Əminsiniz?`
+              : `"${removing.dish.name}" menyudan silinəcək. Əminsiniz?`
+        }
+        error={deleteError}
+        busy={deleteState.isLoading}
+        onConfirm={() => void onConfirmDelete()}
+        onClose={closeDelete}
+      />
+    </div>
+  )
+}

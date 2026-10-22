@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
+  BookOpen,
   HandCoins,
   LayoutDashboard,
   LayoutGrid,
@@ -34,6 +35,13 @@ const LINKS = [
     to: '/admin/tables',
     label: 'Masalar',
     icon: QrCode,
+    end: false,
+    roles: STAFF,
+  },
+  {
+    to: '/admin/menu',
+    label: 'Menyu',
+    icon: BookOpen,
     end: false,
     roles: STAFF,
   },

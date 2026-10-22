@@ -19,7 +19,7 @@ const EMOJI_RE = /\p{Extended_Pictographic}/u
 
 // Files we never scan (binary, generated or lockfiles).
 const SKIP_RE =
-  /(^|[/\\])(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$|\.(png|jpe?g|gif|ico|svg|webp|woff2?|ttf|eot|jar|class|lock)$/i
+  /(^|[/\\])(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$|\.(png|jpe?g|gif|ico|svg|webp|woff2?|ttf|eot|jar|class|lock|ai|pdf|psd)$/i
 
 function stagedFiles() {
   const out = execSync('git diff --cached --name-only --diff-filter=ACM', {

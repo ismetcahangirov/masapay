@@ -10,3 +10,6 @@
 *.woff binary
 *.woff2 binary
 *.jar binary
+*.ai binary
+*.pdf binary
+*.psd binary

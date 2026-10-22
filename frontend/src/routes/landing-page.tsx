@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { ArrowRight, QrCode, SplitSquareHorizontal, Star } from 'lucide-react'
+import { BrandMark } from '@/components/layout/brand-mark'
 import { SiteHeader } from '@/components/layout/site-header'
 import { Reveal } from '@/components/motion/reveal'
 import { Parallax } from '@/components/motion/parallax'
@@ -201,7 +202,7 @@ export function LandingPage() {
       >
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
           <span className="flex items-center gap-2 text-lg font-normal tracking-tight">
-            <img className="w-7 lg:w-8" src="/masapay.svg" alt="masapay" />
+            <BrandMark className="h-7 lg:h-8" />
             masapay
           </span>
           <nav className="flex flex-wrap gap-8 text-sm text-white/60">

@@ -75,8 +75,9 @@ Brand rəngləri CSS dəyişənləri kimi `src/index.css`-də təyin olunub və 
 
 ## Tipografiya
 
-- **Şrift:** Helvetica Neue / Arial (klassik qrotesk). Layihəyə self-hosted
-  woff2 kimi inteqrasiya olunub (`/public/fonts`, bax [Font inteqrasiyası](#font-inteqrasiyası)).
+- **Şrift:** **Masapay Sans**: brendin öz şrifti. Həndəsi, monolayn, bütün
+  ucları yumrudur (loqonun hap formasının davamı). Helvetica Neue / Arial yalnız
+  ehtiyat üçündür. Self-hosted woff2 (`/public/fonts`, bax [Font inteqrasiyası](#font-inteqrasiyası)).
 - **Nəhəng başlıqlar:** çəki **400**, **çox sıx tracking** (`-0.045em`) və sıx
   sətir aralığı (leading ~0.98). İri, tam eninə yayılan başlıqlar səhifənin əsas
   vizual ağırlığını daşıyır.
@@ -125,12 +126,16 @@ Tövsiyə olunan tətbiq: scroll istiqamətini izləyən hook + `framer-motion`
 
 ## Font İnteqrasiyası
 
-- Fontlar `frontend/public/fonts/helvetica-neue-{300,400,500,700}.woff2`
-  ünvanında self-hosted-dir (OTF-dən woff2-yə çevrilib, brotli sıxılma ilə).
+- Əsas şrift `frontend/public/fonts/masapay-sans-{400,500,600,700}.woff2`.
+  Mənbə və yenidən yığma qaydası `docs/brand/font/README.md`-dədir (OTF-lər də
+  oradadır).
+- Helvetica Neue faylları (`helvetica-neue-{300,400,500,700}.woff2`) ehtiyat
+  kimi qalır: Masapay Sans-da olmayan simvollar (`&`, `@` və s.) onunla
+  göstərilir.
 - `@font-face` təyinatları `frontend/src/styles/fonts.css`-də, `index.css`-ə
   import olunub; `font-display: swap`.
-- Tailwind `fontFamily.sans` = `["Helvetica Neue", "Arial", "system-ui",
-  "sans-serif"]`; `body` da eyni stack-i istifadə edir.
+- Tailwind `fontFamily.sans` = `["Masapay Sans", "Helvetica Neue", "Arial",
+  "system-ui", "sans-serif"]`; `body` da eyni stack-i istifadə edir.
 - Yalnız istifadə olunan 4 çəki daxil edilib (bundle ölçüsünü saxlamaq üçün);
   əlavə çəki (Thin, Medium Italic və s.) lazım olduqda eyni qayda ilə əlavə
   olunur.

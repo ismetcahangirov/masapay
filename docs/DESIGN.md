@@ -29,7 +29,7 @@ Qaydalar:
   bölmələr demək olar qara (`#0A0A0A`) panellər.
 - **Mətn:** açıq fonda saf qara, tünd fonda ağ — həmişə **yüksək kontrast**.
 - **Yaşıl çox seyrək istifadə olunur.** O, bizim imza rəngimizdir və yalnız
-  önəmli vurğu nöqtələrində görünür (loqo, bir neçə açar ikon, kiçik nişan).
+  önəmli vurğu nöqtələrində görünür (bir neçə açar ikon, kiçik nişan).
   Səhifənin böyük hissəsi qara/ağ/greige-dir. **Yaşıl əsas düymələrdə,
   başlıqlarda və ya böyük sahələrdə istifadə OLUNMUR.** (Referans: Sunday öz
   çəhrayısını ~2000 elementdən yalnız ~8-ində işlədir.)
@@ -37,6 +37,17 @@ Qaydalar:
   ağ mətn kontrast standartını keçmir).
 - **Qradient rənglər və Bənövşəyi-Mavi qarışıqları qadağandır** (əvvəlki
   qaydadan qalır).
+
+### Loqo
+
+- Kəpənək qalstuklu "ofisiant pinqvin": həndəsi tağ gövdə, hap formalı ağ qarın
+  (şəffaf boşluq), göz parıltısı. **Tək rəng**, yaşıl işlənmir.
+- Mənbə: `docs/brand/masapay-logo.ai` (artboard-lar: `mark`, `lockup`); export-lar
+  eyni qovluqdadır.
+- UI-da `BrandMark` komponenti (`fill="currentColor"`) işlənir: açıq fonda qara,
+  tünd fonda ağ, rəngi mətndən alır.
+- Favicon `frontend/public/masapay.svg` brauzerin tünd temasında ağa keçir;
+  `favicon-32.png` və `apple-touch-icon.png` ehtiyat üçündür.
 
 ### Düymələr
 

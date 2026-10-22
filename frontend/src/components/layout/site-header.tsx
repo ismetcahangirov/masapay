@@ -7,6 +7,7 @@ import {
 } from 'framer-motion'
 import { useScrollDirection } from '@/hooks/use-scroll-direction'
 import { useUnderHeaderTone } from '@/hooks/use-under-header-tone'
+import { BrandMark } from '@/components/layout/brand-mark'
 import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import { cn } from '@/lib/utils'
 
@@ -45,7 +46,7 @@ export function SiteHeader() {
           href="#top"
           className="flex items-center gap-2 text-lg font-normal tracking-tight"
         >
-          <img className="w-7 lg:w-8" src="/masapay.svg" alt="masapay" />
+          <BrandMark className="h-7 lg:h-8" />
           masapay
         </a>
 

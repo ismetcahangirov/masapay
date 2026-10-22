@@ -98,7 +98,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Helvetica Neue', Arial, system-ui, sans-serif;
+    font-family: 'Masapay Sans', 'Helvetica Neue', Arial, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

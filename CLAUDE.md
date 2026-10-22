@@ -22,7 +22,7 @@ sonuna footer kimi əlavə olunub:
   - Açıq fon (greige): `#F6F5F6` — hero və açıq bölmələr
   - Tünd panel (near-black): `#0A0A0A`
   - Vurğu (yaşıl, CTA / uğur): `#08CB00` (üzərində mətn qara)
-- **Şrift: Helvetica Neue / Arial** (self-hosted woff2, `/frontend/public/fonts`).
+- **Şrift: Masapay Sans** (brendin öz şrifti, self-hosted woff2, `/frontend/public/fonts`; mənbə `docs/brand/font`). Ehtiyat: Helvetica Neue / Arial.
 - Tam dizayn dili, tipografiya, header davranışı və hərəkət (motion) qaydaları:
   [docs/DESIGN.md](./docs/DESIGN.md).
 

@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
+import { BrandMark } from '@/components/layout/brand-mark'
 import type { UserRole } from '@/features/auth/auth-slice'
 import { LogoutButton } from '@/features/auth/logout-button'
 import { cn } from '@/lib/utils'
@@ -99,7 +100,11 @@ export function AdminNav() {
 
   return (
     <nav className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-      <div className="flex flex-wrap gap-1">
+      <span className="flex items-center gap-2 text-xl tracking-tight">
+        <BrandMark className="h-7" />
+        masapay
+      </span>
+      <div className="flex flex-1 flex-wrap gap-1">
         {links.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}

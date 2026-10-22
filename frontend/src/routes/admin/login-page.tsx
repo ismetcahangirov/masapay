@@ -3,6 +3,7 @@ import { GoogleLogin } from '@react-oauth/google'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Clock, CircleAlert } from 'lucide-react'
 import { useAppDispatch } from '@/app/hooks'
+import { BrandMark } from '@/components/layout/brand-mark'
 import {
   type GoogleLoginResponse,
   useLoginWithGoogleMutation,
@@ -73,7 +74,8 @@ export function LoginPage() {
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/40 p-6">
       <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
+        <CardHeader className="items-center text-center">
+          <BrandMark className="mb-2 h-12" />
           <CardTitle>masapay admin</CardTitle>
           <CardDescription>Google hesabınızla daxil olun</CardDescription>
         </CardHeader>

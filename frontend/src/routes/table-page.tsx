@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { validateTableToken } from '@/lib/table-session'
 import { InvalidTokenPage } from '@/routes/invalid-token-page'
+import { BrandMark } from '@/components/layout/brand-mark'
 import { BillCard } from '@/features/order/bill-card'
 import {
   BillError,
@@ -63,7 +64,12 @@ export function TablePage() {
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center p-6">
+    <main className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
+      {/* The brand above the customer's cards (#162 logo, single colour). */}
+      <span className="flex items-center gap-2 text-lg tracking-tight">
+        <BrandMark className="h-7" />
+        masapay
+      </span>
       {content}
     </main>
   )

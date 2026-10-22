@@ -1,10 +1,17 @@
 import { useState } from 'react'
-import { FileDown, HandCoins, LoaderCircle, Receipt } from 'lucide-react'
+import {
+  FileDown,
+  FileSpreadsheet,
+  HandCoins,
+  LoaderCircle,
+  Receipt,
+} from 'lucide-react'
 import { AdminNav } from '@/features/admin/admin-nav'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
 import { saveFile } from '@/features/admin/tables/tables-api'
 import {
   useTipReportCsvMutation,
+  useTipReportExcelMutation,
   useTipReportQuery,
 } from '@/features/admin/tips/tips-api'
 import {
@@ -44,8 +51,9 @@ function isBadRequest(error: unknown): boolean {
   )
 }
 
-// Tip report (#48): tips collected per waiter in a date range, with a CSV
-// export. A manager sees their own restaurant; a super admin picks one.
+// Tip report (#48): tips collected per waiter in a date range, with an Excel
+// (#170) and a CSV download. A manager sees their own restaurant; a super
+// admin picks one.
 export function TipsPage() {
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
@@ -59,6 +67,17 @@ export function TipsPage() {
     { skip: !restaurantId || !complete },
   )
   const [downloadCsv, csvState] = useTipReportCsvMutation()
+  const [downloadExcel, excelState] = useTipReportExcelMutation()
+
+  async function onExcel() {
+    if (!restaurantId) return
+    try {
+      const file = await downloadExcel({ restaurantId, ...range }).unwrap()
+      saveFile(file.blob, file.filename)
+    } catch {
+      // excelState.error is shown below.
+    }
+  }
 
   async function onExport() {
     if (!restaurantId) return
@@ -83,13 +102,23 @@ export function TipsPage() {
             Seçilmiş tarix aralığında ofisiantlar üzrə toplanan bəxşişlər
           </p>
         </div>
-        <Button
-          onClick={() => void onExport()}
-          disabled={!data || csvState.isLoading}
-        >
-          <FileDown aria-hidden />
-          {csvState.isLoading ? 'Hazırlanır...' : 'CSV yüklə'}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => void onExcel()}
+            disabled={!data || excelState.isLoading}
+          >
+            <FileSpreadsheet aria-hidden />
+            {excelState.isLoading ? 'Hazırlanır...' : 'Excel yüklə'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => void onExport()}
+            disabled={!data || csvState.isLoading}
+          >
+            <FileDown aria-hidden />
+            {csvState.isLoading ? 'Hazırlanır...' : 'CSV yüklə'}
+          </Button>
+        </div>
       </header>
 
       {restaurants.data && restaurants.data.length > 1 && (
@@ -180,6 +209,9 @@ export function TipsPage() {
       )}
       {csvState.isError && (
         <p className="text-sm text-destructive">CSV yükləmək alınmadı.</p>
+      )}
+      {excelState.isError && (
+        <p className="text-sm text-destructive">Excel yükləmək alınmadı.</p>
       )}
 
       {data && !report.isError && (

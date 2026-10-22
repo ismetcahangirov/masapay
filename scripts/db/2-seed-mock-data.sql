@@ -79,6 +79,7 @@ INSERT INTO users (id, google_sub, email, name, role, restaurant_id, enabled) VA
     ('f0000000-0000-0000-0000-000000000001', 'mock-google-sub-admin',   'admin@masapay.local',   'Mock Super Admin', 'SUPER_ADMIN',   NULL,                                   TRUE),
     ('f0000000-0000-0000-0000-000000000002', 'mock-google-sub-manager', 'manager@dolma.local',   'Mock Manager',     'RESTO_MANAGER', 'a0000000-0000-0000-0000-000000000001', TRUE),
     ('f0000000-0000-0000-0000-000000000003', 'mock-google-sub-waiter',  'waiter@dolma.local',    'Mock Waiter',      'WAITER',        'a0000000-0000-0000-0000-000000000001', TRUE),
+    ('f0000000-0000-0000-0000-000000000005', 'mock-google-sub-chef',    'chef@dolma.local',      'Mock Chef',        'CHEF',          'a0000000-0000-0000-0000-000000000001', TRUE),
     ('f0000000-0000-0000-0000-000000000004', 'mock-google-sub-pending', 'pending@bulvar.local',  'Mock Pending',     NULL,            NULL,                                   FALSE)
 ON CONFLICT (id) DO NOTHING;
 

@@ -2,6 +2,13 @@ spring:
   application:
     name: masapay-backend
 
+  # Outgoing calls (Payriff, iiko) give up instead of holding a request thread forever when
+  # the other side hangs; applies to every RestClient built from the auto-configured builder.
+  http:
+    client:
+      connect-timeout: ${MASAPAY_HTTP_CONNECT_TIMEOUT:5s}
+      read-timeout: ${MASAPAY_HTTP_READ_TIMEOUT:20s}
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/masapay}
     username: ${SPRING_DATASOURCE_USERNAME:masapay}
@@ -53,6 +60,11 @@ masapay:
       # LOCAL DEVELOPMENT ONLY. Enables POST /api/auth/dev-login, which signs in as an existing
       # enabled user by email without Google. Never set this in a deployed environment.
       enabled: ${MASAPAY_DEV_LOGIN_ENABLED:false}
+  security:
+    # LOCAL DEVELOPMENT ONLY. Lets the app start with the public default JWT and webhook
+    # secrets below. Off by default, so a deployment that forgets to set them fails at startup
+    # instead of accepting forged tokens. Dev login implies it.
+    allow-dev-secrets: ${MASAPAY_ALLOW_DEV_SECRETS:${MASAPAY_DEV_LOGIN_ENABLED:false}}
   orders:
     # Enables the customer-facing order endpoints; disabled in the infra-free smoke test.
     enabled: ${MASAPAY_ORDERS_ENABLED:true}

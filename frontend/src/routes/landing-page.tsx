@@ -13,17 +13,17 @@ const HEADING = 'font-normal leading-[0.98] tracking-[-0.045em]'
 
 const FEATURES = [
   {
-    icon: <QrCode className="size-6" aria-hidden />,
+    icon: <QrCode className="size-10" aria-hidden />,
     title: 'QR ilə ani giriş',
     body: 'Tətbiq yükləmədən, masadakı QR kodla canlı adisyona çıxış.',
   },
   {
-    icon: <SplitSquareHorizontal className="size-6" aria-hidden />,
+    icon: <SplitSquareHorizontal className="size-10" aria-hidden />,
     title: 'Ağıllı hesab bölmə',
     body: 'Tam, öz yediyini və ya bərabər böl — hamısı bir toxunuşla.',
   },
   {
-    icon: <Star className="size-6" aria-hidden />,
+    icon: <Star className="size-10" aria-hidden />,
     title: 'Daha çox Google rəyi',
     body: 'Uğurlu ödənişdən sonra 5 ulduzlu rəyə yönləndirmə.',
   },
@@ -201,7 +201,7 @@ export function LandingPage() {
         className="bg-brand-near-black text-brand-white"
       >
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
-          <span className="flex items-center gap-2.5 text-xl font-normal tracking-tight lg:text-2xl">
+          <span className="flex items-center gap-2 text-xl font-normal tracking-tight lg:text-2xl">
             <BrandMark className="h-8 lg:h-9" />
             masapay
           </span>
@@ -240,7 +240,7 @@ function Feature({
 }) {
   return (
     <div>
-      <div className="mb-5 text-brand-green">{icon}</div>
+      <div className="mb-6 text-brand-green">{icon}</div>
       <h3 className="text-2xl font-normal tracking-tight">{title}</h3>
       <p className="mt-2 text-white/60">{body}</p>
     </div>

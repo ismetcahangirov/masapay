@@ -49,7 +49,9 @@ public final class XlsxReport {
 	private static final int WINDOW = 200;
 	private static final int MAX_WIDTH_CHARS = 60;
 	/** The header row; the title block sits above it. */
-	static final int HEADER_ROW = 4;
+	public static final int HEADER_ROW = 4;
+	/** The first row of data, under the header; tests and callers that read a report start here. */
+	public static final int FIRST_DATA_ROW = HEADER_ROW + 1;
 
 	private final String sheetName;
 	private final String title;

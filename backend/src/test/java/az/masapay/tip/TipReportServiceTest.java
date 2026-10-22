@@ -18,6 +18,9 @@ import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import az.masapay.tip.dto.TipReport;
 import az.masapay.tip.dto.WaiterTip;
+import az.masapay.report.ReportFile;
+import az.masapay.report.XlsxReport;
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -26,6 +29,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -179,5 +183,30 @@ class TipReportServiceTest {
 		AuthenticatedUser manager = new AuthenticatedUser(UUID.randomUUID(), "m@example.com", UserRole.RESTO_MANAGER);
 		when(userRepository.findById(manager.id())).thenReturn(Optional.of(user));
 		return manager;
+	}
+
+	@Test
+	void theExcelFileHasOneRowPerWaiterAndIsNamedAfterTheRestaurantAndPeriod() throws Exception {
+		stubRestaurant();
+		restaurant.setName("Dolma Restoran");
+		WaiterTip aysel = new WaiterTip(UUID.randomUUID(), "Aysel", "aysel@example.com", 3, new BigDecimal("12.50"));
+		WaiterTip unassigned = new WaiterTip(null, null, null, 2, new BigDecimal("4.00"));
+		when(transactionRepository.sumTipsByWaiter(eq(restaurantId), eq(TransactionStatus.SUCCESS), any(), any()))
+			.thenReturn(List.of(aysel, unassigned));
+
+		ReportFile file = service.excel(admin, restaurantId, LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 22));
+
+		assertThat(file.nameParts()).containsExactly("Dolma Restoran", "bexsisler", LocalDate.of(2026, 10, 1),
+			LocalDate.of(2026, 10, 22));
+		try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(file.body()))) {
+			var sheet = workbook.getSheet("Bəxşişlər");
+			assertThat(sheet.getRow(1).getCell(0).getStringCellValue())
+				.isEqualTo("Dolma Restoran · 01.10.2026 - 22.10.2026");
+			var firstRow = sheet.getRow(XlsxReport.FIRST_DATA_ROW);
+			assertThat(firstRow.getCell(0).getStringCellValue()).isEqualTo("Aysel");
+			assertThat(firstRow.getCell(3).getNumericCellValue()).isEqualTo(12.5);
+			assertThat(sheet.getRow(XlsxReport.FIRST_DATA_ROW + 1).getCell(0).getStringCellValue())
+				.isEqualTo("Təyin olunmayıb");
+		}
 	}
 }

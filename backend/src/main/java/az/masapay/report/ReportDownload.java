@@ -1,6 +1,5 @@
 package az.masapay.report;
 
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.Locale;
@@ -28,7 +27,8 @@ public final class ReportDownload {
 		return ResponseEntity.ok()
 			.contentType(XLSX)
 			.header(HttpHeaders.CONTENT_DISPOSITION,
-				ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build().toString())
+				// The name is plain ASCII (see slug), so no RFC 2047 / 5987 encoding is needed.
+				ContentDisposition.attachment().filename(filename).build().toString())
 			.body(body);
 	}
 

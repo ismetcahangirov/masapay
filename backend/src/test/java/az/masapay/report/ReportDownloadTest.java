@@ -24,8 +24,7 @@ class ReportDownloadTest {
 
 		assertThat(response.getHeaders().getContentType()).isEqualTo(ReportDownload.XLSX);
 		assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
-			.contains("attachment")
-			.contains("dolma-restoran-bexsisler-2026-10-01-2026-10-22.xlsx");
+			.isEqualTo("attachment; filename=\"dolma-restoran-bexsisler-2026-10-01-2026-10-22.xlsx\"");
 		assertThat(response.getBody()).containsExactly(1, 2);
 	}
 }

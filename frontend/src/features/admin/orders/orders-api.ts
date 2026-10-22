@@ -2,6 +2,10 @@ import { api } from '@/app/api'
 import type { RootState } from '@/app/store'
 import { toTableOrder, type TableOrderDto } from '@/features/order/order-api'
 import type { TableOrder } from '@/features/order/types'
+import type {
+  SplitType,
+  TransactionStatus,
+} from '@/features/admin/transactions/transactions-api'
 import { subscribeToTopic } from '@/lib/stomp'
 
 // Staff orders screen (#143): the full bill of every table that has one, in
@@ -26,12 +30,8 @@ export const ordersApi = api.injectEndpoints({
         } catch {
           return // the first load failed; nothing to keep live
         }
-        const reload = () =>
-          dispatch(
-            ordersApi.util.invalidateTags([
-              { type: 'Bills', id: restaurantId },
-            ]),
-          )
+        // Without an id this also reloads any open table detail (its payments).
+        const reload = () => dispatch(ordersApi.util.invalidateTags(['Bills']))
         let connectedBefore = false
         const subscription = subscribeToTopic(
           `/topic/restaurants/${restaurantId}/floor`,
@@ -47,7 +47,48 @@ export const ordersApi = api.injectEndpoints({
         subscription.close()
       },
     }),
+    /** Payments on the table's current bill, newest first (#144). Amounts in manat. */
+    tablePayments: build.query<TablePayment[], string>({
+      query: (tableId) => `/admin/tables/${tableId}/order/payments`,
+      providesTags: (_r, _e, tableId) => [
+        { type: 'Bills', id: `pay-${tableId}` },
+      ],
+    }),
+    /** Staff add a dish from today's menu; it goes to the kitchen (#144). */
+    addMenuDish: build.mutation<
+      TableOrderDto,
+      {
+        tableId: string
+        restaurantId: string
+        menuItemId: string
+        quantity: number
+      }
+    >({
+      query: ({ tableId, menuItemId, quantity }) => ({
+        url: `/admin/tables/${tableId}/order/menu-items`,
+        method: 'POST',
+        body: { menuItemId, quantity },
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Bills', id: restaurantId },
+      ],
+    }),
   }),
 })
 
-export const { useRestaurantBillsQuery } = ordersApi
+export interface TablePayment {
+  id: string
+  amount: number
+  tipAmount: number
+  totalAmount: number
+  refundedAmount: number
+  splitType: SplitType | null
+  status: TransactionStatus
+  createdAt: string
+}
+
+export const {
+  useRestaurantBillsQuery,
+  useTablePaymentsQuery,
+  useAddMenuDishMutation,
+} = ordersApi

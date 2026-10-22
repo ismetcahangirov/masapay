@@ -54,7 +54,6 @@ public class OpenBillWriter {
 		// The row lock serialises concurrent adds and payments on the same bill.
 		Order order = orderRepository.findOpenOrderForUpdate(table.getId()).orElseGet(() -> openOrder(table));
 
-		BigDecimal added = BigDecimal.ZERO;
 		for (NewLine line : lines) {
 			OrderItem item = new OrderItem();
 			item.setOrder(order);
@@ -67,27 +66,26 @@ public class OpenBillWriter {
 			item.setKitchenStatus(line.menuItem() == null ? null : KitchenStatus.NEW);
 			item.setAddedBy(line.addedBy());
 			orderItemRepository.save(item);
-			added = added.add(item.getTotalPrice());
 		}
 
-		order.setTotalAmount(newTotal(order, added, table.getRestaurant().getServiceChargePercent()));
+		order.setTotalAmount(newTotal(order, table.effectiveServiceChargePercent()));
 		orderRepository.save(order);
 
 		broadcaster.ifAvailable(b -> b.broadcastOrderUpdate(table.getQrToken()));
 	}
 
 	/**
-	 * Bill total after adding lines worth {@code added}. Without a service charge it simply grows.
-	 * With one, it is recomputed from all lines so the charge always matches them:
-	 * items + items * percent.
+	 * Bill total after adding lines, always recomputed from all lines so the charge matches them:
+	 * items + items * percent, or just the items when nothing is charged. A table whose service
+	 * charge changed (#146) is therefore charged the new rate on the whole bill, in either direction.
 	 */
-	private BigDecimal newTotal(Order order, BigDecimal added, BigDecimal serviceChargePercent) {
-		if (serviceChargePercent == null) {
-			return order.getTotalAmount().add(added);
-		}
+	private BigDecimal newTotal(Order order, BigDecimal serviceChargePercent) {
 		BigDecimal items = orderItemRepository.findByOrderId(order.getId()).stream()
 			.map(OrderItem::getTotalPrice)
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
+		if (serviceChargePercent == null) {
+			return items;
+		}
 		BigDecimal charge = items.multiply(serviceChargePercent).divide(ONE_HUNDRED, 2, RoundingMode.HALF_UP);
 		return items.add(charge);
 	}

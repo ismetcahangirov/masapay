@@ -3,7 +3,8 @@ import { screen } from '@testing-library/react'
 import { TableQrCard } from '@/features/admin/tables/table-qr-card'
 import { mockApi, renderWithProviders } from '@/test/utils'
 
-const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29"><rect width="1" height="1"/></svg>'
+const svg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29"><rect width="1" height="1"/></svg>'
 
 describe('TableQrCard (QR)', () => {
   it('shows the table QR code from the backend and links to the customer page', async () => {
@@ -16,6 +17,8 @@ describe('TableQrCard (QR)', () => {
           status: 'AVAILABLE',
           qrToken: 'q7',
           customerUrl: 'http://localhost:5173/r/r1/t/t7?token=q7',
+          serviceChargePercent: null,
+          effectiveServiceChargePercent: 10,
         }}
       />,
     )

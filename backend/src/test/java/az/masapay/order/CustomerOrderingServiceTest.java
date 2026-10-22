@@ -62,6 +62,8 @@ class CustomerOrderingServiceTest {
 	private final RestaurantTable table = new RestaurantTable();
 	private final Order order = new Order();
 
+	private final List<OrderItem> savedLines = new ArrayList<>();
+
 	@BeforeEach
 	@SuppressWarnings("unchecked")
 	void setUp() {
@@ -73,6 +75,12 @@ class CustomerOrderingServiceTest {
 		when(tableRepository.findByQrToken(table.getQrToken())).thenReturn(Optional.of(table));
 		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
 		when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+		// The bill total is recomputed from its lines: hand back what was saved.
+		when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> {
+			savedLines.add(inv.getArgument(0));
+			return inv.getArgument(0);
+		});
+		when(orderItemRepository.findByOrderId(any())).thenAnswer(inv -> new ArrayList<>(savedLines));
 		doAnswer(inv -> {
 			((Consumer<OrderRealtimeBroadcaster>) inv.getArgument(0)).accept(realtime);
 			return null;

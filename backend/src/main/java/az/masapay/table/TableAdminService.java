@@ -10,6 +10,7 @@ import az.masapay.repository.RestaurantTableRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import az.masapay.table.dto.TableSummary;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -67,6 +68,24 @@ public class TableAdminService {
 		table.setLabel(name);
 		table = tableRepository.save(table);
 		return TableSummary.of(table, urlBuilder.urlFor(table));
+	}
+
+	/**
+	 * Sets a table's own service charge (#146), managers only. It applies from the next line added
+	 * to the bill; a bill already open keeps its total until then.
+	 */
+	@Transactional
+	public TableSummary setServiceCharge(UUID restaurantId, UUID tableId, BigDecimal percent,
+			AuthenticatedUser caller) {
+		if (caller.role() == UserRole.WAITER) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Waiters cannot change the service charge");
+		}
+		checkSameRestaurant(caller, restaurantId);
+		RestaurantTable table = tableRepository.findById(tableId)
+			.filter(t -> t.getRestaurant().getId().equals(restaurantId))
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
+		table.setServiceChargePercent(percent);
+		return TableSummary.of(tableRepository.save(table), urlBuilder.urlFor(table));
 	}
 
 	/** Staff may only see their own restaurant's tables; a super admin any. */

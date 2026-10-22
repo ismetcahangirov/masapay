@@ -2,6 +2,7 @@ package az.masapay.table;
 
 import az.masapay.security.AuthenticatedUser;
 import az.masapay.table.dto.CreateTableRequest;
+import az.masapay.table.dto.TableServiceChargeRequest;
 import az.masapay.table.dto.TableSummary;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -43,5 +45,13 @@ public class AdminTableController {
 	public TableSummary create(@PathVariable UUID restaurantId, @Valid @RequestBody CreateTableRequest request,
 			@AuthenticationPrincipal AuthenticatedUser caller) {
 		return tableAdminService.create(restaurantId, request.label(), caller);
+	}
+
+	/** A table's own service charge (#146): null follows the restaurant, 0 charges none. */
+	@PutMapping("/{tableId}/service-charge")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER')")
+	public TableSummary setServiceCharge(@PathVariable UUID restaurantId, @PathVariable UUID tableId,
+			@Valid @RequestBody TableServiceChargeRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
+		return tableAdminService.setServiceCharge(restaurantId, tableId, request.percent(), caller);
 	}
 }

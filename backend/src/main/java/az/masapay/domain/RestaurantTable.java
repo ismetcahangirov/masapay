@@ -9,6 +9,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,4 +37,20 @@ public class RestaurantTable extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
 	private TableStatus status = TableStatus.AVAILABLE;
+
+	/**
+	 * This table's own service charge in percent (#146): null follows the restaurant, 0 means none
+	 * at this table.
+	 */
+	@Column(name = "service_charge_percent", precision = 5, scale = 2)
+	private BigDecimal serviceChargePercent;
+
+	/**
+	 * The service charge that applies at this table: its own percentage when it has one (0 meaning
+	 * none), otherwise the restaurant's. Null when nothing is charged.
+	 */
+	public BigDecimal effectiveServiceChargePercent() {
+		BigDecimal percent = serviceChargePercent != null ? serviceChargePercent : restaurant.getServiceChargePercent();
+		return percent == null || percent.signum() == 0 ? null : percent;
+	}
 }

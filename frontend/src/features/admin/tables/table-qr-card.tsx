@@ -1,4 +1,4 @@
-import { Download, ExternalLink } from 'lucide-react'
+import { Download, ExternalLink, Percent } from 'lucide-react'
 import {
   type AdminTable,
   saveFile,
@@ -6,9 +6,20 @@ import {
 } from '@/features/admin/tables/tables-api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { serviceChargeLabel } from './service-charge'
 
-/** One table: its QR code, a download button and the customer link. */
-export function TableQrCard({ table }: { table: AdminTable }) {
+/**
+ * One table: its QR code, a download button, the customer link and its service charge (#146),
+ * which a manager can change from here.
+ */
+export function TableQrCard({
+  table,
+  onEditServiceCharge,
+}: {
+  table: AdminTable
+  /** Shown to managers only. */
+  onEditServiceCharge?: () => void
+}) {
   const qr = useTableQrSvgQuery(table.id)
 
   function download() {
@@ -52,6 +63,22 @@ export function TableQrCard({ table }: { table: AdminTable }) {
               Aç
             </a>
           </Button>
+        </div>
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <span className="text-muted-foreground">
+            Xidmət haqqı: {serviceChargeLabel(table)}
+          </span>
+          {onEditServiceCharge && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEditServiceCharge}
+              aria-label={`${table.label} xidmət haqqı`}
+            >
+              <Percent aria-hidden />
+              Dəyiş
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

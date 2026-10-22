@@ -9,6 +9,7 @@ import {
   useRestaurantQrZipMutation,
   useRestaurantTablesQuery,
 } from '@/features/admin/tables/tables-api'
+import { ServiceChargeDialog } from '@/features/admin/tables/service-charge-dialog'
 import { TableQrCard } from '@/features/admin/tables/table-qr-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,6 +34,7 @@ export function TablesPage() {
   const [createTable, createState] = useCreateTableMutation()
   const [downloadZip, zipState] = useRestaurantQrZipMutation()
   const [label, setLabel] = useState('')
+  const [chargingId, setChargingId] = useState<string | null>(null)
 
   async function onCreate(event: FormEvent) {
     event.preventDefault()
@@ -145,9 +147,23 @@ export function TablesPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tables.data?.map((table) => (
-          <TableQrCard key={table.id} table={table} />
+          <TableQrCard
+            key={table.id}
+            table={table}
+            onEditServiceCharge={
+              canCreate ? () => setChargingId(table.id) : undefined
+            }
+          />
         ))}
       </div>
+
+      {restaurantId && (
+        <ServiceChargeDialog
+          restaurantId={restaurantId}
+          table={tables.data?.find((t) => t.id === chargingId) ?? null}
+          onClose={() => setChargingId(null)}
+        />
+      )}
     </div>
   )
 }

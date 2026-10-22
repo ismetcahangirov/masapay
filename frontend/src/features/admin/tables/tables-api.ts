@@ -10,6 +10,10 @@ export interface AdminTable {
   qrToken: string
   /** The customer link the table's QR code encodes. */
   customerUrl: string
+  /** The table's own service charge (#146): null follows the restaurant, 0 is none. */
+  serviceChargePercent: number | null
+  /** What its bills are charged; null when nothing. */
+  effectiveServiceChargePercent: number | null
 }
 
 export const tablesApi = api.injectEndpoints({
@@ -28,6 +32,20 @@ export const tablesApi = api.injectEndpoints({
         url: `/admin/restaurants/${restaurantId}/tables`,
         method: 'POST',
         body: { label },
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Tables', id: restaurantId },
+      ],
+    }),
+    /** A table's own service charge (#146); null follows the restaurant again. */
+    setTableServiceCharge: build.mutation<
+      AdminTable,
+      { restaurantId: string; tableId: string; percent: number | null }
+    >({
+      query: ({ restaurantId, tableId, percent }) => ({
+        url: `/admin/restaurants/${restaurantId}/tables/${tableId}/service-charge`,
+        method: 'PUT',
+        body: { percent },
       }),
       invalidatesTags: (_r, _e, { restaurantId }) => [
         { type: 'Tables', id: restaurantId },
@@ -53,6 +71,7 @@ export const tablesApi = api.injectEndpoints({
 export const {
   useRestaurantTablesQuery,
   useCreateTableMutation,
+  useSetTableServiceChargeMutation,
   useTableQrSvgQuery,
   useRestaurantQrZipMutation,
 } = tablesApi

@@ -4,6 +4,7 @@ import az.masapay.domain.MenuItem;
 import az.masapay.domain.Order;
 import az.masapay.domain.OrderItem;
 import az.masapay.domain.RestaurantTable;
+import az.masapay.domain.User;
 import az.masapay.domain.enums.KitchenStatus;
 import az.masapay.realtime.OrderRealtimeBroadcaster;
 import az.masapay.repository.OrderItemRepository;
@@ -28,8 +29,12 @@ public class OpenBillWriter {
 
 	private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
 
-	/** One line to add; {@code menuItem} is null for a line typed in by staff. */
-	public record NewLine(String name, BigDecimal quantity, BigDecimal unitPrice, MenuItem menuItem) {
+	/**
+	 * One line to add. {@code menuItem} is null for a line typed in by staff; {@code addedBy} is the
+	 * staff member who added it, null when a customer ordered it (#144).
+	 */
+	public record NewLine(String name, BigDecimal quantity, BigDecimal unitPrice, MenuItem menuItem,
+			User addedBy) {
 	}
 
 	private final OrderRepository orderRepository;
@@ -60,6 +65,7 @@ public class OpenBillWriter {
 			item.setMenuItem(line.menuItem());
 			// Dishes ordered from the menu go to the kitchen screen (#142).
 			item.setKitchenStatus(line.menuItem() == null ? null : KitchenStatus.NEW);
+			item.setAddedBy(line.addedBy());
 			orderItemRepository.save(item);
 			added = added.add(item.getTotalPrice());
 		}

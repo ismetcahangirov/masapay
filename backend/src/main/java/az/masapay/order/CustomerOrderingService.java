@@ -75,7 +75,7 @@ public class CustomerOrderingService {
 				throw new ResponseStatusException(HttpStatus.CONFLICT, "A dish is no longer available");
 			}
 			return new OpenBillWriter.NewLine(dish.getName(), BigDecimal.valueOf(entry.getValue()), dish.getPrice(),
-				dish);
+				dish, null);
 		}).toList();
 
 		billWriter.append(table, lines);

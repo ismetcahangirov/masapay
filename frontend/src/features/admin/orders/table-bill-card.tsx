@@ -1,5 +1,6 @@
-import { CircleCheck } from 'lucide-react'
+import { CircleCheck, Info } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -27,9 +28,12 @@ const KITCHEN_LABELS: Record<KitchenStatus, string> = {
 export function TableBillCard({
   tableLabel,
   order,
+  onOpenDetail,
 }: {
   tableLabel: string
   order: Order
+  /** Opens the table's detail: who added what, payments, adding a dish (#144). */
+  onOpenDetail?: () => void
 }) {
   const left = orderBalance(order)
   const progress =
@@ -43,7 +47,20 @@ export function TableBillCard({
         <CardTitle className="text-lg">
           <h2>{tableLabel}</h2>
         </CardTitle>
-        <OrderStatusBadge status={order.status} />
+        <div className="flex items-center gap-2">
+          <OrderStatusBadge status={order.status} />
+          {onOpenDetail && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenDetail}
+              aria-label={`${tableLabel} ətraflı`}
+            >
+              <Info aria-hidden />
+              Ətraflı
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {order.items.length === 0 ? (

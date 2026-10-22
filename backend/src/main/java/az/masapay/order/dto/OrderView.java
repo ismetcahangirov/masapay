@@ -22,9 +22,7 @@ public record OrderView(
 	 */
 	public static OrderView of(Order order, List<OrderItem> items, BigDecimal paidAmount) {
 		List<OrderItemView> itemViews = items.stream()
-			.map(i -> new OrderItemView(
-				i.getId(), i.getName(), i.getQuantity(), i.getUnitPrice(), i.getTotalPrice(), i.isPaid(),
-				i.getKitchenStatus()))
+			.map(OrderItemView::of)
 			.toList();
 		EqualSplitView equalSplit = order.getEqualSplitParts() == null
 			? null
@@ -38,5 +36,11 @@ public record OrderView(
 		return new OrderView(
 			order.getId(), order.getStatus().name(), order.getTotalAmount(), paidAmount, outstanding,
 			order.getOpenedAt(), itemViews, equalSplit, serviceCharge);
+	}
+
+	/** The same bill without staff names, for customers (#144). */
+	public OrderView withoutStaffNames() {
+		return new OrderView(orderId, status, totalAmount, paidAmount, outstanding, openedAt,
+			items.stream().map(OrderItemView::withoutStaffName).toList(), equalSplit, serviceCharge);
 	}
 }

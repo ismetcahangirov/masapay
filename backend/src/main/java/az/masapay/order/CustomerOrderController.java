@@ -33,12 +33,12 @@ public class CustomerOrderController {
 
 	@GetMapping("/{qrToken}/order")
 	public TableOrderResponse currentOrder(@PathVariable UUID qrToken) {
-		return customerOrderService.getCurrentOrder(qrToken);
+		return customerOrderService.getCurrentOrder(qrToken).forCustomers();
 	}
 
 	/** Puts the customer's confirmed basket onto the table's bill (#140). */
 	@PostMapping("/{qrToken}/order/items")
 	public TableOrderResponse placeOrder(@PathVariable UUID qrToken, @Valid @RequestBody PlaceOrderRequest request) {
-		return orderingService.placeOrder(qrToken, request);
+		return orderingService.placeOrder(qrToken, request).forCustomers();
 	}
 }

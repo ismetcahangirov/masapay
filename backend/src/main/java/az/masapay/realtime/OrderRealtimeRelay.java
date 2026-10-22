@@ -55,7 +55,7 @@ public class OrderRealtimeRelay implements MessageListener {
 	 * floor, and a "this table changed" ping to the kitchen screens, which then reload their list.
 	 */
 	static void deliver(SimpMessagingTemplate messagingTemplate, UUID qrToken, TableOrderResponse snapshot) {
-		messagingTemplate.convertAndSend(destination(qrToken), snapshot);
+		messagingTemplate.convertAndSend(destination(qrToken), snapshot.forCustomers());
 		messagingTemplate.convertAndSend(floorDestination(snapshot.restaurantId()),
 			FloorTableView.of(snapshot, Instant.now()));
 		messagingTemplate.convertAndSend(kitchenDestination(snapshot.restaurantId()),

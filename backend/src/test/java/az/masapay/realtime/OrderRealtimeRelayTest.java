@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import az.masapay.order.dto.OrderItemView;
 import az.masapay.order.dto.OrderView;
 import az.masapay.order.dto.TableOrderResponse;
 import az.masapay.table.FloorStatus;
@@ -34,8 +35,11 @@ class OrderRealtimeRelayTest {
 	@Test
 	void relaysRedisMessageToTableTopic() throws Exception {
 		UUID qrToken = UUID.randomUUID();
+		OrderItemView byWaiter = new OrderItemView(UUID.randomUUID(), "Çay", BigDecimal.ONE, new BigDecimal("7.00"),
+			new BigDecimal("7.00"), false, null, OrderItemView.Source.STAFF, "Aysel",
+			Instant.parse("2026-01-01T00:00:00Z"));
 		OrderView order = new OrderView(
-			UUID.randomUUID(), "OPEN", new BigDecimal("7.00"), BigDecimal.ZERO, new BigDecimal("7.00"), Instant.parse("2026-01-01T00:00:00Z"), List.of(), null, null);
+			UUID.randomUUID(), "OPEN", new BigDecimal("7.00"), BigDecimal.ZERO, new BigDecimal("7.00"), Instant.parse("2026-01-01T00:00:00Z"), List.of(byWaiter), null, null);
 		TableOrderResponse snapshot =
 			new TableOrderResponse(UUID.randomUUID(), "A1", UUID.randomUUID(), "Cafe", "AZN", null, order);
 		byte[] body = objectMapper.writeValueAsString(new OrderUpdateMessage(qrToken, snapshot))
@@ -50,6 +54,8 @@ class OrderRealtimeRelayTest {
 		assertThat(destination.getAllValues().get(0)).isEqualTo("/topic/tables/" + qrToken);
 		assertThat(payload.getAllValues().get(0)).isInstanceOf(TableOrderResponse.class);
 		assertThat(((TableOrderResponse) payload.getAllValues().get(0)).order().status()).isEqualTo("OPEN");
+		// The table topic is public: the waiter's name stays out of it (#144).
+		assertThat(((TableOrderResponse) payload.getAllValues().get(0)).order().items().get(0).addedBy()).isNull();
 
 		// The same message also updates the restaurant's live floor plan (#44).
 		assertThat(destination.getAllValues().get(1))

@@ -3,6 +3,7 @@ import { LoaderCircle } from 'lucide-react'
 import { AdminNav } from '@/features/admin/admin-nav'
 import { useRestaurantBillsQuery } from '@/features/admin/orders/orders-api'
 import { TableBillCard } from '@/features/admin/orders/table-bill-card'
+import { TableDetailDialog } from '@/features/admin/orders/table-detail-dialog'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
 import { Label } from '@/components/ui/label'
 import {
@@ -18,12 +19,14 @@ const ALL = 'ALL'
 
 // Staff orders screen (#143): every table with a bill, live. Waiters see what
 // each table ordered, where it is in the kitchen, what is paid and what is
-// left; a table filter narrows it to one table.
+// left; a table filter narrows it to one table. "Ətraflı" opens who added each
+// line and when, the payments, and adding a dish from the menu (#144).
 export function OrdersPage() {
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
   const [tableId, setTableId] = useState(ALL)
+  const [detailId, setDetailId] = useState<string | null>(null)
 
   const bills = useRestaurantBillsQuery(restaurantId ?? '', {
     skip: !restaurantId,
@@ -107,10 +110,20 @@ export function OrdersPage() {
                 key={table.tableId}
                 tableLabel={table.tableLabel}
                 order={table.order}
+                onOpenDetail={() => setDetailId(table.tableId)}
               />
             ),
         )}
       </div>
+
+      {restaurantId && (
+        <TableDetailDialog
+          restaurantId={restaurantId}
+          // Looked up on every render, so a live update shows in the open dialog too.
+          table={withBills.find((t) => t.tableId === detailId) ?? null}
+          onClose={() => setDetailId(null)}
+        />
+      )}
     </div>
   )
 }

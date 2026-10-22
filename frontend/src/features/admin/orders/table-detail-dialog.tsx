@@ -8,14 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useRestaurantMenuQuery } from '@/features/admin/menu/menu-api'
 import {
   formatAmount,
@@ -25,6 +17,7 @@ import {
 import { TransactionStatusBadge } from '@/features/admin/transactions/transaction-status'
 import { formatCurrency } from '@/features/order/format'
 import type { TableOrder } from '@/features/order/types'
+import { cn } from '@/lib/utils'
 import { lineAuthor } from './line-author'
 import { useAddMenuDishMutation, useTablePaymentsQuery } from './orders-api'
 
@@ -159,22 +152,37 @@ export function TableDetailDialog({
 
         <section aria-label="Məhsul əlavə et" className="space-y-2">
           <h3 className="text-sm font-semibold">Məhsul əlavə et</h3>
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-48 flex-1 space-y-1">
-              <Label htmlFor="detail-dish">Menyudan</Label>
-              <Select value={dishId} onValueChange={setDishId}>
-                <SelectTrigger id="detail-dish">
-                  <SelectValue placeholder="Məhsul seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {todaysDishes.map((dish) => (
-                    <SelectItem key={dish.id} value={dish.id}>
-                      {dish.name} · {formatAmount(dish.price, 'AZN')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Today's dishes as one-tap buttons: quicker than a dropdown on a
+              waiter's tablet, and a dropdown inside this dialog would fight
+              the dialog over keyboard focus. */}
+          <ul
+            className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto"
+            aria-label="Bu günün menyusu"
+          >
+            {todaysDishes.map((dish) => {
+              const picked = dish.id === dishId
+              return (
+                <li key={dish.id}>
+                  <Button
+                    type="button"
+                    variant={picked ? 'secondary' : 'outline'}
+                    aria-pressed={picked}
+                    className={cn(
+                      'h-auto w-full flex-col items-start gap-0 py-2 text-left',
+                      picked && 'ring-2 ring-foreground',
+                    )}
+                    onClick={() => setDishId(picked ? '' : dish.id)}
+                  >
+                    <span className="w-full truncate">{dish.name}</span>
+                    <span className="text-xs font-normal tabular-nums text-muted-foreground">
+                      {formatAmount(dish.price, 'AZN')}
+                    </span>
+                  </Button>
+                </li>
+              )
+            })}
+          </ul>
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <div className="flex items-center gap-1">
               <Button
                 type="button"

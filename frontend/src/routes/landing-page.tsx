@@ -201,11 +201,11 @@ export function LandingPage() {
         className="bg-brand-near-black text-brand-white"
       >
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
-          <span className="flex items-center gap-2 text-lg font-normal tracking-tight">
-            <BrandMark className="h-7 lg:h-8" />
+          <span className="flex items-center gap-2.5 text-xl font-normal tracking-tight lg:text-2xl">
+            <BrandMark className="h-8 lg:h-9" />
             masapay
           </span>
-          <nav className="flex flex-wrap gap-8 text-sm text-white/60">
+          <nav className="flex flex-wrap gap-8 text-base text-white/60">
             <a
               href="#product"
               className="transition-colors hover:text-brand-white"

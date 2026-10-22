@@ -44,9 +44,9 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
         <a
           href="#top"
-          className="flex items-center gap-2 text-lg font-normal tracking-tight"
+          className="flex items-center gap-2.5 text-xl font-normal tracking-tight lg:text-2xl"
         >
-          <BrandMark className="h-7 lg:h-8" />
+          <BrandMark className="h-8 lg:h-9" />
           masapay
         </a>
 
@@ -56,7 +56,7 @@ export function SiteHeader() {
               key={link.href}
               href={link.href}
               className={cn(
-                'text-sm transition-colors',
+                'text-base transition-colors',
                 onDark
                   ? 'text-white/60 hover:text-white'
                   : 'text-black/55 hover:text-black',

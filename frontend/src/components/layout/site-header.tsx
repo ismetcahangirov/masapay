@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { ArrowRight, Menu } from 'lucide-react'
 import {
   motion,
   useMotionValue,
@@ -8,7 +9,14 @@ import {
 import { useScrollDirection } from '@/hooks/use-scroll-direction'
 import { useUnderHeaderTone } from '@/hooks/use-under-header-tone'
 import { BrandMark } from '@/components/layout/brand-mark'
+import { Button } from '@/components/ui/button'
 import { LiquidButton } from '@/components/ui/liquid-glass-button'
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
@@ -44,7 +52,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
         <a
           href="#top"
-          className="flex items-center gap-2.5 text-xl font-normal tracking-tight lg:text-2xl"
+          className="flex items-center gap-2 text-xl font-normal tracking-tight lg:text-2xl"
         >
           <BrandMark className="h-8 lg:h-9" />
           masapay
@@ -67,9 +75,83 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <GlassCta onDark={onDark} />
+        <div className="hidden md:block">
+          <GlassCta onDark={onDark} />
+        </div>
+
+        <MobileMenu />
       </div>
     </motion.header>
+  )
+}
+
+function scrollToSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+}
+
+// Below md the nav and CTA move into a full-height sheet behind a burger
+// button. The section scroll waits until the sheet has closed, because the
+// open sheet locks page scrolling.
+function MobileMenu() {
+  const [open, setOpen] = useState(false)
+  const pending = useRef<string | null>(null)
+
+  function go(id: string) {
+    pending.current = id
+    setOpen(false)
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button
+          type="button"
+          aria-label="Menyunu aç"
+          className="-mr-2 flex size-11 items-center justify-center rounded-full md:hidden"
+        >
+          <Menu className="size-7" aria-hidden />
+        </button>
+      </SheetTrigger>
+      <SheetContent
+        side="right"
+        aria-describedby={undefined}
+        className="flex w-full flex-col border-l-0 bg-brand-greige px-6 pb-8 pt-0 text-[#0a0a0a] sm:max-w-sm"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          const id = pending.current
+          pending.current = null
+          if (id) window.setTimeout(() => scrollToSection(id), 0)
+        }}
+      >
+        <SheetTitle className="sr-only">Menyu</SheetTitle>
+        <div className="flex h-16 items-center gap-2 text-xl tracking-tight">
+          <BrandMark className="h-8" />
+          masapay
+        </div>
+        <nav className="mt-10 flex flex-col gap-6">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={(event) => {
+                event.preventDefault()
+                go(link.href.slice(1))
+              }}
+              className="text-3xl tracking-tight"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+        <Button
+          onClick={() => go('demo')}
+          className="mt-auto h-14 w-full rounded-full text-lg"
+        >
+          Demo istə
+          <ArrowRight className="size-5" aria-hidden />
+        </Button>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -112,14 +194,14 @@ function GlassCta({ onDark }: { onDark: boolean }) {
         />
       </div>
       <LiquidButton
-        size="sm"
+        size="lg"
         onClick={() =>
           document
             .getElementById('demo')
             ?.scrollIntoView({ behavior: 'smooth' })
         }
         className={cn(
-          'rounded-full font-medium',
+          'rounded-full text-base font-medium',
           onDark ? 'dark text-white' : 'text-black',
         )}
       >

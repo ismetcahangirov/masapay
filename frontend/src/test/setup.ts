@@ -14,6 +14,28 @@ globalThis.Request = class extends NodeRequest {
   }
 } as typeof Request
 
+// Newer Node versions ship their own global localStorage that shadows jsdom's
+// and has no working methods unless Node is started with a storage file. Give
+// tests a plain in-memory Storage so code that remembers things per browser
+// (the customer basket, #140) behaves as in a real browser.
+if (typeof window.localStorage?.clear !== 'function') {
+  const data = new Map<string, string>()
+  const memoryStorage: Storage = {
+    get length() {
+      return data.size
+    },
+    clear: () => data.clear(),
+    getItem: (key) => data.get(key) ?? null,
+    key: (index) => [...data.keys()][index] ?? null,
+    removeItem: (key) => void data.delete(key),
+    setItem: (key, value) => void data.set(key, String(value)),
+  }
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: memoryStorage,
+  })
+}
+
 // Each test starts with an empty DOM and an empty RTK Query cache.
 afterEach(() => {
   cleanup()

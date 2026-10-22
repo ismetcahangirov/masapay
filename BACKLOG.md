@@ -104,6 +104,7 @@ iyerarxiyası ilə). Repo: [ismetcahangirov/masapay](https://github.com/ismetcah
 | #46 | 9.4 POS və Payriff Tənzimləmələri | ismetcahangirov + YunisPashayev | admin-panel, frontend, backend |
 | #47 | 9.5 QR Kod Generatoru | YunisPashayev | admin-panel, backend |
 | #48 | 9.6 Bəxşişlərin Bölünməsi və Personal Analitikası | ismetcahangirov + YunisPashayev | admin-panel, frontend, backend |
+| #170 | 9.7 Peşəkar Excel (.xlsx) hesabatları - bəxşişlər və əməliyyatlar | codelady-ship | admin-panel, frontend, backend |
 
 ### EPIC 10 — DevOps, Test və Yerləşdirmə (#49 · @ismetcahangirov + @YunisPashayev)
 | # | Sub-issue | Assignee | Labels |

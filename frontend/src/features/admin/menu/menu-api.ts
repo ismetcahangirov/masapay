@@ -4,12 +4,21 @@ import { api } from '@/app/api'
 // dishes. Every staff member reads it; managers and super admins change it.
 // Prices are in manat, as the backend sends them.
 
+/** One dish inside a combo and how many of it (#138). */
+export interface ComboComponent {
+  itemId: string
+  name: string
+  quantity: number
+}
+
 export interface MenuDish {
   id: string
   categoryId: string
   name: string
   description: string | null
   price: number
+  /** A combo's contents, such as a business lunch; empty for an ordinary dish. */
+  components: ComboComponent[]
 }
 
 export interface MenuCategory {
@@ -29,6 +38,8 @@ export interface DishInput {
   name: string
   description: string | null
   price: number
+  /** Replaces a combo's contents; empty for an ordinary dish. */
+  components: { itemId: string; quantity: number }[]
 }
 
 const menuUrl = (restaurantId: string) =>

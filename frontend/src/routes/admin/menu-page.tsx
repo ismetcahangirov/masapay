@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LoaderCircle, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Layers, LoaderCircle, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import { AdminNav } from '@/features/admin/admin-nav'
 import { CategoryDialog } from '@/features/admin/menu/category-dialog'
@@ -15,6 +15,7 @@ import {
 import { isConflict } from '@/features/admin/menu/menu-errors'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
 import { formatAmount } from '@/features/admin/transactions/format'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -45,6 +46,7 @@ export function MenuPage() {
   const [dishDialog, setDishDialog] = useState<{
     dish: MenuDish | null
     categoryId: string | null
+    combo: boolean
   } | null>(null)
   const [removing, setRemoving] = useState<Removing | null>(null)
 
@@ -81,9 +83,11 @@ export function MenuPage() {
 
   const deleteError = !deleteState.isError
     ? null
-    : removing?.kind === 'category' && isConflict(deleteState.error)
-      ? 'Bu kateqoriyada məhsul var. Əvvəlcə məhsulları silin və ya başqa kateqoriyaya köçürün.'
-      : 'Silmək alınmadı.'
+    : !isConflict(deleteState.error)
+      ? 'Silmək alınmadı.'
+      : removing?.kind === 'category'
+        ? 'Bu kateqoriyada məhsul var. Əvvəlcə məhsulları silin və ya başqa kateqoriyaya köçürün.'
+        : 'Bu məhsul kombonun tərkibindədir. Əvvəlcə onu kombodan çıxarın.'
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
@@ -151,11 +155,29 @@ export function MenuPage() {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setDishDialog({ dish: null, categoryId: category.id })
+                      setDishDialog({
+                        dish: null,
+                        categoryId: category.id,
+                        combo: false,
+                      })
                     }
                   >
                     <Plus aria-hidden />
                     Məhsul
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setDishDialog({
+                        dish: null,
+                        categoryId: category.id,
+                        combo: true,
+                      })
+                    }
+                  >
+                    <Layers aria-hidden />
+                    Kombo
                   </Button>
                   <Button
                     variant="ghost"
@@ -189,7 +211,19 @@ export function MenuPage() {
                       className="flex items-start justify-between gap-4 py-3"
                     >
                       <div className="min-w-0 space-y-0.5">
-                        <p className="font-medium">{dish.name}</p>
+                        <p className="flex flex-wrap items-center gap-2 font-medium">
+                          {dish.name}
+                          {dish.components.length > 0 && (
+                            <Badge variant="secondary">Kombo</Badge>
+                          )}
+                        </p>
+                        {dish.components.length > 0 && (
+                          <p className="text-sm">
+                            {dish.components
+                              .map((c) => `${c.quantity} x ${c.name}`)
+                              .join(', ')}
+                          </p>
+                        )}
                         {dish.description && (
                           <p className="text-sm text-muted-foreground">
                             {dish.description}
@@ -206,7 +240,11 @@ export function MenuPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() =>
-                                setDishDialog({ dish, categoryId: null })
+                                setDishDialog({
+                                  dish,
+                                  categoryId: null,
+                                  combo: dish.components.length > 0,
+                                })
                               }
                               aria-label={`${dish.name} redaktə et`}
                             >
@@ -247,6 +285,7 @@ export function MenuPage() {
             restaurantId={restaurantId}
             open={dishDialog !== null}
             dish={dishDialog?.dish ?? null}
+            combo={dishDialog?.combo ?? false}
             categories={categories}
             defaultCategoryId={dishDialog?.categoryId ?? null}
             onClose={() => setDishDialog(null)}

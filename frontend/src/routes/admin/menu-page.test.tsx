@@ -21,10 +21,26 @@ const menu = [
         name: 'Sezar',
         description: 'Toyuq, kahı',
         price: 8.5,
+        components: [],
       },
     ],
   },
   { id: 'c2', name: 'İçkilər', sortOrder: 1, items: [] },
+  {
+    id: 'c3',
+    name: 'Biznes lanç',
+    sortOrder: 2,
+    items: [
+      {
+        id: 'k1',
+        categoryId: 'c3',
+        name: 'Lanç 1',
+        description: null,
+        price: 12,
+        components: [{ itemId: 'd1', name: 'Sezar', quantity: 2 }],
+      },
+    ],
+  },
 ]
 
 function signInAs(role: UserRole) {
@@ -93,7 +109,71 @@ describe('MenuPage (#137)', () => {
       name: 'Ayran',
       description: null,
       price: 2.5,
+      components: [],
     })
+  })
+
+  it('shows a combo with its badge and contents (#138)', async () => {
+    backend()
+    renderWithProviders(<MenuPage />)
+
+    const lunch = await screen.findByRole('region', { name: 'Biznes lanç' })
+    const row = within(lunch).getByRole('listitem')
+    expect(within(row).getByText('Kombo')).toBeInTheDocument()
+    expect(within(row).getByText('2 x Sezar')).toBeInTheDocument()
+  })
+
+  it('creates a combo from picked dishes with its own price (#138)', async () => {
+    let sent: unknown = null
+    backend({
+      [`POST ${MENU_URL}/items`]: async (request: Request) => {
+        sent = await request.json()
+        return { id: 'k2', ...(sent as object) }
+      },
+    })
+    renderWithProviders(<MenuPage />)
+
+    const lunch = await screen.findByRole('region', { name: 'Biznes lanç' })
+    await userEvent.click(within(lunch).getByRole('button', { name: /Kombo/ }))
+    await userEvent.type(screen.getByLabelText('Ad'), 'Lanç 2')
+    await userEvent.type(screen.getByLabelText('Qiymət (AZN)'), '15')
+    const save = screen.getByRole('button', { name: 'Yadda saxla' })
+    expect(save).toBeDisabled()
+    // An existing combo is not offered as a component.
+    expect(
+      screen.queryByRole('button', { name: 'Lanç 1 artır' }),
+    ).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Sezar artır' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sezar artır' }))
+    await userEvent.click(save)
+
+    await screen.findByRole('region', { name: 'Biznes lanç' })
+    expect(sent).toEqual({
+      categoryId: 'c3',
+      name: 'Lanç 2',
+      description: null,
+      price: 15,
+      components: [{ itemId: 'd1', quantity: 2 }],
+    })
+  })
+
+  it('explains why a dish inside a combo cannot be deleted (#138)', async () => {
+    backend({
+      [`DELETE ${MENU_URL}/items/d1`]: new Response(
+        JSON.stringify({ status: 409 }),
+        { status: 409 },
+      ),
+    })
+    renderWithProviders(<MenuPage />)
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Sezar sil' }),
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Sil' }))
+
+    expect(
+      await screen.findByText(/kombonun tərkibindədir/),
+    ).toBeInTheDocument()
   })
 
   it('explains why a category with dishes cannot be deleted', async () => {

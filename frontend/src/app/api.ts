@@ -88,6 +88,7 @@ export const api = createApi({
     'Transactions',
     'Floor',
     'Menu',
+    'CustomerMenu',
   ],
   endpoints: () => ({}),
 })

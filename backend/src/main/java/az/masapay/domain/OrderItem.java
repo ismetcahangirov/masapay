@@ -47,4 +47,9 @@ public class OrderItem extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "paid_transaction_id")
 	private Transaction paidTransaction;
+
+	/** The menu dish a customer ordered (#140); null for lines typed in by staff. */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "menu_item_id")
+	private MenuItem menuItem;
 }

@@ -10,6 +10,7 @@ import {
   NoOpenBill,
 } from '@/features/order/bill-states'
 import { useGetTableOrderQuery } from '@/features/order/order-api'
+import { MenuOrderCard } from '@/features/ordering/menu-order-card'
 import { PaymentActions } from '@/features/payment/payment-actions'
 
 // Landing page reached by scanning a table QR code:
@@ -36,18 +37,27 @@ export function TablePage() {
   } else if (error || !data) {
     const notFound = !!error && 'status' in error && error.status === 404
     content = <BillError notFound={notFound} onRetry={refetch} />
-  } else if (!data.order) {
-    content = (
-      <NoOpenBill
-        tableLabel={data.tableLabel}
-        restaurantName={data.restaurantName}
-      />
-    )
   } else {
+    // Two cards (#140): ordering from the menu, then the bill and its payment.
     content = (
-      <div className="flex w-full flex-col items-center gap-4">
-        <BillCard table={data} order={data.order} />
-        <PaymentActions qrToken={validation.qrToken} order={data.order} />
+      <div className="flex w-full flex-col items-center gap-6">
+        <MenuOrderCard qrToken={validation.qrToken} currency={data.currency} />
+        <section
+          aria-label="Ödəniş"
+          className="flex w-full flex-col items-center gap-4"
+        >
+          {data.order ? (
+            <>
+              <BillCard table={data} order={data.order} />
+              <PaymentActions qrToken={validation.qrToken} order={data.order} />
+            </>
+          ) : (
+            <NoOpenBill
+              tableLabel={data.tableLabel}
+              restaurantName={data.restaurantName}
+            />
+          )}
+        </section>
       </div>
     )
   }

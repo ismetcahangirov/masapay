@@ -45,8 +45,8 @@ class StaffOrderServiceTest {
 	private final OrderRealtimeBroadcaster realtime = mock(OrderRealtimeBroadcaster.class);
 	@SuppressWarnings("unchecked")
 	private final ObjectProvider<OrderRealtimeBroadcaster> broadcaster = mock(ObjectProvider.class);
-	private final StaffOrderService service = new StaffOrderService(tableRepository, orderRepository,
-			orderItemRepository, userRepository, customerOrderService, broadcaster);
+	private final StaffOrderService service = new StaffOrderService(tableRepository, userRepository,
+			customerOrderService, new OpenBillWriter(orderRepository, orderItemRepository, broadcaster));
 
 	private final Restaurant restaurant = new Restaurant();
 	private final RestaurantTable table = new RestaurantTable();

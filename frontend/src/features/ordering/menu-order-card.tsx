@@ -24,11 +24,14 @@ import {
   useCustomerMenuQuery,
   usePlaceOrderMutation,
 } from './customer-menu-api'
+import { upsellFor } from './upsell'
+import { UpsellDialog } from './upsell-dialog'
 import { MAX_QUANTITY, useBasket } from './use-basket'
 
 // Card 1 of the table screen (#140): today's menu and the customer's basket.
 // "Əlavə sifariş" is always enabled, so another round can be ordered at any
 // time; a confirmed round goes onto the bill and cannot be removed from here.
+// Before "Əminsiniz?" the restaurant's suggested extras are offered (#141).
 export function MenuOrderCard({
   qrToken,
   currency,
@@ -41,6 +44,8 @@ export function MenuOrderCard({
   const { syncWithMenu } = basket
   const [browsing, setBrowsing] = useState(true)
   const [confirming, setConfirming] = useState(false)
+  const [upsell, setUpsell] = useState<CustomerDish[] | null>(null)
+  const [addedExtras, setAddedExtras] = useState<Set<string>>(new Set())
   const [justOrdered, setJustOrdered] = useState(false)
   const [placeOrder, placeState] = usePlaceOrderMutation()
 
@@ -52,6 +57,31 @@ export function MenuOrderCard({
   function startNewRound() {
     setJustOrdered(false)
     setBrowsing(true)
+  }
+
+  // Extras (#141) are worked out when the customer asks to confirm, and shown
+  // first; with nothing to offer, "Əminsiniz?" opens straight away.
+  function askToConfirm() {
+    const extras = upsellFor(
+      basket.entries,
+      (menu.data ?? []).flatMap((c) => c.items),
+    )
+    if (extras.length === 0) {
+      setConfirming(true)
+      return
+    }
+    setAddedExtras(new Set())
+    setUpsell(extras)
+  }
+
+  function addExtra(dish: CustomerDish) {
+    basket.change(dish, 1)
+    setAddedExtras((current) => new Set(current).add(dish.id))
+  }
+
+  function continueToConfirm() {
+    setUpsell(null)
+    setConfirming(true)
   }
 
   async function onConfirm() {
@@ -198,12 +228,22 @@ export function MenuOrderCard({
           <Button
             variant="success"
             className="h-12 w-full"
-            onClick={() => setConfirming(true)}
+            onClick={askToConfirm}
           >
             Sifarişi təsdiqlə ({formatCurrency(basket.total, currency)})
           </Button>
         </CardFooter>
       )}
+
+      <UpsellDialog
+        open={upsell !== null}
+        extras={upsell ?? []}
+        added={addedExtras}
+        currency={currency}
+        onAdd={addExtra}
+        onContinue={continueToConfirm}
+        onClose={() => setUpsell(null)}
+      />
 
       <ConfirmOrderDialog
         open={confirming}

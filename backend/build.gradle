@@ -56,6 +56,9 @@ dependencies {
 	// QR code matrix generation for printable table codes (rendered to SVG ourselves)
 	implementation 'com.google.zxing:core:3.5.3'
 
+	// Formatted Excel (.xlsx) reports, streamed row by row (#170)
+	implementation 'org.apache.poi:poi-ooxml:5.3.0'
+
 	// Observability (health endpoint)
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 

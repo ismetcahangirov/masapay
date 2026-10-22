@@ -5,6 +5,7 @@ import {
   LoaderCircle,
   Search,
   Undo2,
+  X,
 } from 'lucide-react'
 import { AdminNav } from '@/features/admin/admin-nav'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
@@ -26,6 +27,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Table,
   TableBody,
   TableCell,
@@ -34,6 +42,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { cn } from '@/lib/utils'
 
 const PAGE_SIZE = 20
 const SEARCH_DELAY_MS = 300
@@ -41,6 +50,10 @@ const ALL = 'ALL'
 
 const STATUSES = Object.keys(STATUS_LABELS) as TransactionStatus[]
 const SPLIT_TYPES = Object.keys(SPLIT_LABELS) as SplitType[]
+
+// A filter that narrows the table gets a dark border, so it is obvious at a
+// glance which filters are on.
+const ACTIVE_FILTER = 'border-foreground font-medium'
 
 // Transactions and refunds (#45): every Payriff payment of a restaurant, with
 // search, filters and paging done on the server, and a refund per payment.
@@ -80,6 +93,19 @@ export function TransactionsPage() {
     },
     { skip: !restaurantId },
   )
+
+  const filtered =
+    status !== ALL || splitType !== ALL || from !== '' || to !== '' || q !== ''
+
+  function clearFilters() {
+    setSearchText('')
+    setQ('')
+    setStatus(ALL)
+    setSplitType(ALL)
+    setFrom('')
+    setTo('')
+    setPage(0)
+  }
 
   const data = transactions.data
   const total = data?.totalElements ?? 0
@@ -163,45 +189,63 @@ export function TransactionsPage() {
               }}
             />
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="tx-status">Status</Label>
+            <Select
+              value={status}
+              onValueChange={(value) => {
+                setStatus(value as TransactionStatus | typeof ALL)
+                setPage(0)
+              }}
+            >
+              <SelectTrigger
+                id="tx-status"
+                className={cn('w-48', status !== ALL && ACTIVE_FILTER)}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Bütün statuslar</SelectItem>
+                {STATUSES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {STATUS_LABELS[value]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="tx-split">Ödəniş tipi</Label>
+            <Select
+              value={splitType}
+              onValueChange={(value) => {
+                setSplitType(value as SplitType | typeof ALL)
+                setPage(0)
+              }}
+            >
+              <SelectTrigger
+                id="tx-split"
+                className={cn('w-48', splitType !== ALL && ACTIVE_FILTER)}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Bütün tiplər</SelectItem>
+                {SPLIT_TYPES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {SPLIT_LABELS[value]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {filtered && (
+            <Button variant="ghost" onClick={clearFilters}>
+              <X aria-hidden />
+              Filtrləri sıfırla
+            </Button>
+          )}
         </div>
-
-        <ToggleGroup
-          type="single"
-          value={status}
-          onValueChange={(value) => {
-            if (!value) return
-            setStatus(value as TransactionStatus | typeof ALL)
-            setPage(0)
-          }}
-          className="flex-wrap justify-start"
-          aria-label="Status"
-        >
-          <ToggleGroupItem value={ALL}>Bütün statuslar</ToggleGroupItem>
-          {STATUSES.map((value) => (
-            <ToggleGroupItem key={value} value={value}>
-              {STATUS_LABELS[value]}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-
-        <ToggleGroup
-          type="single"
-          value={splitType}
-          onValueChange={(value) => {
-            if (!value) return
-            setSplitType(value as SplitType | typeof ALL)
-            setPage(0)
-          }}
-          className="flex-wrap justify-start"
-          aria-label="Bölmə növü"
-        >
-          <ToggleGroupItem value={ALL}>Bütün bölmələr</ToggleGroupItem>
-          {SPLIT_TYPES.map((value) => (
-            <ToggleGroupItem key={value} value={value}>
-              {SPLIT_LABELS[value]}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
       </section>
 
       {transactions.isError && (
@@ -216,7 +260,7 @@ export function TransactionsPage() {
             <TableRow>
               <TableHead>Tarix</TableHead>
               <TableHead>Masa</TableHead>
-              <TableHead>Bölmə</TableHead>
+              <TableHead>Ödəniş tipi</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Məbləğ</TableHead>
               <TableHead className="text-right">Bəxşiş</TableHead>

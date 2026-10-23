@@ -41,3 +41,19 @@ afterEach(() => {
   cleanup()
   store.dispatch(api.util.resetApiState())
 })
+
+// jsdom has no matchMedia; the admin sidebar (#184) asks it whether the screen
+// is a phone. Tests run as a desktop: no media query matches.
+if (typeof window.matchMedia !== 'function') {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList
+}

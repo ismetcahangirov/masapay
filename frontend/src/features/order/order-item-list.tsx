@@ -1,10 +1,12 @@
 import { Check } from 'lucide-react'
 import { type OrderItem, orderItemTotal } from '@/features/order/types'
 import { formatCurrency } from '@/features/order/format'
+import { KitchenStatusBadge } from '@/features/order/kitchen-status-badge'
 import { cn } from '@/lib/utils'
 
 // One line of the bill. A paid line stays on the receipt but is crossed out
 // and greyed, so everyone at the table sees what is settled and what is not.
+// A dish from the menu also shows where it is in the kitchen (#178).
 function OrderItemRow({
   item,
   currency,
@@ -19,7 +21,7 @@ function OrderItemRow({
         item.paid && 'text-muted-foreground',
       )}
     >
-      <div className="flex min-w-0 items-baseline gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         <span className="tabular-nums text-sm text-muted-foreground">
           {item.quantity}&times;
         </span>
@@ -36,6 +38,9 @@ function OrderItemRow({
             <Check className="size-3" aria-hidden />
             Ödənilib
           </span>
+        )}
+        {item.kitchenStatus && !item.paid && (
+          <KitchenStatusBadge status={item.kitchenStatus} />
         )}
       </div>
       <span

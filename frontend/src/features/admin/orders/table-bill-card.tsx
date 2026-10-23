@@ -1,4 +1,5 @@
-import { CircleCheck, Info } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { BellRing, CircleCheck, Info } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,22 +10,53 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { formatCurrency } from '@/features/order/format'
+import { KitchenStatusBadge } from '@/features/order/kitchen-status-badge'
 import { OrderStatusBadge } from '@/features/order/order-status-badge'
-import {
-  orderBalance,
-  type KitchenStatus,
-  type Order,
-} from '@/features/order/types'
+import { orderBalance, type Order } from '@/features/order/types'
 import { cn } from '@/lib/utils'
 
-const KITCHEN_LABELS: Record<KitchenStatus, string> = {
-  NEW: 'Mətbəxdə: yeni',
-  PREPARING: 'Hazırlanır',
-  READY: 'Hazırdır',
+/** How long a dish that just turned ready stays highlighted. */
+export const JUST_READY_MS = 2 * 60 * 1000
+
+/**
+ * Ids of dishes that turned READY while the screen was open (#178), each kept
+ * for {@link JUST_READY_MS}, so the waiter sees what to take to the table now.
+ * Dishes already ready when the screen opened are not highlighted.
+ */
+function useJustReady(order: Order): Set<string> {
+  const previous = useRef<Map<string, string | null> | null>(null)
+  const [justReady, setJustReady] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const before = previous.current
+    previous.current = new Map(order.items.map((i) => [i.id, i.kitchenStatus]))
+    if (!before) return
+    const turned = order.items
+      .filter(
+        (i) => i.kitchenStatus === 'READY' && before.get(i.id) !== 'READY',
+      )
+      .map((i) => i.id)
+    if (turned.length === 0) return
+    setJustReady((current) => new Set([...current, ...turned]))
+    const timer = setTimeout(
+      () =>
+        setJustReady((current) => {
+          const next = new Set(current)
+          turned.forEach((id) => next.delete(id))
+          return next
+        }),
+      JUST_READY_MS,
+    )
+    return () => clearTimeout(timer)
+  }, [order.items])
+
+  return justReady
 }
 
 // One table on the staff orders screen (#143): what was ordered, where each
 // dish is in the kitchen, which lines are paid, and what is still to pay.
+// Ready dishes that are not paid yet are counted in the header, and a dish
+// that just turned ready is highlighted (#178).
 export function TableBillCard({
   tableLabel,
   order,
@@ -36,6 +68,10 @@ export function TableBillCard({
   onOpenDetail?: () => void
 }) {
   const left = orderBalance(order)
+  const justReady = useJustReady(order)
+  const readyCount = order.items.filter(
+    (item) => item.kitchenStatus === 'READY' && !item.paid,
+  ).length
   const progress =
     order.totalAmount > 0
       ? Math.min(100, Math.round((order.paidAmount / order.totalAmount) * 100))
@@ -47,7 +83,13 @@ export function TableBillCard({
         <CardTitle className="text-lg">
           <h2>{tableLabel}</h2>
         </CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {readyCount > 0 && (
+            <Badge variant="success" className="gap-1">
+              <BellRing className="size-3" aria-hidden />
+              {readyCount} yemək hazırdır
+            </Badge>
+          )}
           <OrderStatusBadge status={order.status} />
           {onOpenDetail && (
             <Button
@@ -70,7 +112,12 @@ export function TableBillCard({
             {order.items.map((item) => (
               <li
                 key={item.id}
-                className="flex items-start justify-between gap-3 py-2"
+                data-just-ready={justReady.has(item.id) || undefined}
+                className={cn(
+                  'flex items-start justify-between gap-3 py-2',
+                  justReady.has(item.id) &&
+                    '-mx-2 rounded-md bg-success/15 px-2',
+                )}
               >
                 <div className="min-w-0 space-y-1">
                   <p
@@ -82,13 +129,7 @@ export function TableBillCard({
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {item.kitchenStatus && (
-                      <Badge
-                        variant={
-                          item.kitchenStatus === 'READY' ? 'success' : 'outline'
-                        }
-                      >
-                        {KITCHEN_LABELS[item.kitchenStatus]}
-                      </Badge>
+                      <KitchenStatusBadge status={item.kitchenStatus} />
                     )}
                     {item.paid && (
                       <Badge variant="secondary">

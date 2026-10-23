@@ -3,6 +3,7 @@ package az.masapay.payment;
 import az.masapay.payment.dto.CheckoutResponse;
 import az.masapay.payment.dto.EqualPaymentQuote;
 import az.masapay.payment.dto.EqualPaymentRequest;
+import az.masapay.payment.dto.FullPaymentRequest;
 import az.masapay.payment.dto.ItemPaymentRequest;
 import az.masapay.payment.dto.PaymentQuote;
 import jakarta.validation.Valid;
@@ -45,9 +46,11 @@ public class CustomerPaymentController {
 		return paymentSettlementService.quoteFullPayment(qrToken);
 	}
 
+	/** The body is optional: without it, or without a tip, the bill is paid without a tip. */
 	@PostMapping("/full/checkout")
-	public CheckoutResponse checkoutFull(@PathVariable UUID qrToken) {
-		return checkoutService.checkoutFull(qrToken);
+	public CheckoutResponse checkoutFull(@PathVariable UUID qrToken,
+			@Valid @RequestBody(required = false) FullPaymentRequest request) {
+		return checkoutService.checkoutFull(qrToken, request == null ? null : request.tipAmount());
 	}
 
 	@GetMapping("/items")
@@ -58,7 +61,7 @@ public class CustomerPaymentController {
 
 	@PostMapping("/items/checkout")
 	public CheckoutResponse checkoutItems(@PathVariable UUID qrToken, @Valid @RequestBody ItemPaymentRequest request) {
-		return checkoutService.checkoutItems(qrToken, request.itemIds(), request.guests());
+		return checkoutService.checkoutItems(qrToken, request.itemIds(), request.guests(), request.tipAmount());
 	}
 
 	@GetMapping("/equal")
@@ -70,6 +73,6 @@ public class CustomerPaymentController {
 
 	@PostMapping("/equal/checkout")
 	public CheckoutResponse checkoutEqual(@PathVariable UUID qrToken, @Valid @RequestBody EqualPaymentRequest request) {
-		return checkoutService.checkoutEqual(qrToken, request.parts(), request.partsToPay());
+		return checkoutService.checkoutEqual(qrToken, request.parts(), request.partsToPay(), request.tipAmount());
 	}
 }

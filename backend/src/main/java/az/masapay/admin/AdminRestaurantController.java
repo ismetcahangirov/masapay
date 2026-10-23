@@ -6,9 +6,13 @@ import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.UserRepository;
+import az.masapay.restaurant.RestaurantGate;
 import az.masapay.security.AuthenticatedUser;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,10 +33,17 @@ public class AdminRestaurantController {
 
 	private final RestaurantRepository restaurantRepository;
 	private final UserRepository userRepository;
+	private final Clock clock;
 
+	@Autowired
 	public AdminRestaurantController(RestaurantRepository restaurantRepository, UserRepository userRepository) {
+		this(restaurantRepository, userRepository, Clock.systemUTC());
+	}
+
+	AdminRestaurantController(RestaurantRepository restaurantRepository, UserRepository userRepository, Clock clock) {
 		this.restaurantRepository = restaurantRepository;
 		this.userRepository = userRepository;
+		this.clock = clock;
 	}
 
 	@GetMapping
@@ -41,9 +52,10 @@ public class AdminRestaurantController {
 		List<Restaurant> restaurants = principal.role() == UserRole.SUPER_ADMIN
 			? restaurantRepository.findAll()
 			: userRepository.findById(principal.id()).map(User::getRestaurant).map(List::of).orElse(List.of());
+		LocalDate today = LocalDate.now(clock.withZone(RestaurantGate.ZONE));
 		return restaurants.stream()
 			.sorted(Comparator.comparing(Restaurant::getName))
-			.map(RestaurantSummary::from)
+			.map(restaurant -> RestaurantSummary.from(restaurant, today))
 			.toList();
 	}
 }

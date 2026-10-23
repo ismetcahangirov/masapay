@@ -69,7 +69,7 @@ class FloorServiceTest {
 		when(tableRepository.findByRestaurantIdOrderByLabelAsc(restaurant.getId())).thenReturn(List.of(empty, busy));
 		when(customerOrderService.getCurrentOrder(empty.getQrToken())).thenReturn(snapshot(empty, null));
 		OrderView open = new OrderView(UUID.randomUUID(), "OPEN", new BigDecimal("20.00"), new BigDecimal("5.00"),
-			new BigDecimal("15.00"), Instant.now(), List.of(), null, null);
+			new BigDecimal("15.00"), Instant.now(), List.of(), null, null, null);
 		when(customerOrderService.getCurrentOrder(busy.getQrToken())).thenReturn(snapshot(busy, open));
 
 		List<FloorTableView> floor = service.floor(restaurant.getId(), waiter);
@@ -102,7 +102,7 @@ class FloorServiceTest {
 		when(tableRepository.findByRestaurantIdOrderByLabelAsc(restaurant.getId())).thenReturn(List.of(empty, busy));
 		when(customerOrderService.getCurrentOrder(empty.getQrToken())).thenReturn(snapshot(empty, null));
 		OrderView open = new OrderView(UUID.randomUUID(), "OPEN", new BigDecimal("20.00"), new BigDecimal("5.00"),
-			new BigDecimal("15.00"), Instant.now(), List.of(), null, null);
+			new BigDecimal("15.00"), Instant.now(), List.of(), null, null, null);
 		TableOrderResponse busyBill = snapshot(busy, open);
 		when(customerOrderService.getCurrentOrder(busy.getQrToken())).thenReturn(busyBill);
 

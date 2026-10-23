@@ -6,6 +6,7 @@ import az.masapay.dashboard.dto.StatusCount;
 import az.masapay.platform.dto.RestaurantPayments;
 import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.TransactionStatus;
+import az.masapay.tip.dto.MyTipLine;
 import az.masapay.tip.dto.WaiterTip;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
@@ -118,6 +119,24 @@ public interface TransactionRepository
 		group by t.restaurant.id
 		""")
 	List<RestaurantPayments> sumSuccessfulPaymentsByRestaurant(
+		@Param("from") Instant from,
+		@Param("to") Instant to);
+
+	/** A waiter's own tips (#182): successful payments with a tip on bills they serve, newest first. */
+	@Query("""
+		select new az.masapay.tip.dto.MyTipLine(t.id, t.paidAt, tb.label, t.tipAmount, t.amount)
+		from Transaction t
+		join t.order o
+		join o.table tb
+		where o.waiter.id = :waiterId
+			and t.status = az.masapay.domain.enums.TransactionStatus.SUCCESS
+			and t.tipAmount > 0
+			and t.paidAt >= :from
+			and t.paidAt < :to
+		order by t.paidAt desc
+		""")
+	List<MyTipLine> findTipsOfWaiter(
+		@Param("waiterId") UUID waiterId,
 		@Param("from") Instant from,
 		@Param("to") Instant to);
 }

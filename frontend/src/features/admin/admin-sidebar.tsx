@@ -130,6 +130,13 @@ const RESTAURANT_LINKS: AdminLink[] = [
     roles: MANAGERS,
   },
   {
+    to: '/admin/my-tips',
+    label: 'Bəxşişlərim',
+    icon: HandCoins,
+    end: false,
+    roles: ['WAITER'],
+  },
+  {
     to: '/admin/settings',
     label: 'Tənzimləmələr',
     icon: Settings,

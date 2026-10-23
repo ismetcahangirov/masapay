@@ -47,6 +47,12 @@ public class StaffOrderController {
 		return staffOrderService.addMenuItem(tableId, request, staff);
 	}
 
+	/** A waiter takes the table: they serve it and get its tips (#182). */
+	@PostMapping("/claim")
+	public TableOrderResponse claim(@PathVariable UUID tableId, @AuthenticationPrincipal AuthenticatedUser staff) {
+		return staffOrderService.claim(tableId, staff);
+	}
+
 	/** Payments on the table's current bill, newest first (#144). */
 	@GetMapping("/payments")
 	public List<TablePaymentView> payments(@PathVariable UUID tableId,

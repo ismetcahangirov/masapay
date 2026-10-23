@@ -56,6 +56,7 @@ describe('AdminLayout sidebar (#184)', () => {
       'Masalar',
       'Sifarişlər',
       'Menyu',
+      'Bəxşişlərim',
     ])
   })
 

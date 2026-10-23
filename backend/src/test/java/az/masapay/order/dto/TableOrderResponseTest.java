@@ -16,7 +16,7 @@ class TableOrderResponseTest {
 
 	private TableOrderResponse bill(OrderItemView... items) {
 		OrderView order = new OrderView(UUID.randomUUID(), "OPEN", new BigDecimal("9.00"), BigDecimal.ZERO,
-			new BigDecimal("9.00"), AT, List.of(items), null, null);
+			new BigDecimal("9.00"), AT, List.of(items), null, null, null);
 		return new TableOrderResponse(UUID.randomUUID(), "Masa 4", UUID.randomUUID(), "Dolma", "AZN", null, order);
 	}
 

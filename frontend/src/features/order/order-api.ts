@@ -40,6 +40,8 @@ interface OrderDto {
   items: OrderItemDto[]
   equalSplit: EqualSplitDto | null
   serviceCharge: { amount: number; guests: number | null } | null
+  /** Staff views only (#182); never sent to customers. */
+  waiter?: { id: string; name: string } | null
 }
 
 export interface TableOrderDto {
@@ -99,6 +101,7 @@ function toOrder(dto: OrderDto, currency: string): Order {
           guests: dto.serviceCharge.guests,
         }
       : null,
+    waiter: dto.waiter ?? null,
   }
 }
 

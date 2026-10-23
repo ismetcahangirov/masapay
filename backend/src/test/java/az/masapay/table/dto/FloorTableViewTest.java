@@ -24,7 +24,7 @@ class FloorTableViewTest {
 		BigDecimal totalAmount = new BigDecimal(total);
 		BigDecimal paidAmount = new BigDecimal(paid);
 		return new OrderView(UUID.randomUUID(), status, totalAmount, paidAmount,
-			totalAmount.subtract(paidAmount).max(BigDecimal.ZERO), OPENED, List.of(), null, null);
+			totalAmount.subtract(paidAmount).max(BigDecimal.ZERO), OPENED, List.of(), null, null, null);
 	}
 
 	@Test

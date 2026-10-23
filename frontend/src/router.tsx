@@ -46,6 +46,11 @@ const RestaurantsPage = lazy(() =>
     default: m.RestaurantsPage,
   })),
 )
+const MyTipsPage = lazy(() =>
+  import('@/routes/admin/my-tips-page').then((m) => ({
+    default: m.MyTipsPage,
+  })),
+)
 const PlatformAnalyticsPage = lazy(() =>
   import('@/routes/admin/platform-analytics-page').then((m) => ({
     default: m.PlatformAnalyticsPage,
@@ -143,6 +148,19 @@ export const router = createBrowserRouter([
         <AdminLayout>
           <Suspense fallback={null}>
             <PlatformAnalyticsPage />
+          </Suspense>
+        </AdminLayout>
+      </RequireAuth>
+    ),
+  },
+  {
+    // A waiter's own tips with the table of each (#182).
+    path: '/admin/my-tips',
+    element: (
+      <RequireAuth roles={['WAITER']}>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <MyTipsPage />
           </Suspense>
         </AdminLayout>
       </RequireAuth>

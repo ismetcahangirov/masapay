@@ -94,6 +94,21 @@ public class StaffOrderService {
 		return customerOrderService.getCurrentOrder(table.getQrToken());
 	}
 
+	/**
+	 * A waiter takes the table (#182): from now on they serve it and its tips are theirs. Another
+	 * waiter may take it over. Only an open bill can be taken.
+	 */
+	@Transactional
+	public TableOrderResponse claim(UUID tableId, AuthenticatedUser staff) {
+		RestaurantTable table = table(tableId);
+		User user = checkSameRestaurant(staff, table);
+		if (staff.role() != UserRole.WAITER) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only a waiter takes a table");
+		}
+		billWriter.assignWaiter(table, user);
+		return customerOrderService.getCurrentOrder(table.getQrToken());
+	}
+
 	/** Payments on the table's current bill, newest first (#144); empty when it has no bill. */
 	@Transactional(readOnly = true)
 	public List<TablePaymentView> payments(UUID tableId, AuthenticatedUser staff) {

@@ -39,7 +39,7 @@ class OrderRealtimeRelayTest {
 			new BigDecimal("7.00"), false, null, OrderItemView.Source.STAFF, "Aysel",
 			Instant.parse("2026-01-01T00:00:00Z"));
 		OrderView order = new OrderView(
-			UUID.randomUUID(), "OPEN", new BigDecimal("7.00"), BigDecimal.ZERO, new BigDecimal("7.00"), Instant.parse("2026-01-01T00:00:00Z"), List.of(byWaiter), null, null);
+			UUID.randomUUID(), "OPEN", new BigDecimal("7.00"), BigDecimal.ZERO, new BigDecimal("7.00"), Instant.parse("2026-01-01T00:00:00Z"), List.of(byWaiter), null, null, null);
 		TableOrderResponse snapshot =
 			new TableOrderResponse(UUID.randomUUID(), "A1", UUID.randomUUID(), "Cafe", "AZN", null, order);
 		byte[] body = objectMapper.writeValueAsString(new OrderUpdateMessage(qrToken, snapshot))

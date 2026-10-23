@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { BellRing, CircleCheck, Info } from 'lucide-react'
+import { BellRing, CircleCheck, Hand, Info, UserRound } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -61,11 +61,16 @@ export function TableBillCard({
   tableLabel,
   order,
   onOpenDetail,
+  onClaim,
+  claiming = false,
 }: {
   tableLabel: string
   order: Order
   /** Opens the table's detail: who added what, payments, adding a dish (#144). */
   onOpenDetail?: () => void
+  /** Shown to a waiter for a table that is not theirs: take it and its tips (#182). */
+  onClaim?: () => void
+  claiming?: boolean
 }) {
   const left = orderBalance(order)
   const justReady = useJustReady(order)
@@ -104,7 +109,27 @@ export function TableBillCard({
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <UserRound className="size-4" aria-hidden />
+            {order.waiter
+              ? `Ofisiant: ${order.waiter.name}`
+              : 'Ofisiant yoxdur'}
+          </span>
+          {onClaim && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onClaim}
+              disabled={claiming}
+              aria-label={`${tableLabel} masanı götür`}
+            >
+              <Hand aria-hidden />
+              Masanı götür
+            </Button>
+          )}
+        </div>
         {order.items.length === 0 ? (
           <p className="text-sm text-muted-foreground">Hələ məhsul yoxdur.</p>
         ) : (

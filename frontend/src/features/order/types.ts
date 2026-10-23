@@ -49,6 +49,8 @@ export interface Order {
   equalSplit: { totalParts: number; paidParts: number } | null
   /** Charge not tied to an item, shared by the guests (#25); null when there is none. */
   serviceCharge: { amount: number; guests: number | null } | null
+  /** Who serves the table and gets its tips (#182); staff screens only. */
+  waiter?: { id: string; name: string } | null
 }
 
 /** The table a QR code belongs to, with its open bill (null when there is none). */

@@ -21,6 +21,7 @@ import az.masapay.menu.dto.ComboComponentView;
 import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
+import az.masapay.menu.dto.ExtraRequest;
 import az.masapay.menu.dto.MenuItemView;
 import az.masapay.menu.dto.SuggestionsRequest;
 import az.masapay.repository.MenuCategoryRepository;
@@ -445,6 +446,29 @@ class MenuServiceTest {
 	@Test
 	void anUnknownQrTokenHasNoMenu() {
 		assertStatus(() -> service.customerMenu(UUID.randomUUID()), HttpStatus.NOT_FOUND);
+	}
+
+	// Extras asked about before confirming (#185)
+
+	@Test
+	void aManagerMarksADishAsAnExtraAskedBeforeConfirming() {
+		MenuItem ketchup = item(category(restaurant, "Souslar", 0), "Ketçup");
+
+		MenuItemView marked = service.setExtra(restaurant.getId(), ketchup.getId(), new ExtraRequest(true), manager);
+
+		assertThat(marked.askBeforeConfirm()).isTrue();
+		assertThat(ketchup.isAskBeforeConfirm()).isTrue();
+		assertThat(service.setExtra(restaurant.getId(), ketchup.getId(), new ExtraRequest(false), manager)
+				.askBeforeConfirm()).isFalse();
+	}
+
+	@Test
+	void anotherRestaurantsDishCanNotBeMarked() {
+		MenuItem foreign = item(category(otherRestaurant, "Souslar", 0), "Ketçup");
+
+		assertStatus(() -> service.setExtra(restaurant.getId(), foreign.getId(), new ExtraRequest(true), manager),
+				HttpStatus.NOT_FOUND);
+		assertThat(foreign.isAskBeforeConfirm()).isFalse();
 	}
 
 	// Upsell (#141)

@@ -1,6 +1,7 @@
 package az.masapay.menu;
 
 import az.masapay.menu.dto.AvailabilityRequest;
+import az.masapay.menu.dto.ExtraRequest;
 import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
 import az.masapay.menu.dto.MenuItemRequest;
@@ -86,6 +87,14 @@ public class AdminMenuController {
 	public MenuItemView setAvailability(@PathVariable UUID restaurantId, @PathVariable UUID itemId,
 			@Valid @RequestBody AvailabilityRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
 		return menuService.setAvailability(restaurantId, itemId, request, caller);
+	}
+
+	/** Asked about before every customer confirms, e.g. ketchup or water (#185). */
+	@PutMapping("/items/{itemId}/extra")
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN','RESTO_MANAGER')")
+	public MenuItemView setExtra(@PathVariable UUID restaurantId, @PathVariable UUID itemId,
+			@Valid @RequestBody ExtraRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
+		return menuService.setExtra(restaurantId, itemId, request, caller);
 	}
 
 	@PutMapping("/items/{itemId}/suggestions")

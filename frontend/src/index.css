@@ -54,6 +54,15 @@
     --brand-green: #08cb00;
     --brand-greige: #f6f5f6;
     --brand-near-black: #0a0a0a;
+    /* Admin sidebar (#184): white panel, black active item, greige hover, green focus ring */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 4%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 300 5% 96%;
+    --sidebar-accent-foreground: 0 0% 4%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 117 100% 40%;
   }
 
   .dark {
@@ -88,6 +97,14 @@
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 117 100% 40%;
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 117 100% 40%;
   }
 }
 

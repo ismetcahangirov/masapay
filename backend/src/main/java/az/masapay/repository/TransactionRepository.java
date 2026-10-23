@@ -3,6 +3,7 @@ package az.masapay.repository;
 import az.masapay.dashboard.dto.PaidAmount;
 import az.masapay.dashboard.dto.PaymentTotals;
 import az.masapay.dashboard.dto.StatusCount;
+import az.masapay.platform.dto.RestaurantPayments;
 import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.tip.dto.WaiterTip;
@@ -103,6 +104,20 @@ public interface TransactionRepository
 		""")
 	List<StatusCount> countPayriffByStatus(
 		@Param("restaurantId") UUID restaurantId,
+		@Param("from") Instant from,
+		@Param("to") Instant to);
+
+	/** Platform analytics (#149): successful payments paid in {@code [from, to)}, per restaurant. */
+	@Query("""
+		select new az.masapay.platform.dto.RestaurantPayments(t.restaurant.id, count(t), sum(t.amount),
+			sum(t.tipAmount))
+		from Transaction t
+		where t.status = az.masapay.domain.enums.TransactionStatus.SUCCESS
+			and t.paidAt >= :from
+			and t.paidAt < :to
+		group by t.restaurant.id
+		""")
+	List<RestaurantPayments> sumSuccessfulPaymentsByRestaurant(
 		@Param("from") Instant from,
 		@Param("to") Instant to);
 }

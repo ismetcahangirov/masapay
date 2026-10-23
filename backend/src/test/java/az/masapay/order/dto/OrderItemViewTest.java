@@ -8,6 +8,7 @@ import az.masapay.domain.User;
 import az.masapay.order.dto.OrderItemView.Source;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class OrderItemViewTest {
@@ -54,5 +55,20 @@ class OrderItemViewTest {
 
 		assertThat(OrderItemView.of(fromPos).source()).isEqualTo(Source.POS);
 		assertThat(OrderItemView.of(olderTyped).source()).isEqualTo(Source.STAFF);
+	}
+
+	@Test
+	void aMenuLineSaysWhichDishItIsEvenForCustomers() {
+		MenuItem sezar = new MenuItem();
+		sezar.setId(UUID.randomUUID());
+		OrderItem item = line();
+		item.setMenuItem(sezar);
+
+		OrderItemView view = OrderItemView.of(item);
+
+		// The payment offer skips dishes the table already has (#183).
+		assertThat(view.menuItemId()).isEqualTo(sezar.getId());
+		assertThat(view.withoutStaffName().menuItemId()).isEqualTo(sezar.getId());
+		assertThat(OrderItemView.of(line()).menuItemId()).isNull();
 	}
 }

@@ -23,7 +23,7 @@ class TableOrderResponseTest {
 	@Test
 	void customersSeeThatStaffAddedALineButNotWho() {
 		OrderItemView byWaiter = new OrderItemView(UUID.randomUUID(), "Dolma", BigDecimal.ONE, new BigDecimal("9.00"),
-			new BigDecimal("9.00"), false, KitchenStatus.NEW, Source.STAFF, "Aysel", AT);
+			new BigDecimal("9.00"), false, KitchenStatus.NEW, Source.STAFF, "Aysel", AT, null);
 
 		TableOrderResponse staffBill = bill(byWaiter);
 		TableOrderResponse forCustomers = staffBill.forCustomers();

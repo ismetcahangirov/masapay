@@ -45,6 +45,11 @@ const RestaurantsPage = lazy(() =>
     default: m.RestaurantsPage,
   })),
 )
+const PlatformAnalyticsPage = lazy(() =>
+  import('@/routes/admin/platform-analytics-page').then((m) => ({
+    default: m.PlatformAnalyticsPage,
+  })),
+)
 const StaffPage = lazy(() =>
   import('@/routes/admin/staff-page').then((m) => ({
     default: m.StaffPage,
@@ -119,6 +124,17 @@ export const router = createBrowserRouter([
       <RequireAuth roles={['SUPER_ADMIN']}>
         <Suspense fallback={null}>
           <RestaurantsPage />
+        </Suspense>
+      </RequireAuth>
+    ),
+  },
+  {
+    // The whole platform's numbers: super admin only (#149).
+    path: '/admin/analytics',
+    element: (
+      <RequireAuth roles={['SUPER_ADMIN']}>
+        <Suspense fallback={null}>
+          <PlatformAnalyticsPage />
         </Suspense>
       </RequireAuth>
     ),

@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   BookOpen,
   Building2,
+  ChartColumn,
   ChefHat,
   ClipboardList,
   HandCoins,
@@ -29,6 +30,13 @@ const LINKS = [
     to: '/admin/restaurants',
     label: 'Restoranlar',
     icon: Building2,
+    end: false,
+    roles: PLATFORM,
+  },
+  {
+    to: '/admin/analytics',
+    label: 'Analitika',
+    icon: ChartColumn,
     end: false,
     roles: PLATFORM,
   },

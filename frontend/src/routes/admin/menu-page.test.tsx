@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { store } from '@/app/store'
 import { type UserRole, userLoaded } from '@/features/auth/auth-slice'
@@ -16,6 +16,7 @@ const ON_MENU = {
   availableUntil: null,
   availableToday: true,
   suggestionIds: [],
+  askBeforeConfirm: false,
 }
 
 const menu = [
@@ -317,5 +318,24 @@ describe('MenuPage (#137)', () => {
 
     await screen.findByRole('region', { name: 'Salatlar' })
     expect(sent).toEqual({ itemIds: ['d4', 'd3'] })
+  })
+
+  it('marks a dish as an extra asked about before confirming (#185)', async () => {
+    let sent: unknown = null
+    backend({
+      [`PUT ${MENU_URL}/items/d1/extra`]: async (request: Request) => {
+        sent = await request.json()
+        return { ...menu[0].items[0], askBeforeConfirm: true }
+      },
+    })
+    renderWithProviders(<MenuPage />)
+
+    const toggle = await screen.findByRole('button', {
+      name: 'Sezar təsdiqdən əvvəl soruşulsun',
+    })
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(toggle)
+
+    await waitFor(() => expect(sent).toEqual({ askBeforeConfirm: true }))
   })
 })

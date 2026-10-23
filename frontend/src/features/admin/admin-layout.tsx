@@ -26,7 +26,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             masapay
           </span>
         </header>
-        <div className="mx-auto w-full max-w-6xl px-6 pt-6 empty:hidden">
+        <div className="mx-auto w-full max-w-6xl px-4 pt-4 empty:hidden sm:px-6 sm:pt-6">
           <SubscriptionBanner />
         </div>
         {children}

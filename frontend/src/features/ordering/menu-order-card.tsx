@@ -186,7 +186,7 @@ export function MenuOrderCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8"
+                    className="size-10"
                     onClick={() => basket.remove(dish.id)}
                     aria-label={`${dish.name} səbətdən çıxar`}
                   >

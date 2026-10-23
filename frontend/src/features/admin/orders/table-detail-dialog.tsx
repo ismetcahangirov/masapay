@@ -165,7 +165,7 @@ export function TableDetailDialog({
               waiter's tablet, and a dropdown inside this dialog would fight
               the dialog over keyboard focus. */}
           <ul
-            className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto"
+            className="grid max-h-48 gap-2 overflow-y-auto sm:grid-cols-2"
             aria-label="Bu günün menyusu"
           >
             {todaysDishes.map((dish) => {

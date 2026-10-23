@@ -62,7 +62,7 @@ export function PlatformAnalyticsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <ChartColumn className="size-6" aria-hidden />

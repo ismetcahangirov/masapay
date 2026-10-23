@@ -7,6 +7,7 @@ import { PaymentResultPage } from '@/routes/payment-result-page'
 import { MockPayriffPage } from '@/routes/mock-payriff-page'
 import { LoginPage } from '@/routes/admin/login-page'
 import { RequireAuth } from '@/features/auth/require-auth'
+import { AdminLayout } from '@/features/admin/admin-layout'
 
 // Admin panel is lazy-loaded so its charting bundle (recharts) stays out of the
 // customer PWA's initial download.
@@ -100,9 +101,11 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
-        <Suspense fallback={null}>
-          <DashboardPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <DashboardPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -111,9 +114,11 @@ export const router = createBrowserRouter([
     path: '/admin/tables',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
-        <Suspense fallback={null}>
-          <TablesPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <TablesPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -122,9 +127,11 @@ export const router = createBrowserRouter([
     path: '/admin/restaurants',
     element: (
       <RequireAuth roles={['SUPER_ADMIN']}>
-        <Suspense fallback={null}>
-          <RestaurantsPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <RestaurantsPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -133,9 +140,11 @@ export const router = createBrowserRouter([
     path: '/admin/analytics',
     element: (
       <RequireAuth roles={['SUPER_ADMIN']}>
-        <Suspense fallback={null}>
-          <PlatformAnalyticsPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <PlatformAnalyticsPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -144,9 +153,11 @@ export const router = createBrowserRouter([
     path: '/admin/staff',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
-        <Suspense fallback={null}>
-          <StaffPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <StaffPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -155,9 +166,11 @@ export const router = createBrowserRouter([
     path: '/admin/orders',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
-        <Suspense fallback={null}>
-          <OrdersPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <OrdersPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -166,9 +179,11 @@ export const router = createBrowserRouter([
     path: '/admin/kitchen',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'CHEF']}>
-        <Suspense fallback={null}>
-          <KitchenPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <KitchenPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -177,9 +192,11 @@ export const router = createBrowserRouter([
     path: '/admin/menu',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
-        <Suspense fallback={null}>
-          <MenuPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <MenuPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -188,9 +205,11 @@ export const router = createBrowserRouter([
     path: '/admin/live',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER', 'WAITER']}>
-        <Suspense fallback={null}>
-          <LiveTablesPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <LiveTablesPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -199,9 +218,11 @@ export const router = createBrowserRouter([
     path: '/admin/transactions',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
-        <Suspense fallback={null}>
-          <TransactionsPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <TransactionsPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -209,9 +230,11 @@ export const router = createBrowserRouter([
     path: '/admin/settings',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
-        <Suspense fallback={null}>
-          <SettingsPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <SettingsPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },
@@ -220,9 +243,11 @@ export const router = createBrowserRouter([
     path: '/admin/tips',
     element: (
       <RequireAuth roles={['SUPER_ADMIN', 'RESTO_MANAGER']}>
-        <Suspense fallback={null}>
-          <TipsPage />
-        </Suspense>
+        <AdminLayout>
+          <Suspense fallback={null}>
+            <TipsPage />
+          </Suspense>
+        </AdminLayout>
       </RequireAuth>
     ),
   },

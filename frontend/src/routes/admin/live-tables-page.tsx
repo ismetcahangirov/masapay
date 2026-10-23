@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { LoaderCircle, Radio } from 'lucide-react'
-import { AdminNav } from '@/features/admin/admin-nav'
 import { useRestaurantFloorQuery } from '@/features/admin/live/floor-api'
 import {
   FLOOR_STATUS,
@@ -36,7 +35,6 @@ export function LiveTablesPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <AdminNav />
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           Canlı masalar

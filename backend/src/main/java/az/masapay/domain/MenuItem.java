@@ -67,6 +67,10 @@ public class MenuItem extends BaseEntity {
 	@Column(name = "available_until")
 	private LocalDate availableUntil;
 
+	/** Asked about before every customer confirms an order, e.g. ketchup or water (#185). */
+	@Column(name = "ask_before_confirm", nullable = false)
+	private boolean askBeforeConfirm;
+
 	/** The dishes a combo is made of (#138); empty for an ordinary dish. */
 	@OneToMany(mappedBy = "combo", cascade = CascadeType.ALL, orphanRemoval = true)
 	@BatchSize(size = 50)

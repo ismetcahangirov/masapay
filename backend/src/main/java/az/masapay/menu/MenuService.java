@@ -7,6 +7,7 @@ import az.masapay.domain.RestaurantTable;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.menu.dto.AvailabilityRequest;
+import az.masapay.menu.dto.ExtraRequest;
 import az.masapay.menu.dto.ComboComponentRequest;
 import az.masapay.menu.dto.MenuCategoryRequest;
 import az.masapay.menu.dto.MenuCategoryView;
@@ -129,6 +130,15 @@ public class MenuService {
 		List<MenuItem> suggestions = request.itemIds().stream().map(id -> item(restaurantId, id)).toList();
 		item.getSuggestions().clear();
 		item.getSuggestions().addAll(suggestions);
+		return MenuItemView.of(item, today());
+	}
+
+	/** Marks a dish as an extra every customer is asked about before confirming, or not (#185). */
+	@Transactional
+	public MenuItemView setExtra(UUID restaurantId, UUID itemId, ExtraRequest request, AuthenticatedUser caller) {
+		checkManager(caller, restaurantId);
+		MenuItem item = item(restaurantId, itemId);
+		item.setAskBeforeConfirm(request.askBeforeConfirm());
 		return MenuItemView.of(item, today());
 	}
 

@@ -3,6 +3,7 @@ import {
   CalendarClock,
   Layers,
   LoaderCircle,
+  MessageCircleQuestion,
   Pencil,
   Plus,
   Sparkles,
@@ -21,6 +22,7 @@ import {
   useDeleteCategoryMutation,
   useDeleteDishMutation,
   useRestaurantMenuQuery,
+  useSetExtraMutation,
 } from '@/features/admin/menu/menu-api'
 import { isConflict } from '@/features/admin/menu/menu-errors'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
@@ -62,6 +64,7 @@ export function MenuPage() {
   const [removing, setRemoving] = useState<Removing | null>(null)
   const [scheduling, setScheduling] = useState<MenuDish | null>(null)
   const [suggesting, setSuggesting] = useState<MenuDish | null>(null)
+  const [setExtra] = useSetExtraMutation()
   const dishNames = new Map(
     categories.flatMap((c) => c.items).map((item) => [item.id, item.name]),
   )
@@ -238,6 +241,15 @@ export function MenuPage() {
                             {dish.components.length > 0 && (
                               <Badge variant="secondary">Kombo</Badge>
                             )}
+                            {dish.askBeforeConfirm && (
+                              <Badge variant="outline">
+                                <MessageCircleQuestion
+                                  className="mr-1 size-3"
+                                  aria-hidden
+                                />
+                                Təsdiqdən əvvəl soruşulur
+                              </Badge>
+                            )}
                             {status && (
                               <Badge variant="outline">
                                 <CalendarClock
@@ -292,6 +304,25 @@ export function MenuPage() {
                                 aria-label={`${dish.name} əlavə təklifləri`}
                               >
                                 <Sparkles aria-hidden />
+                              </Button>
+                              <Button
+                                variant={
+                                  dish.askBeforeConfirm ? 'secondary' : 'ghost'
+                                }
+                                size="icon"
+                                aria-pressed={dish.askBeforeConfirm}
+                                onClick={() =>
+                                  restaurantId &&
+                                  void setExtra({
+                                    restaurantId,
+                                    dishId: dish.id,
+                                    askBeforeConfirm: !dish.askBeforeConfirm,
+                                  })
+                                }
+                                aria-label={`${dish.name} təsdiqdən əvvəl soruşulsun`}
+                                title="Təsdiqdən əvvəl hər müştəridən soruşulsun (sous, su)"
+                              >
+                                <MessageCircleQuestion aria-hidden />
                               </Button>
                               <Button
                                 variant="ghost"

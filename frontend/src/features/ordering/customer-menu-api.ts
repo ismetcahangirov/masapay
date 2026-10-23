@@ -20,6 +20,8 @@ export interface CustomerDish {
   components: { name: string; quantity: number }[]
   /** Extras the restaurant offers with it before confirming (#141). */
   suggestionIds: string[]
+  /** Asked about before every order is confirmed, e.g. ketchup or water (#185). */
+  askBeforeConfirm: boolean
 }
 
 export interface CustomerCategory {
@@ -38,6 +40,7 @@ interface CategoryDto {
     price: number
     components: { name: string; quantity: number }[]
     suggestionIds?: string[]
+    askBeforeConfirm?: boolean
   }[]
 }
 
@@ -67,6 +70,7 @@ export const customerMenuApi = api.injectEndpoints({
               quantity,
             })),
             suggestionIds: item.suggestionIds ?? [],
+            askBeforeConfirm: item.askBeforeConfirm ?? false,
           })),
         })),
       providesTags: (_r, _e, qrToken) => [

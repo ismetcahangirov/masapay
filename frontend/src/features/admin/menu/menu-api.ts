@@ -28,6 +28,8 @@ export interface MenuDish {
   availableToday: boolean
   /** Extras offered with it before the customer confirms (#141), in order. */
   suggestionIds: string[]
+  /** Every customer is asked about it before confirming, e.g. ketchup (#185). */
+  askBeforeConfirm: boolean
 }
 
 export type AvailabilityMode = 'ALWAYS' | 'OFF' | 'OFF_TODAY' | 'DATES'
@@ -147,6 +149,19 @@ export const menuApi = api.injectEndpoints({
         { type: 'Menu', id: restaurantId },
       ],
     }),
+    setExtra: build.mutation<
+      MenuDish,
+      { restaurantId: string; dishId: string; askBeforeConfirm: boolean }
+    >({
+      query: ({ restaurantId, dishId, askBeforeConfirm }) => ({
+        url: `${menuUrl(restaurantId)}/items/${dishId}/extra`,
+        method: 'PUT',
+        body: { askBeforeConfirm },
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Menu', id: restaurantId },
+      ],
+    }),
     setAvailability: build.mutation<
       MenuDish,
       { restaurantId: string; dishId: string; body: AvailabilityInput }
@@ -180,6 +195,7 @@ export const {
   useCreateDishMutation,
   useUpdateDishMutation,
   useSetAvailabilityMutation,
+  useSetExtraMutation,
   useSetSuggestionsMutation,
   useDeleteDishMutation,
 } = menuApi

@@ -200,6 +200,11 @@ describe('OrdersPage (#143)', () => {
     expect(await within(payments).findByText(/bəxşiş/)).toBeInTheDocument()
     expect(within(payments).getByText(/Məhsula görə/)).toBeInTheDocument()
 
+    // Only a manager cancels an order (#186).
+    expect(
+      within(dialog).queryByRole('button', { name: 'Sifarişi ləğv et' }),
+    ).toBeNull()
+
     const todays = within(dialog).getByRole('list', {
       name: 'Bu günün menyusu',
     })
@@ -215,5 +220,61 @@ describe('OrdersPage (#143)', () => {
     )
 
     await waitFor(() => expect(sent).toEqual({ menuItemId: 'm1', quantity: 2 }))
+  })
+
+  it('lets a manager cancel an order with a reason, but not one with a payment (#186)', async () => {
+    store.dispatch(
+      userLoaded({ id: 'm1', email: 'm@x.az', role: 'RESTO_MANAGER' }),
+    )
+    let sent: unknown = null
+    let refuse = true
+    mockApi({
+      'GET /api/admin/restaurants': [{ id: 'r1', name: 'Dolma' }],
+      'GET /api/admin/restaurants/r1/floor/bills': bills,
+      'GET /api/admin/tables/t2/order/payments': [],
+      'GET /api/admin/restaurants/r1/menu': [],
+      'POST /api/admin/tables/t2/order/cancel': async (request: Request) => {
+        sent = await request.json()
+        if (refuse) {
+          return new Response(
+            JSON.stringify({ status: 409, detail: 'ORDER_HAS_PAYMENTS' }),
+            {
+              status: 409,
+              headers: { 'Content-Type': 'application/problem+json' },
+            },
+          )
+        }
+        return bills[1]
+      },
+    })
+    renderWithProviders(<OrdersPage />)
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Masa 2 ətraflı' }),
+    )
+    const dialog = screen.getByRole('dialog', { name: 'Masa 2' })
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: 'Sifarişi ləğv et' }),
+    )
+    const confirm = within(dialog).getByRole('button', {
+      name: 'Ləğvi təsdiqlə',
+    })
+    expect(confirm).toBeDisabled()
+    await userEvent.type(
+      within(dialog).getByLabelText('Səbəb'),
+      'Müştəri getdi',
+    )
+    await userEvent.click(confirm)
+
+    expect(
+      await within(dialog).findByText(/Əvvəlcə pulu geri qaytarın/),
+    ).toBeInTheDocument()
+    expect(sent).toEqual({ reason: 'Müştəri getdi' })
+
+    refuse = false
+    await userEvent.click(confirm)
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Masa 2' })).toBeNull(),
+    )
   })
 })

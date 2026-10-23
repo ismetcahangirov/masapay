@@ -54,6 +54,20 @@ export const ordersApi = api.injectEndpoints({
         { type: 'Bills', id: `pay-${tableId}` },
       ],
     }),
+    /** A manager cancels the table's confirmed order, with a reason (#186). */
+    cancelOrder: build.mutation<
+      TableOrderDto,
+      { tableId: string; restaurantId: string; reason: string }
+    >({
+      query: ({ tableId, reason }) => ({
+        url: `/admin/tables/${tableId}/order/cancel`,
+        method: 'POST',
+        body: { reason },
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Bills', id: restaurantId },
+      ],
+    }),
     /** A waiter takes the table: they serve it and get its tips (#182). */
     claimTable: build.mutation<
       TableOrderDto,
@@ -101,6 +115,7 @@ export interface TablePayment {
 }
 
 export const {
+  useCancelOrderMutation,
   useClaimTableMutation,
   useRestaurantBillsQuery,
   useTablePaymentsQuery,

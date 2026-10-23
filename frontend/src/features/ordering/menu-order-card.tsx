@@ -1,13 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  CircleCheckBig,
-  LoaderCircle,
-  Minus,
-  Plus,
-  ShoppingBasket,
-  X,
-} from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { BookOpen, CircleCheckBig, Plus, ShoppingBasket, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -25,14 +17,16 @@ import {
   useCustomerMenuQuery,
   usePlaceOrderMutation,
 } from './customer-menu-api'
+import { MenuBrowser } from './menu-browser'
 import { extrasToAsk, upsellFor } from './upsell'
 import { UpsellDialog } from './upsell-dialog'
-import { MAX_QUANTITY, useBasket } from './use-basket'
+import { useBasket } from './use-basket'
 
 // Card 1 of the table screen (#140): today's menu and the customer's basket.
 // "Əlavə sifariş" is always enabled, so another round can be ordered at any
 // time; a confirmed round goes onto the bill and cannot be removed from here.
 // Before "Əminsiniz?" the restaurant's suggested extras are offered (#141).
+// The "Menyu" button opens the full menu in three columns (#180).
 export function MenuOrderCard({
   qrToken,
   currency,
@@ -43,7 +37,7 @@ export function MenuOrderCard({
   const menu = useCustomerMenuQuery(qrToken)
   const basket = useBasket(qrToken)
   const { syncWithMenu } = basket
-  const [browsing, setBrowsing] = useState(true)
+  const [browsing, setBrowsing] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [upsell, setUpsell] = useState<{
     suggestions: CustomerDish[]
@@ -160,51 +154,14 @@ export function MenuOrderCard({
           </div>
         )}
 
-        {browsing && (
-          <>
-            {menu.isLoading && (
-              <LoaderCircle
-                className="mx-auto size-6 animate-spin text-muted-foreground"
-                aria-label="Yüklənir"
-              />
-            )}
-            {menu.isError && (
-              <p className="text-sm text-destructive">
-                Menyunu yükləmək alınmadı.
-              </p>
-            )}
-            {menu.data?.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Bu gün menyuda sifariş ediləcək məhsul yoxdur.
-              </p>
-            )}
-            {menu.data?.map((category) => (
-              <section
-                key={category.id}
-                aria-labelledby={`menu-${category.id}`}
-                className="space-y-2"
-              >
-                <h3
-                  id={`menu-${category.id}`}
-                  className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  {category.name}
-                </h3>
-                <ul className="divide-y rounded-lg border">
-                  {category.items.map((dish) => (
-                    <DishRow
-                      key={dish.id}
-                      dish={dish}
-                      currency={currency}
-                      quantity={basket.quantityOf(dish.id)}
-                      onChange={(delta) => basket.change(dish, delta)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </>
-        )}
+        <Button
+          className="h-12 w-full"
+          variant="outline"
+          onClick={() => setBrowsing(true)}
+        >
+          <BookOpen aria-hidden />
+          Menyu
+        </Button>
       </CardContent>
 
       {basket.count > 0 && (
@@ -249,6 +206,24 @@ export function MenuOrderCard({
         </CardFooter>
       )}
 
+      <MenuBrowser
+        open={browsing}
+        categories={menu.data ?? []}
+        loading={menu.isLoading}
+        failed={menu.isError}
+        currency={currency}
+        entries={basket.entries}
+        total={basket.total}
+        quantityOf={basket.quantityOf}
+        onChange={(dish, delta) => basket.change(dish, delta)}
+        onRemove={basket.remove}
+        onConfirm={() => {
+          setBrowsing(false)
+          askToConfirm()
+        }}
+        onClose={() => setBrowsing(false)}
+      />
+
       <UpsellDialog
         open={upsell !== null}
         extras={upsell?.suggestions ?? []}
@@ -278,81 +253,5 @@ export function MenuOrderCard({
         }}
       />
     </Card>
-  )
-}
-
-function DishRow({
-  dish,
-  currency,
-  quantity,
-  onChange,
-}: {
-  dish: CustomerDish
-  currency: string
-  quantity: number
-  onChange: (delta: number) => void
-}) {
-  return (
-    <li className="flex items-start justify-between gap-3 p-3">
-      <div className="min-w-0 space-y-0.5">
-        <p className="flex flex-wrap items-center gap-2 font-medium">
-          {dish.name}
-          {dish.components.length > 0 && (
-            <Badge variant="secondary">Kombo</Badge>
-          )}
-        </p>
-        {dish.components.length > 0 && (
-          <p className="text-xs">
-            {dish.components.map((c) => `${c.quantity} x ${c.name}`).join(', ')}
-          </p>
-        )}
-        {dish.description && (
-          <p className="text-xs text-muted-foreground">{dish.description}</p>
-        )}
-        <p className="text-sm tabular-nums">
-          {formatCurrency(dish.price, currency)}
-        </p>
-      </div>
-      {quantity === 0 ? (
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0"
-          onClick={() => onChange(1)}
-          aria-label={`${dish.name} əlavə et`}
-        >
-          <Plus aria-hidden />
-          Əlavə et
-        </Button>
-      ) : (
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => onChange(-1)}
-            aria-label={`${dish.name} azalt`}
-          >
-            <Minus aria-hidden />
-          </Button>
-          <span
-            className="w-6 text-center text-sm tabular-nums"
-            aria-label={`${dish.name} sayı`}
-          >
-            {quantity}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => onChange(1)}
-            disabled={quantity >= MAX_QUANTITY}
-            aria-label={`${dish.name} artır`}
-          >
-            <Plus aria-hidden />
-          </Button>
-        </div>
-      )}
-    </li>
   )
 }

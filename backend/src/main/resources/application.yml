@@ -72,6 +72,15 @@ masapay:
     # secrets below. Off by default, so a deployment that forgets to set them fails at startup
     # instead of accepting forged tokens. Dev login implies it.
     allow-dev-secrets: ${MASAPAY_ALLOW_DEV_SECRETS:${MASAPAY_DEV_LOGIN_ENABLED:false}}
+  secrets:
+    # Restaurant secrets (Payriff secret key, iiko API login) are stored AES-256-GCM encrypted
+    # (#157). Key: base64 of 32 random bytes (`openssl rand -base64 32`), kept only in the server
+    # environment. Required unless allow-dev-secrets is on, which falls back to a public dev key.
+    encryption-key: ${MASAPAY_SECRETS_ENCRYPTION_KEY:}
+    # Name stored with every value. To rotate: give the new key a new id, move the old one to
+    # old-keys ("k1=<base64>"); values are re-encrypted with the new key at the next startup.
+    key-id: ${MASAPAY_SECRETS_KEY_ID:k1}
+    old-keys: ${MASAPAY_SECRETS_OLD_KEYS:}
   rate-limit:
     # Fixed one-minute (and one-day) windows kept in memory per instance. Behind a reverse
     # proxy also set SERVER_FORWARD_HEADERS_STRATEGY=framework so the client IP is real.

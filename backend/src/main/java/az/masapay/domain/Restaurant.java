@@ -3,7 +3,9 @@ package az.masapay.domain;
 import az.masapay.domain.enums.PosType;
 import az.masapay.domain.enums.SubscriptionPlan;
 import az.masapay.domain.enums.SubscriptionStatus;
+import az.masapay.security.EncryptedStringConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -39,7 +41,9 @@ public class Restaurant extends BaseEntity {
 	@Column(nullable = false)
 	private boolean active = true;
 
-	@Column(name = "iiko_api_login")
+	/** iiko API login; stored encrypted (#157), never returned to clients in clear text. */
+	@Convert(converter = EncryptedStringConverter.class)
+	@Column(name = "iiko_api_login", length = 1024)
 	private String iikoApiLogin;
 
 	@Column(name = "iiko_organization_id")
@@ -51,8 +55,9 @@ public class Restaurant extends BaseEntity {
 	@Column(name = "payriff_merchant_id", length = 128)
 	private String payriffMerchantId;
 
-	/** Payriff secret key; never returned to clients in clear text. */
-	@Column(name = "payriff_secret_key", length = 512)
+	/** Payriff secret key; stored encrypted (#157), never returned to clients in clear text. */
+	@Convert(converter = EncryptedStringConverter.class)
+	@Column(name = "payriff_secret_key", length = 1024)
 	private String payriffSecretKey;
 
 	/** Service charge in percent of the items, e.g. 10.00; null when the restaurant charges none. */

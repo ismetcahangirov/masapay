@@ -8,6 +8,8 @@ import az.masapay.domain.RestaurantTable;
 import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.TransactionStatus;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -69,5 +71,16 @@ class PersistenceIntegrationTest {
 		assertThat(transactionRepository.findByPayriffOrderId("ord-1")).isPresent();
 		assertThat(transactionRepository.findByOrderIdAndStatus(order.getId(), TransactionStatus.PENDING))
 				.hasSize(1);
+
+		UUID restaurantId = restaurant.getId();
+		transaction.setStatus(TransactionStatus.SUCCESS);
+		transaction.setPaidAt(Instant.parse("2026-10-23T08:00:00Z"));
+		transactionRepository.saveAndFlush(transaction);
+		assertThat(transactionRepository.sumSuccessfulPaymentsByRestaurant(Instant.parse("2026-10-22T20:00:00Z"),
+				Instant.parse("2026-10-23T20:00:00Z"))).singleElement().satisfies(row -> {
+					assertThat(row.restaurantId()).isEqualTo(restaurantId);
+					assertThat(row.paymentCount()).isEqualTo(1);
+					assertThat(row.revenue()).isEqualByComparingTo("25.00");
+				});
 	}
 }

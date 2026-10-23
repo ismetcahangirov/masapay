@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import {
   JUST_READY_MS,
   TableBillCard,
@@ -61,5 +62,32 @@ describe('TableBillCard ready dishes (#178)', () => {
     expect(screen.getByText(/Dolma/).closest('li')).not.toHaveAttribute(
       'data-just-ready',
     )
+  })
+})
+
+describe('TableBillCard waiter (#182)', () => {
+  it('shows who serves the table and lets a waiter take it', async () => {
+    const onClaim = vi.fn()
+    const { rerender } = render(
+      <TableBillCard
+        tableLabel="Masa 4"
+        order={order('NEW', 'NEW')}
+        onClaim={onClaim}
+      />,
+    )
+    expect(screen.getByText('Ofisiant yoxdur')).toBeInTheDocument()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Masa 4 masanı götür' }),
+    )
+    expect(onClaim).toHaveBeenCalledOnce()
+
+    rerender(
+      <TableBillCard
+        tableLabel="Masa 4"
+        order={{ ...order('NEW', 'NEW'), waiter: { id: 'w1', name: 'Aysel' } }}
+      />,
+    )
+    expect(screen.getByText('Ofisiant: Aysel')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /masanı götür/ })).toBeNull()
   })
 })

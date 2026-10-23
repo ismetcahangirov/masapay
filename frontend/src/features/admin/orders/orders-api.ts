@@ -54,6 +54,19 @@ export const ordersApi = api.injectEndpoints({
         { type: 'Bills', id: `pay-${tableId}` },
       ],
     }),
+    /** A waiter takes the table: they serve it and get its tips (#182). */
+    claimTable: build.mutation<
+      TableOrderDto,
+      { tableId: string; restaurantId: string }
+    >({
+      query: ({ tableId }) => ({
+        url: `/admin/tables/${tableId}/order/claim`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Bills', id: restaurantId },
+      ],
+    }),
     /** Staff add a dish from today's menu; it goes to the kitchen (#144). */
     addMenuDish: build.mutation<
       TableOrderDto,
@@ -88,6 +101,7 @@ export interface TablePayment {
 }
 
 export const {
+  useClaimTableMutation,
   useRestaurantBillsQuery,
   useTablePaymentsQuery,
   useAddMenuDishMutation,

@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
-import { useRestaurantBillsQuery } from '@/features/admin/orders/orders-api'
+import { useAppSelector } from '@/app/hooks'
+import {
+  useClaimTableMutation,
+  useRestaurantBillsQuery,
+} from '@/features/admin/orders/orders-api'
 import { TableBillCard } from '@/features/admin/orders/table-bill-card'
 import { TableDetailDialog } from '@/features/admin/orders/table-detail-dialog'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
@@ -19,8 +23,11 @@ const ALL = 'ALL'
 // Staff orders screen (#143): every table with a bill, live. Waiters see what
 // each table ordered, where it is in the kitchen, what is paid and what is
 // left; a table filter narrows it to one table. "Ətraflı" opens who added each
-// line and when, the payments, and adding a dish from the menu (#144).
+// line and when, the payments, and adding a dish from the menu (#144). A waiter
+// can take a table, so its tips are theirs (#182).
 export function OrdersPage() {
+  const user = useAppSelector((state) => state.auth.user)
+  const [claim, claimState] = useClaimTableMutation()
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
@@ -100,6 +107,12 @@ export function OrdersPage() {
         </p>
       )}
 
+      {claimState.isError && (
+        <p className="text-sm text-destructive">
+          Masanı götürmək alınmadı. Hesab bağlanmış ola bilər.
+        </p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map(
           (table) =>
@@ -109,6 +122,14 @@ export function OrdersPage() {
                 tableLabel={table.tableLabel}
                 order={table.order}
                 onOpenDetail={() => setDetailId(table.tableId)}
+                onClaim={
+                  user?.role === 'WAITER' &&
+                  table.order.waiter?.id !== user.id &&
+                  restaurantId
+                    ? () => void claim({ tableId: table.tableId, restaurantId })
+                    : undefined
+                }
+                claiming={claimState.isLoading}
               />
             ),
         )}

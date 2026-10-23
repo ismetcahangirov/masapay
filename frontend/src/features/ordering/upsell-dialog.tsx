@@ -131,7 +131,7 @@ export function UpsellDialog({
                       <Button
                         variant="outline"
                         size="icon"
-                        className="size-9"
+                        className="size-10"
                         disabled={quantity === 0}
                         onClick={() => onChangeAsked(dish, -1)}
                         aria-label={`${dish.name} azalt`}
@@ -147,7 +147,7 @@ export function UpsellDialog({
                       <Button
                         variant="outline"
                         size="icon"
-                        className="size-9"
+                        className="size-10"
                         onClick={() => onChangeAsked(dish, 1)}
                         aria-label={`${dish.name} artır`}
                       >

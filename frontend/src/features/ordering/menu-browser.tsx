@@ -153,7 +153,7 @@ export function MenuBrowser({
                         <Button
                           variant="outline"
                           size="icon"
-                          className="size-8"
+                          className="size-10"
                           onClick={() => onChange(dish, -1)}
                           aria-label={`Seçilən ${dish.name} azalt`}
                         >
@@ -162,7 +162,7 @@ export function MenuBrowser({
                         <Button
                           variant="outline"
                           size="icon"
-                          className="size-8"
+                          className="size-10"
                           disabled={quantity >= MAX_QUANTITY}
                           onClick={() => onChange(dish, 1)}
                           aria-label={`Seçilən ${dish.name} artır`}
@@ -172,7 +172,7 @@ export function MenuBrowser({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-8"
+                          className="size-10"
                           onClick={() => onRemove(dish.id)}
                           aria-label={`${dish.name} səbətdən çıxar`}
                         >
@@ -258,7 +258,7 @@ function DishRow({
           <Button
             variant="outline"
             size="icon"
-            className="size-8"
+            className="size-10"
             onClick={() => onChange(-1)}
             aria-label={`${dish.name} azalt`}
           >
@@ -273,7 +273,7 @@ function DishRow({
           <Button
             variant="outline"
             size="icon"
-            className="size-8"
+            className="size-10"
             onClick={() => onChange(1)}
             disabled={quantity >= MAX_QUANTITY}
             aria-label={`${dish.name} artır`}

@@ -77,7 +77,7 @@ export function ServiceChargeDialog({
             type="single"
             value={mode}
             onValueChange={(value) => value && setMode(value as Mode)}
-            className="grid grid-cols-3 gap-2"
+            className="grid gap-2 sm:grid-cols-3"
             aria-label="Xidmət haqqı"
           >
             <ToggleGroupItem value="RESTAURANT" className="h-auto py-2">

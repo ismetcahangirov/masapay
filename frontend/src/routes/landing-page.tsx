@@ -54,7 +54,7 @@ export function LandingPage() {
       {/* Hero — light */}
       <section
         data-section-tone="light"
-        className="mx-auto flex min-h-svh max-w-6xl items-center px-6 pb-24 pt-32"
+        className="mx-auto flex min-h-svh max-w-6xl items-center px-4 sm:px-6 pb-24 pt-32"
       >
         <div className="grid w-full items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <Reveal>
@@ -94,7 +94,7 @@ export function LandingPage() {
         data-section-tone="dark"
         className="bg-brand-near-black text-brand-white"
       >
-        <div className="mx-auto max-w-6xl px-6 py-28">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-28">
           <Parallax speed={0.25}>
             <Reveal>
               <h2
@@ -120,7 +120,7 @@ export function LandingPage() {
 
       {/* Stats / trust — light */}
       <section data-section-tone="light" className="bg-background">
-        <div className="mx-auto grid max-w-6xl gap-12 px-6 py-28 sm:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 py-28 sm:grid-cols-3">
           {STATS.map((stat, index) => (
             <Reveal key={stat.label} delay={index * 0.08}>
               <div>
@@ -144,7 +144,7 @@ export function LandingPage() {
         data-section-tone="dark"
         className="bg-brand-near-black text-brand-white"
       >
-        <div className="mx-auto max-w-6xl px-6 py-28">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-28">
           <Reveal>
             <h2 className={`max-w-3xl text-[clamp(2rem,4vw,3rem)] ${HEADING}`}>
               Personala yox, təcrübəyə vaxt.
@@ -170,7 +170,7 @@ export function LandingPage() {
 
       {/* CTA — light */}
       <section id="pricing" data-section-tone="light" className="bg-background">
-        <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-6 py-28">
+        <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-4 sm:px-6 py-28">
           <Parallax speed={0.2}>
             <Reveal>
               <h2
@@ -200,7 +200,7 @@ export function LandingPage() {
         data-section-tone="dark"
         className="bg-brand-near-black text-brand-white"
       >
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
           <span className="flex items-center gap-2 text-xl font-normal tracking-tight lg:text-2xl">
             <BrandMark className="h-8 lg:h-9" />
             masapay

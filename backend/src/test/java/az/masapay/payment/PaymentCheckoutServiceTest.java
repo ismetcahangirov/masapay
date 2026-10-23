@@ -92,6 +92,42 @@ class PaymentCheckoutServiceTest {
 	}
 
 	@Test
+	void aTipIsChargedOnTopButKeptApartFromTheBill() {
+		when(settlementService.quoteFullPayment(qrToken)).thenReturn(new PaymentQuote(new BigDecimal("25.00"), "AZN"));
+
+		service.checkoutFull(qrToken, new BigDecimal("2.5"));
+
+		Transaction pending = saved();
+		// Only the bill part pays the order off; Payriff charges both together (#181).
+		assertThat(pending.getAmount()).isEqualByComparingTo("25.00");
+		assertThat(pending.getTipAmount()).isEqualByComparingTo("2.50");
+		assertThat(pending.getTotalAmount()).isEqualByComparingTo("27.50");
+	}
+
+	@Test
+	void anItemOrEqualCheckoutTakesATipToo() {
+		UUID a = UUID.randomUUID();
+		when(settlementService.quoteItemPayment(qrToken, List.of(a), null))
+			.thenReturn(new PaymentQuote(new BigDecimal("8.50"), "AZN"));
+
+		service.checkoutItems(qrToken, List.of(a), null, new BigDecimal("1.00"));
+
+		assertThat(saved().getTotalAmount()).isEqualByComparingTo("9.50");
+	}
+
+	@Test
+	void aNegativeOddOrTooBigTipIsRefused() {
+		BigDecimal bill = new BigDecimal("10.00");
+		for (String tip : List.of("-1.00", "0.005", "10.01")) {
+			assertThatThrownBy(() -> PaymentCheckoutService.checkedTip(new BigDecimal(tip), bill))
+				.isInstanceOfSatisfying(ResponseStatusException.class,
+					e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+		}
+		assertThat(PaymentCheckoutService.checkedTip(null, bill)).isEqualByComparingTo("0");
+		assertThat(PaymentCheckoutService.checkedTip(new BigDecimal("10"), bill)).isEqualByComparingTo("10.00");
+	}
+
+	@Test
 	void anItemCheckoutRemembersTheItemsAndGuests() {
 		UUID a = UUID.randomUUID();
 		UUID b = UUID.randomUUID();

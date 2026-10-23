@@ -53,28 +53,41 @@ public class PaymentCheckoutService {
 	}
 
 	public CheckoutResponse checkoutFull(UUID qrToken) {
+		return checkoutFull(qrToken, null);
+	}
+
+	/** {@code tip} is on top of the bill (#181); null or zero for none. */
+	public CheckoutResponse checkoutFull(UUID qrToken, BigDecimal tip) {
 		gate.checkTakesPayments(qrToken);
 		BigDecimal amount = settlementService.quoteFullPayment(qrToken).amount();
 		if (amount.signum() <= 0) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Order has nothing left to pay");
 		}
-		return start(pending(qrToken, amount, SplitType.FULL));
+		return start(pending(qrToken, amount, tip, SplitType.FULL));
 	}
 
 	public CheckoutResponse checkoutItems(UUID qrToken, List<UUID> itemIds, Integer guests) {
+		return checkoutItems(qrToken, itemIds, guests, null);
+	}
+
+	public CheckoutResponse checkoutItems(UUID qrToken, List<UUID> itemIds, Integer guests, BigDecimal tip) {
 		gate.checkTakesPayments(qrToken);
 		List<UUID> ids = itemIds.stream().distinct().toList();
 		BigDecimal amount = settlementService.quoteItemPayment(qrToken, ids, guests).amount();
-		Transaction transaction = pending(qrToken, amount, SplitType.ITEM);
+		Transaction transaction = pending(qrToken, amount, tip, SplitType.ITEM);
 		transaction.setCheckoutItemIds(ids.stream().map(UUID::toString).collect(Collectors.joining(",")));
 		transaction.setCheckoutGuests(guests);
 		return start(transaction);
 	}
 
 	public CheckoutResponse checkoutEqual(UUID qrToken, int parts, int partsToPay) {
+		return checkoutEqual(qrToken, parts, partsToPay, null);
+	}
+
+	public CheckoutResponse checkoutEqual(UUID qrToken, int parts, int partsToPay, BigDecimal tip) {
 		gate.checkTakesPayments(qrToken);
 		BigDecimal amount = settlementService.quoteEqualPayment(qrToken, parts, partsToPay).amount();
-		Transaction transaction = pending(qrToken, amount, SplitType.EQUAL);
+		Transaction transaction = pending(qrToken, amount, tip, SplitType.EQUAL);
 		transaction.setCheckoutParts(parts);
 		transaction.setCheckoutPartsToPay(partsToPay);
 		return start(transaction);
@@ -88,7 +101,25 @@ public class PaymentCheckoutService {
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
 	}
 
-	private Transaction pending(UUID qrToken, BigDecimal amount, SplitType splitType) {
+	/**
+	 * The tip a guest adds (#181): never negative, at most two decimals, and at most the bill part
+	 * it comes with, which catches a slip of the finger (50.00 instead of 5.00).
+	 */
+	static BigDecimal checkedTip(BigDecimal tip, BigDecimal amount) {
+		if (tip == null || tip.signum() == 0) {
+			return BigDecimal.ZERO;
+		}
+		if (tip.signum() < 0 || tip.scale() > 2) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The tip must be a positive amount");
+		}
+		if (tip.compareTo(amount) > 0) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The tip is larger than the payment");
+		}
+		return tip.setScale(2);
+	}
+
+	private Transaction pending(UUID qrToken, BigDecimal amount, BigDecimal tip, SplitType splitType) {
+		BigDecimal tipAmount = checkedTip(tip, amount);
 		RestaurantTable table = tableRepository.findByQrToken(qrToken)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Table not found"));
 		Order order = orderRepository.findFirstByTableIdAndStatusOrderByOpenedAtDesc(table.getId(), OrderStatus.OPEN)
@@ -96,8 +127,11 @@ public class PaymentCheckoutService {
 		Transaction transaction = new Transaction();
 		transaction.setOrder(order);
 		transaction.setRestaurant(order.getRestaurant());
+		// The bill part and the tip are kept apart: only the bill part pays the order off, and
+		// Payriff charges both together.
 		transaction.setAmount(amount);
-		transaction.setTotalAmount(amount);
+		transaction.setTipAmount(tipAmount);
+		transaction.setTotalAmount(amount.add(tipAmount));
 		transaction.setCurrency(order.getCurrency());
 		transaction.setSplitType(splitType);
 		transaction.setStatus(TransactionStatus.PENDING);

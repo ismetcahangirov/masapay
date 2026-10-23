@@ -66,10 +66,15 @@ export const paymentApi = api.injectEndpoints({
       transformResponse: toQuote,
       keepUnusedDataFor: 0,
     }),
-    checkoutFull: build.mutation<Checkout, string>({
-      query: (qrToken) => ({
+    /** {@code tipAmount} is in manat (#181); null for no tip. */
+    checkoutFull: build.mutation<
+      Checkout,
+      { qrToken: string; tipAmount: number | null }
+    >({
+      query: ({ qrToken, tipAmount }) => ({
         url: `${base(qrToken)}/full/checkout`,
         method: 'POST',
+        body: { tipAmount },
       }),
     }),
 
@@ -90,12 +95,17 @@ export const paymentApi = api.injectEndpoints({
     }),
     checkoutEqual: build.mutation<
       Checkout,
-      { qrToken: string; parts: number; partsToPay: number }
+      {
+        qrToken: string
+        parts: number
+        partsToPay: number
+        tipAmount: number | null
+      }
     >({
-      query: ({ qrToken, parts, partsToPay }) => ({
+      query: ({ qrToken, parts, partsToPay, tipAmount }) => ({
         url: `${base(qrToken)}/equal/checkout`,
         method: 'POST',
-        body: { parts, partsToPay },
+        body: { parts, partsToPay, tipAmount },
       }),
     }),
 
@@ -114,12 +124,17 @@ export const paymentApi = api.injectEndpoints({
     }),
     checkoutItems: build.mutation<
       Checkout,
-      { qrToken: string; itemIds: string[]; guests?: number }
+      {
+        qrToken: string
+        itemIds: string[]
+        guests?: number
+        tipAmount: number | null
+      }
     >({
-      query: ({ qrToken, itemIds, guests }) => ({
+      query: ({ qrToken, itemIds, guests, tipAmount }) => ({
         url: `${base(qrToken)}/items/checkout`,
         method: 'POST',
-        body: { itemIds, guests: guests ?? null },
+        body: { itemIds, guests: guests ?? null, tipAmount },
       }),
     }),
 

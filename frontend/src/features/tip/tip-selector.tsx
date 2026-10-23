@@ -79,7 +79,7 @@ export function TipSelector({
             {percent}%
           </ToggleGroupItem>
         ))}
-        <ToggleGroupItem value={CUSTOM_MODE}>Fərqli məbləğ</ToggleGroupItem>
+        <ToggleGroupItem value={CUSTOM_MODE}>Başqa məbləğ</ToggleGroupItem>
       </ToggleGroup>
 
       {isCustom && (

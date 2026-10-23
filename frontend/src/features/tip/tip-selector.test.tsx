@@ -17,7 +17,7 @@ describe('TipSelector', () => {
     const onChange = vi.fn()
     render(<TipSelector baseMinor={4000} currency="AZN" onChange={onChange} />)
 
-    await userEvent.click(screen.getByRole('radio', { name: 'Fərqli məbləğ' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Başqa məbləğ' }))
     const input = screen.getByLabelText('Bəxşiş məbləği (AZN)')
     await userEvent.type(input, '2,5')
     expect(onChange).toHaveBeenLastCalledWith(250)

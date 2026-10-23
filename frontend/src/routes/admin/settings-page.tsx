@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
-import { AdminNav } from '@/features/admin/admin-nav'
 import {
   useIntegrationSettingsQuery,
   useMyRestaurantsQuery,
@@ -21,7 +20,6 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
-      <AdminNav />
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Tənzimləmələr</h1>
         <p className="text-sm text-muted-foreground">

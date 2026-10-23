@@ -9,7 +9,6 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
-import { AdminNav } from '@/features/admin/admin-nav'
 import { availabilityLabel } from '@/features/admin/menu/availability'
 import { AvailabilityDialog } from '@/features/admin/menu/availability-dialog'
 import { CategoryDialog } from '@/features/admin/menu/category-dialog'
@@ -108,7 +107,6 @@ export function MenuPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <AdminNav />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">Menyu</h1>

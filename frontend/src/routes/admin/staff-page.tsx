@@ -1,6 +1,5 @@
 import { type FormEvent, useState } from 'react'
 import { LoaderCircle, Power, UserCheck, UserPlus } from 'lucide-react'
-import { AdminNav } from '@/features/admin/admin-nav'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
 import {
   type StaffMember,
@@ -91,7 +90,6 @@ export function StaffPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <AdminNav />
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">İşçilər</h1>
         <p className="text-sm text-muted-foreground">

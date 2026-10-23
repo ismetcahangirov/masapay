@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
-import { AdminNav } from '@/features/admin/admin-nav'
 import { useRestaurantBillsQuery } from '@/features/admin/orders/orders-api'
 import { TableBillCard } from '@/features/admin/orders/table-bill-card'
 import { TableDetailDialog } from '@/features/admin/orders/table-detail-dialog'
@@ -39,7 +38,6 @@ export function OrdersPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <AdminNav />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">Sifarişlər</h1>

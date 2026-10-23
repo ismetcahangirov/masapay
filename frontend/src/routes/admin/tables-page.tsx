@@ -1,7 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { FolderDown, LoaderCircle, Plus } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
-import { AdminNav } from '@/features/admin/admin-nav'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
 import {
   saveFile,
@@ -64,7 +63,6 @@ export function TablesPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
-      <AdminNav />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">Masalar</h1>

@@ -38,6 +38,17 @@ public class Order extends BaseEntity {
 	@JoinColumn(name = "waiter_id")
 	private User waiter;
 
+	/** Set when a manager cancelled the confirmed order (#186): when, who and why. */
+	@Column(name = "cancelled_at")
+	private Instant cancelledAt;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "cancelled_by")
+	private User cancelledBy;
+
+	@Column(name = "cancel_reason", length = 500)
+	private String cancelReason;
+
 	/** Reference to the matching order in the external POS, when synced. */
 	@Column(name = "pos_order_id", length = 128)
 	private String posOrderId;

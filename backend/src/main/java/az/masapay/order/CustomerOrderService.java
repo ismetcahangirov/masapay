@@ -29,6 +29,8 @@ public class CustomerOrderService {
 
 	/** How long a fully paid bill stays visible on the table page as a receipt. */
 	static final Duration RECEIPT_WINDOW = Duration.ofHours(2);
+	/** A cancelled order is shown this long, so the guests see it was cancelled (#186). */
+	static final Duration CANCELLED_WINDOW = Duration.ofMinutes(15);
 
 	private final RestaurantTableRepository tableRepository;
 	private final OrderRepository orderRepository;
@@ -55,6 +57,8 @@ public class CustomerOrderService {
 			.findFirstByTableIdAndStatusOrderByOpenedAtDesc(table.getId(), OrderStatus.OPEN)
 			.or(() -> orderRepository.findFirstByTableIdAndStatusAndClosedAtAfterOrderByClosedAtDesc(
 				table.getId(), OrderStatus.PAID, Instant.now().minus(RECEIPT_WINDOW)))
+			.or(() -> orderRepository.findFirstByTableIdAndStatusAndClosedAtAfterOrderByClosedAtDesc(
+				table.getId(), OrderStatus.CANCELLED, Instant.now().minus(CANCELLED_WINDOW)))
 			.map(this::toOrderView)
 			.orElse(null);
 

@@ -19,7 +19,12 @@ export function PaymentActions({
 }) {
   const [mode, setMode] = useState<Mode>(null)
 
-  if (order.status === 'paid' || orderBalance(order) === 0) {
+  // Nothing to pay on a settled bill, or on one the manager cancelled (#186).
+  if (
+    order.status === 'paid' ||
+    order.status === 'cancelled' ||
+    orderBalance(order) === 0
+  ) {
     return null
   }
 

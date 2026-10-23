@@ -1,4 +1,4 @@
-import { CircleCheckBig } from 'lucide-react'
+import { Ban, CircleCheckBig } from 'lucide-react'
 import {
   type TableOrder,
   orderTotal,
@@ -129,7 +129,8 @@ export function BillCard({
 }) {
   const total = orderTotal(order)
   const balance = orderBalance(order)
-  const fullyPaid = order.status === 'paid' || balance === 0
+  const cancelled = order.status === 'cancelled'
+  const fullyPaid = !cancelled && (order.status === 'paid' || balance === 0)
 
   return (
     <Card className="w-full max-w-md">
@@ -146,6 +147,18 @@ export function BillCard({
           <CircleCheckBig className="size-5 shrink-0" aria-hidden />
           <span className="text-sm font-medium">
             Hesab tam ödənilib. Təşəkkür edirik!
+          </span>
+        </div>
+      )}
+
+      {cancelled && (
+        <div
+          role="status"
+          className="mx-6 mb-2 flex items-center gap-3 rounded-lg bg-destructive/10 px-4 py-3 text-destructive"
+        >
+          <Ban className="size-5 shrink-0" aria-hidden />
+          <span className="text-sm font-medium">
+            Sifariş restoran tərəfindən ləğv olundu. Ödəniş tələb olunmur.
           </span>
         </div>
       )}

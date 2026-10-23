@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  Ban,
   CircleDollarSign,
   Clock,
   ReceiptText,
@@ -27,6 +28,7 @@ const STATUS_CONFIG: Record<
     icon: CircleDollarSign,
   },
   paid: { label: 'Ödənilib', variant: 'success', icon: CheckCircle2 },
+  cancelled: { label: 'Ləğv olunub', variant: 'destructive', icon: Ban },
 }
 
 export function OrderStatusBadge({

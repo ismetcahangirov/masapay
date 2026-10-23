@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,8 @@ import {
 } from '@/features/payment/payment-api'
 import { AmountDue, ErrorNote } from '@/features/payment/payment-parts'
 import { paymentErrorMessage } from '@/features/payment/payment-errors'
+import { tipAmount } from '@/features/payment/tip-amount'
+import { TipSection } from '@/features/payment/tip-section'
 
 // "Tam ödə" (#24): one guest pays everything that is still outstanding.
 export function FullPaymentDialog({
@@ -29,17 +32,21 @@ export function FullPaymentDialog({
 }) {
   const quote = useQuoteFullQuery(qrToken, { skip: !open })
   const [pay, payState] = useCheckoutFullMutation()
+  const [tipMinor, setTipMinor] = useState(0)
 
   function close(next: boolean) {
     if (!next) {
       payState.reset()
+      setTipMinor(0)
     }
     onOpenChange(next)
   }
 
   async function onPay() {
     try {
-      goToPayment(await pay(qrToken).unwrap())
+      goToPayment(
+        await pay({ qrToken, tipAmount: tipAmount(tipMinor) }).unwrap(),
+      )
     } catch {
       void quote.refetch()
     }
@@ -63,16 +70,29 @@ export function FullPaymentDialog({
               currency={currency}
               loading={quote.isFetching}
             />
+            {quote.data && (
+              <TipSection
+                amountMinor={quote.data.amount}
+                currency={currency}
+                tipMinor={tipMinor}
+                onTipChange={setTipMinor}
+              />
+            )}
             {error && <ErrorNote>{error}</ErrorNote>}
             <Button
               className="w-full"
-              disabled={!quote.data || quote.isFetching || payState.isLoading}
+              disabled={
+                !quote.data ||
+                quote.isFetching ||
+                payState.isLoading ||
+                (!!quote.data && tipMinor > quote.data.amount)
+              }
               onClick={() => void onPay()}
             >
               {payState.isLoading
                 ? 'Payriff-ə yönləndirilir...'
                 : quote.data
-                  ? `${formatCurrency(quote.data.amount, currency)} ödə`
+                  ? `${formatCurrency(quote.data.amount + tipMinor, currency)} ödə`
                   : 'Ödə'}
             </Button>
           </div>

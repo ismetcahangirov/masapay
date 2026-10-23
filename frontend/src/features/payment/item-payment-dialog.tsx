@@ -17,6 +17,8 @@ import {
 } from '@/features/payment/payment-api'
 import { AmountDue, ErrorNote, Stepper } from '@/features/payment/payment-parts'
 import { paymentErrorMessage } from '@/features/payment/payment-errors'
+import { tipAmount } from '@/features/payment/tip-amount'
+import { TipSection } from '@/features/payment/tip-section'
 import { cn } from '@/lib/utils'
 
 const MAX_GUESTS = 50
@@ -53,6 +55,7 @@ export function ItemPaymentDialog({
     { skip: !open || chosen.length === 0 },
   )
   const [pay, payState] = useCheckoutItemsMutation()
+  const [tipMinor, setTipMinor] = useState(0)
 
   function toggle(id: string) {
     setSelected((current) =>
@@ -65,6 +68,7 @@ export function ItemPaymentDialog({
   function close(next: boolean) {
     if (!next) {
       setSelected([])
+      setTipMinor(0)
       payState.reset()
     }
     onOpenChange(next)
@@ -73,7 +77,12 @@ export function ItemPaymentDialog({
   async function onPay() {
     try {
       goToPayment(
-        await pay({ qrToken, itemIds: chosen, guests: guestCount }).unwrap(),
+        await pay({
+          qrToken,
+          itemIds: chosen,
+          guests: guestCount,
+          tipAmount: tipAmount(tipMinor),
+        }).unwrap(),
       )
     } catch {
       if (chosen.length > 0) void quote.refetch()
@@ -156,6 +165,14 @@ export function ItemPaymentDialog({
                 Ödəmək üçün ən azı bir məhsul seçin.
               </p>
             )}
+            {chosen.length > 0 && quote.data && (
+              <TipSection
+                amountMinor={quote.data.amount}
+                currency={order.currency}
+                tipMinor={tipMinor}
+                onTipChange={setTipMinor}
+              />
+            )}
             {error && <ErrorNote>{error}</ErrorNote>}
             <Button
               className="w-full"
@@ -163,14 +180,15 @@ export function ItemPaymentDialog({
                 chosen.length === 0 ||
                 !quote.data ||
                 quote.isFetching ||
-                payState.isLoading
+                payState.isLoading ||
+                (!!quote.data && tipMinor > quote.data.amount)
               }
               onClick={() => void onPay()}
             >
               {payState.isLoading
                 ? 'Payriff-ə yönləndirilir...'
                 : quote.data && chosen.length > 0
-                  ? `${formatCurrency(quote.data.amount, order.currency)} ödə`
+                  ? `${formatCurrency(quote.data.amount + tipMinor, order.currency)} ödə`
                   : 'Ödə'}
             </Button>
           </div>

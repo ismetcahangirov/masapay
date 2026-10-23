@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ItemPaymentDialog } from '@/features/payment/item-payment-dialog'
 import type { Order } from '@/features/order/types'
@@ -84,6 +84,63 @@ describe('ItemPaymentDialog (Öz yediyim)', () => {
     await userEvent.click(screen.getByRole('button', { name: /ödə$/ }))
 
     await waitFor(() => expect(goToPayment).toHaveBeenCalled())
-    expect(checkoutBody).toEqual({ itemIds: ['kabab'], guests: null })
+    expect(checkoutBody).toEqual({
+      itemIds: ['kabab'],
+      guests: null,
+      tipAmount: null,
+    })
+  })
+
+  it('adds a tip: a ready percentage or another amount, and never more than the bill part (#181)', async () => {
+    let checkoutBody: unknown
+    mockApi({
+      [`GET /api/public/tables/${QR}/payment/items`]: {
+        amount: 18,
+        currency: 'AZN',
+      },
+      [`POST /api/public/tables/${QR}/payment/items/checkout`]: async (
+        request: Request,
+      ) => {
+        checkoutBody = await request.json()
+        return { transactionId: 'tx-3', paymentUrl: 'https://pay.test/tx-3' }
+      },
+    })
+    renderWithProviders(
+      <ItemPaymentDialog
+        qrToken={QR}
+        order={order}
+        open
+        onOpenChange={() => {}}
+      />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /Lülə kabab/ }))
+    const tip = await screen.findByRole('region', { name: 'Bəxşiş' })
+
+    await userEvent.click(within(tip).getByRole('radio', { name: '10%' }))
+    expect(
+      screen.getByRole('button', { name: /19,80.*ödə/ }),
+    ).toBeInTheDocument()
+
+    await userEvent.click(
+      within(tip).getByRole('radio', { name: 'Başqa məbləğ' }),
+    )
+    const own = within(tip).getByLabelText(/Bəxşiş məbləği/)
+    await userEvent.type(own, '25')
+    expect(
+      within(tip).getByText('Bəxşiş ödənilən hissədən çox ola bilməz.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /ödə$/ })).toBeDisabled()
+
+    await userEvent.clear(own)
+    await userEvent.type(own, '3,5')
+    await userEvent.click(screen.getByRole('button', { name: /21,50.*ödə/ }))
+
+    await waitFor(() =>
+      expect(checkoutBody).toEqual({
+        itemIds: ['kabab'],
+        guests: null,
+        tipAmount: 3.5,
+      }),
+    )
   })
 })

@@ -16,6 +16,8 @@ import {
 } from '@/features/payment/payment-api'
 import { AmountDue, ErrorNote, Stepper } from '@/features/payment/payment-parts'
 import { paymentErrorMessage } from '@/features/payment/payment-errors'
+import { tipAmount } from '@/features/payment/tip-amount'
+import { TipSection } from '@/features/payment/tip-section'
 
 const MIN_PARTS = 2
 const MAX_PARTS = 50
@@ -51,10 +53,12 @@ export function EqualSplitDialog({
     { skip: !open },
   )
   const [pay, payState] = useCheckoutEqualMutation()
+  const [tipMinor, setTipMinor] = useState(0)
 
   function close(next: boolean) {
     if (!next) {
       setPartsToPay(1)
+      setTipMinor(0)
       payState.reset()
     }
     onOpenChange(next)
@@ -62,7 +66,14 @@ export function EqualSplitDialog({
 
   async function onPay() {
     try {
-      goToPayment(await pay({ qrToken, parts, partsToPay: shares }).unwrap())
+      goToPayment(
+        await pay({
+          qrToken,
+          parts,
+          partsToPay: shares,
+          tipAmount: tipAmount(tipMinor),
+        }).unwrap(),
+      )
     } catch {
       void quote.refetch()
     }
@@ -111,16 +122,29 @@ export function EqualSplitDialog({
               currency={order.currency}
               loading={quote.isFetching}
             />
+            {quote.data && (
+              <TipSection
+                amountMinor={quote.data.amount}
+                currency={order.currency}
+                tipMinor={tipMinor}
+                onTipChange={setTipMinor}
+              />
+            )}
             {error && <ErrorNote>{error}</ErrorNote>}
             <Button
               className="w-full"
-              disabled={!quote.data || quote.isFetching || payState.isLoading}
+              disabled={
+                !quote.data ||
+                quote.isFetching ||
+                payState.isLoading ||
+                (!!quote.data && tipMinor > quote.data.amount)
+              }
               onClick={() => void onPay()}
             >
               {payState.isLoading
                 ? 'Payriff-ə yönləndirilir...'
                 : quote.data
-                  ? `${formatCurrency(quote.data.amount, order.currency)} ödə`
+                  ? `${formatCurrency(quote.data.amount + tipMinor, order.currency)} ödə`
                   : 'Ödə'}
             </Button>
           </div>

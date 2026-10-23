@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { paymentErrorMessage } from '@/features/payment/payment-errors'
-import { isRestaurantClosed, problemReason } from './api-errors'
+import {
+  isRestaurantClosed,
+  problemReason,
+  takesNoOnlinePayments,
+} from './api-errors'
 
 const closed = {
   status: 409,
@@ -29,5 +33,14 @@ describe('API problem details (#147)', () => {
     expect(paymentErrorMessage({ status: 409, data: {} })).toMatch(
       /Hesab bu arada dəyişdi/,
     )
+  })
+
+  it('treats an ended subscription like a closed restaurant for payments (#148)', () => {
+    const expired = { status: 409, data: { detail: 'SUBSCRIPTION_EXPIRED' } }
+    expect(takesNoOnlinePayments(expired)).toBe(true)
+    expect(takesNoOnlinePayments(closed)).toBe(true)
+    // Ordering stays open, so it is not "closed".
+    expect(isRestaurantClosed(expired)).toBe(false)
+    expect(paymentErrorMessage(expired)).toMatch(/onlayn ödəniş qəbul etmir/)
   })
 })

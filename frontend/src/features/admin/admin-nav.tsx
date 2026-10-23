@@ -16,6 +16,7 @@ import { useAppSelector } from '@/app/hooks'
 import { BrandMark } from '@/components/layout/brand-mark'
 import type { UserRole } from '@/features/auth/auth-slice'
 import { LogoutButton } from '@/features/auth/logout-button'
+import { SubscriptionBanner } from '@/features/admin/subscription-banner'
 import { cn } from '@/lib/utils'
 
 const MANAGERS: UserRole[] = ['SUPER_ADMIN', 'RESTO_MANAGER']
@@ -102,38 +103,44 @@ const LINKS = [
     roles: MANAGERS,
   },
 ]
-/** Top navigation shared by the admin pages; shows only the pages the role may open. */
+/**
+ * Top navigation shared by the admin pages; shows only the pages the role may
+ * open, and a manager's subscription warning under it (#148).
+ */
 export function AdminNav() {
   const role = useAppSelector((state) => state.auth.user?.role)
   const links = LINKS.filter((link) => role && link.roles.includes(role))
 
   return (
-    <nav className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-      <span className="flex items-center gap-2 text-xl tracking-tight">
-        <BrandMark className="h-7" />
-        masapay
-      </span>
-      <div className="flex flex-1 flex-wrap gap-1">
-        {links.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted',
-              )
-            }
-          >
-            <Icon className="size-4" aria-hidden />
-            {label}
-          </NavLink>
-        ))}
-      </div>
-      <LogoutButton />
-    </nav>
+    <>
+      <nav className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
+        <span className="flex items-center gap-2 text-xl tracking-tight">
+          <BrandMark className="h-7" />
+          masapay
+        </span>
+        <div className="flex flex-1 flex-wrap gap-1">
+          {links.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted',
+                )
+              }
+            >
+              <Icon className="size-4" aria-hidden />
+              {label}
+            </NavLink>
+          ))}
+        </div>
+        <LogoutButton />
+      </nav>
+      <SubscriptionBanner />
+    </>
   )
 }

@@ -12,13 +12,21 @@ import static org.mockito.Mockito.when;
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.User;
 import az.masapay.domain.enums.PosType;
+import az.masapay.domain.enums.SubscriptionPlan;
+import az.masapay.domain.enums.SubscriptionStatus;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.platform.dto.CreateRestaurantRequest;
 import az.masapay.platform.dto.PlatformRestaurantView;
+import az.masapay.platform.dto.SubscriptionRequest;
 import az.masapay.platform.dto.UpdateRestaurantRequest;
 import az.masapay.repository.RestaurantRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +42,7 @@ class PlatformRestaurantServiceTest {
 	private final RestaurantRepository restaurantRepository = mock(RestaurantRepository.class);
 	private final UserRepository userRepository = mock(UserRepository.class);
 	private final PlatformRestaurantService service = new PlatformRestaurantService(restaurantRepository,
-			userRepository);
+			userRepository, Clock.fixed(Instant.parse("2026-10-23T08:00:00Z"), ZoneOffset.UTC));
 
 	private final AuthenticatedUser superAdmin =
 			new AuthenticatedUser(UUID.randomUUID(), "admin@masapay.az", UserRole.SUPER_ADMIN);
@@ -140,6 +148,37 @@ class PlatformRestaurantServiceTest {
 
 		assertThat(view.managers()).extracting(PlatformRestaurantView.Manager::email)
 				.containsExactly("second@gmail.com");
+	}
+
+	@Test
+	void aSubscriptionIsSetAndShowsWhereItStandsToday() {
+		Restaurant dolma = new Restaurant();
+		dolma.setId(UUID.randomUUID());
+		when(restaurantRepository.findById(dolma.getId())).thenReturn(Optional.of(dolma));
+		assertThat(service.setSubscription(dolma.getId(), new SubscriptionRequest(SubscriptionPlan.PRO, false,
+				LocalDate.of(2026, 9, 1), LocalDate.of(2026, 10, 22), new BigDecimal("49.00")), superAdmin)
+			.subscription().status()).isEqualTo(SubscriptionStatus.EXPIRED);
+
+		PlatformRestaurantView extended = service.setSubscription(dolma.getId(), new SubscriptionRequest(
+				SubscriptionPlan.PRO, false, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 11, 30),
+				new BigDecimal("49.00")), superAdmin);
+
+		assertThat(extended.subscription().status()).isEqualTo(SubscriptionStatus.ACTIVE);
+		assertThat(extended.subscription().endsOn()).isEqualTo(LocalDate.of(2026, 11, 30));
+		assertThat(dolma.getSubscriptionMonthlyFee()).isEqualByComparingTo("49.00");
+	}
+
+	@Test
+	void aSubscriptionThatEndsBeforeItStartsIsRefused() {
+		Restaurant dolma = new Restaurant();
+		dolma.setId(UUID.randomUUID());
+		when(restaurantRepository.findById(dolma.getId())).thenReturn(Optional.of(dolma));
+		SubscriptionRequest backwards = new SubscriptionRequest(SubscriptionPlan.BASIC, true,
+				LocalDate.of(2026, 11, 1), LocalDate.of(2026, 10, 31), BigDecimal.ZERO);
+
+		assertStatus(() -> service.setSubscription(dolma.getId(), backwards, superAdmin), HttpStatus.BAD_REQUEST);
+		assertStatus(() -> service.setSubscription(dolma.getId(), backwards, manager), HttpStatus.FORBIDDEN);
+		verify(restaurantRepository, never()).save(any());
 	}
 
 	@Test

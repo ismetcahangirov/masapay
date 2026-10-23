@@ -1,6 +1,6 @@
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query'
 import type { SerializedError } from '@reduxjs/toolkit'
-import { isRestaurantClosed } from '@/lib/api-errors'
+import { takesNoOnlinePayments } from '@/lib/api-errors'
 
 /** Turns an API error into a short message for the customer. */
 export function paymentErrorMessage(
@@ -10,7 +10,7 @@ export function paymentErrorMessage(
   if ('status' in error && error.status === 'FETCH_ERROR') {
     return 'İnternet bağlantısı yoxdur. Bağlantını yoxlayıb yenidən cəhd edin, pul çəkilməyib.'
   }
-  if (isRestaurantClosed(error)) {
+  if (takesNoOnlinePayments(error)) {
     return 'Restoran hazırda onlayn ödəniş qəbul etmir. Zəhmət olmasa ofisianta müraciət edin.'
   }
   if ('status' in error && error.status === 409) {

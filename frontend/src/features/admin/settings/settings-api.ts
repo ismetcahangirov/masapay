@@ -1,4 +1,5 @@
 import { api } from '@/app/api'
+import type { SubscriptionStatus } from '@/features/admin/platform/platform-api'
 
 // Admin restaurant settings (#46): POS provider, iiko/Payriff credentials and
 // the service charge. Secrets come back masked (e.g. "••••••••abcd") and are
@@ -9,6 +10,10 @@ export type PosType = 'IIKO' | 'MICROS' | 'CUSTOM'
 export interface RestaurantSummary {
   id: string
   name: string
+  /** Where the subscription stands today (#148), for the manager's banner. */
+  subscriptionStatus: SubscriptionStatus
+  /** "YYYY-MM-DD", null when there was never a subscription. */
+  subscriptionEndsOn: string | null
 }
 
 export interface IntegrationSettings {

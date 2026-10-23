@@ -17,3 +17,12 @@ export function problemReason(error: ApiError): string | null {
 export function isRestaurantClosed(error: ApiError): boolean {
   return problemReason(error) === 'RESTAURANT_CLOSED'
 }
+
+/**
+ * The restaurant takes no online payments right now: switched off (#147) or
+ * its subscription has ended (#148). The customer is told the same either way.
+ */
+export function takesNoOnlinePayments(error: ApiError): boolean {
+  const reason = problemReason(error)
+  return reason === 'RESTAURANT_CLOSED' || reason === 'SUBSCRIPTION_EXPIRED'
+}

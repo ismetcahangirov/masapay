@@ -1,6 +1,7 @@
 import { api } from '@/app/api'
 
-// The platform's restaurants, run by the super admin (#147).
+// The platform's restaurants and their subscriptions, run by the super admin
+// (#147, #148).
 
 export type PosType = 'IIKO' | 'MICROS' | 'CUSTOM'
 
@@ -12,6 +13,24 @@ export interface PlatformManager {
   signedIn: boolean
 }
 
+export type SubscriptionPlan = 'BASIC' | 'PRO'
+/** EXPIRED: after the last day; the restaurant's customers cannot pay online. */
+export type SubscriptionStatus = 'NONE' | 'TRIAL' | 'ACTIVE' | 'EXPIRED'
+
+/** Dates are "YYYY-MM-DD", both days included, Baku time. */
+export interface Subscription {
+  plan: SubscriptionPlan
+  trial: boolean
+  startsOn: string
+  endsOn: string
+  monthlyFee: number
+}
+
+export interface SubscriptionView extends Partial<Omit<Subscription, 'trial'>> {
+  status: SubscriptionStatus
+  trial: boolean
+}
+
 export interface PlatformRestaurant {
   id: string
   name: string
@@ -20,6 +39,7 @@ export interface PlatformRestaurant {
   active: boolean
   createdAt: string
   managers: PlatformManager[]
+  subscription: SubscriptionView
 }
 
 export interface NewRestaurant {
@@ -54,6 +74,17 @@ export const platformApi = api.injectEndpoints({
       }),
       invalidatesTags: LIST,
     }),
+    setSubscription: build.mutation<
+      PlatformRestaurant,
+      { id: string } & Subscription
+    >({
+      query: ({ id, ...body }) => ({
+        url: `${URL}/${id}/subscription`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: LIST,
+    }),
     addManager: build.mutation<
       PlatformRestaurant,
       { id: string; email: string }
@@ -72,5 +103,6 @@ export const {
   usePlatformRestaurantsQuery,
   useCreateRestaurantMutation,
   useUpdateRestaurantMutation,
+  useSetSubscriptionMutation,
   useAddManagerMutation,
 } = platformApi

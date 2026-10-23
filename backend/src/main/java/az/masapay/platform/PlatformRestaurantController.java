@@ -3,6 +3,7 @@ package az.masapay.platform;
 import az.masapay.platform.dto.AddManagerRequest;
 import az.masapay.platform.dto.CreateRestaurantRequest;
 import az.masapay.platform.dto.PlatformRestaurantView;
+import az.masapay.platform.dto.SubscriptionRequest;
 import az.masapay.platform.dto.UpdateRestaurantRequest;
 import az.masapay.security.AuthenticatedUser;
 import jakarta.validation.Valid;
@@ -16,12 +17,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** The platform's restaurants, run by the super admin (#147). */
+/** The platform's restaurants and their subscriptions, run by the super admin (#147, #148). */
 @RestController
 @RequestMapping("/api/admin/platform/restaurants")
 @PreAuthorize("hasRole('SUPER_ADMIN')")
@@ -50,6 +52,12 @@ public class PlatformRestaurantController {
 	public PlatformRestaurantView update(@PathVariable UUID restaurantId,
 			@Valid @RequestBody UpdateRestaurantRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
 		return service.update(restaurantId, request, caller);
+	}
+
+	@PutMapping("/{restaurantId}/subscription")
+	public PlatformRestaurantView setSubscription(@PathVariable UUID restaurantId,
+			@Valid @RequestBody SubscriptionRequest request, @AuthenticationPrincipal AuthenticatedUser caller) {
+		return service.setSubscription(restaurantId, request, caller);
 	}
 
 	@PostMapping("/{restaurantId}/managers")

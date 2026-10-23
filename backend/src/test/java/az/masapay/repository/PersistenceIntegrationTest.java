@@ -7,6 +7,7 @@ import az.masapay.domain.Restaurant;
 import az.masapay.domain.RestaurantTable;
 import az.masapay.domain.Transaction;
 import az.masapay.domain.enums.TransactionStatus;
+import az.masapay.security.SecretCipher;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -15,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -26,6 +30,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers(disabledWithoutDocker = true)
+@Import(SecretCipher.class)
+@TestPropertySource(properties = "masapay.security.allow-dev-secrets=true")
 class PersistenceIntegrationTest {
 
 	@Container
@@ -40,12 +46,18 @@ class PersistenceIntegrationTest {
 	private OrderRepository orderRepository;
 	@Autowired
 	private TransactionRepository transactionRepository;
+	@Autowired
+	private JdbcTemplate jdbc;
 
 	@Test
 	void migrationsApplyAndPaymentQueriesWork() {
 		Restaurant restaurant = new Restaurant();
 		restaurant.setName("Dolma");
-		restaurant = restaurantRepository.save(restaurant);
+		restaurant.setPayriffSecretKey("payriff-secret");
+		restaurant = restaurantRepository.saveAndFlush(restaurant);
+		// #157: encrypted in the table, clear in the entity.
+		assertThat(jdbc.queryForObject("SELECT payriff_secret_key FROM restaurants WHERE id = ?", String.class,
+				restaurant.getId())).startsWith("enc:dev:");
 
 		RestaurantTable table = new RestaurantTable();
 		table.setRestaurant(restaurant);

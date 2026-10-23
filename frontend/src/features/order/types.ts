@@ -10,6 +10,8 @@ export type OrderStatus =
   | 'partially_paid'
   /** Fully settled. */
   | 'paid'
+  /** A manager cancelled the confirmed order (#186). */
+  | 'cancelled'
 
 /** Kitchen progress of an ordered dish (#142). */
 export type KitchenStatus = 'NEW' | 'PREPARING' | 'READY'

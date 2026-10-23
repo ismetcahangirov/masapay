@@ -19,10 +19,11 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 	/**
 	 * The kitchen's work for one restaurant (#142), oldest first: everything not ready yet, plus
 	 * what became ready since {@code readySince} so the chef still sees what was just finished.
-	 * The table comes with each line, for the ticket header.
+	 * The table comes with each line, for the ticket header. A cancelled order's dishes drop off (#186).
 	 */
 	@Query("SELECT oi FROM OrderItem oi JOIN FETCH oi.order o JOIN FETCH o.table "
-		+ "WHERE o.restaurant.id = :restaurantId AND (oi.kitchenStatus IN :open "
+		+ "WHERE o.restaurant.id = :restaurantId "
+		+ "AND o.status <> az.masapay.domain.enums.OrderStatus.CANCELLED AND (oi.kitchenStatus IN :open "
 		+ "OR (oi.kitchenStatus = :ready AND oi.updatedAt >= :readySince)) "
 		+ "ORDER BY oi.createdAt ASC")
 	List<OrderItem> findKitchenWork(@Param("restaurantId") UUID restaurantId,

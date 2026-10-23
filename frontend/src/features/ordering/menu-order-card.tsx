@@ -126,6 +126,10 @@ export function MenuOrderCard({
           <CardDescription>
             Seçin, yoxlayın və təsdiqləyin. Sifariş masanın hesabına düşür.
           </CardDescription>
+          <p className="text-xs text-muted-foreground">
+            Təsdiqlənmiş sifarişi ləğv etmək üçün restoran menecerinə müraciət
+            edin.
+          </p>
         </div>
         <Button
           variant="outline"

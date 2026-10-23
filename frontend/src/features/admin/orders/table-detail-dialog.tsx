@@ -18,13 +18,16 @@ import { TransactionStatusBadge } from '@/features/admin/transactions/transactio
 import { formatCurrency } from '@/features/order/format'
 import type { TableOrder } from '@/features/order/types'
 import { cn } from '@/lib/utils'
+import { useAppSelector } from '@/app/hooks'
+import { CancelOrderSection } from './cancel-order-section'
 import { lineAuthor } from './line-author'
 import { useAddMenuDishMutation, useTablePaymentsQuery } from './orders-api'
 
 const MAX_QUANTITY = 20
 
 // The detail of one table's bill (#144): every line with who added it and
-// when, the payments made on it, and adding a dish from today's menu.
+// when, the payments made on it, and adding a dish from today's menu. A
+// manager can also cancel the whole order from here; a waiter can not (#186).
 export function TableDetailDialog({
   restaurantId,
   table,
@@ -36,6 +39,12 @@ export function TableDetailDialog({
   onClose: () => void
 }) {
   const order = table?.order ?? null
+  const role = useAppSelector((state) => state.auth.user?.role)
+  const canCancel =
+    (role === 'RESTO_MANAGER' || role === 'SUPER_ADMIN') &&
+    order !== null &&
+    order.status !== 'paid' &&
+    order.status !== 'cancelled'
   const payments = useTablePaymentsQuery(table?.tableId ?? '', {
     skip: !table,
   })
@@ -228,6 +237,13 @@ export function TableDetailDialog({
             </p>
           )}
         </section>
+        {canCancel && table && (
+          <CancelOrderSection
+            restaurantId={restaurantId}
+            tableId={table.tableId}
+            onCancelled={onClose}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )

@@ -83,6 +83,7 @@ function toOrder(dto: OrderDto, currency: string): Order {
 
   let status: OrderStatus
   if (dto.status === 'PAID') status = 'paid'
+  else if (dto.status === 'CANCELLED') status = 'cancelled'
   else if (paidAmount > 0) status = 'partially_paid'
   else if (dto.status === 'CLOSED') status = 'awaiting_payment'
   else status = 'open'

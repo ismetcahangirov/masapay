@@ -52,6 +52,16 @@ function table(overrides: Partial<NonNullable<TableOrder['order']>> = {}) {
 }
 
 describe('BillCard (receipt)', () => {
+  it('tells the guests the restaurant cancelled the order (#186)', () => {
+    const data = table({ status: 'cancelled' })
+    render(<BillCard table={data} order={data.order!} />)
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Sifariş restoran tərəfindən ləğv olundu',
+    )
+    expect(screen.queryByText(/tam ödənilib/)).toBeNull()
+  })
+
   it('crosses out paid lines and keeps unpaid ones normal', () => {
     const data = table()
     render(<BillCard table={data} order={data.order!} />)

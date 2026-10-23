@@ -1,14 +1,27 @@
 import { type FormEvent, useState } from 'react'
-import { Building2, LoaderCircle, Plus, Power, UserPlus } from 'lucide-react'
+import {
+  Building2,
+  CalendarClock,
+  LoaderCircle,
+  Plus,
+  Power,
+  UserPlus,
+} from 'lucide-react'
 import { AdminNav } from '@/features/admin/admin-nav'
 import {
   type PlatformRestaurant,
   type PosType,
+  type SubscriptionStatus,
   useAddManagerMutation,
   useCreateRestaurantMutation,
   usePlatformRestaurantsQuery,
   useUpdateRestaurantMutation,
 } from '@/features/admin/platform/platform-api'
+import {
+  STATUS_LABELS,
+  formatDay,
+} from '@/features/admin/platform/subscription'
+import { SubscriptionDialog } from '@/features/admin/platform/subscription-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -43,6 +56,16 @@ const POS_LABELS: Record<PosType, string> = {
   CUSTOM: 'POS-suz / digər',
 }
 
+const STATUS_VARIANTS: Record<
+  SubscriptionStatus,
+  'success' | 'secondary' | 'destructive' | 'outline'
+> = {
+  ACTIVE: 'success',
+  TRIAL: 'secondary',
+  EXPIRED: 'destructive',
+  NONE: 'outline',
+}
+
 function isConflict(error: unknown): boolean {
   return (
     !!error &&
@@ -54,7 +77,8 @@ function isConflict(error: unknown): boolean {
 
 // The platform's restaurants (#147), for the super admin: open a restaurant
 // with its first manager (who lands in it on their first Google sign-in), add
-// managers, switch a restaurant off so its customers can neither order nor pay.
+// managers, switch a restaurant off so its customers can neither order nor pay,
+// and set or extend its subscription (#148).
 export function RestaurantsPage() {
   const restaurants = usePlatformRestaurantsQuery()
   const [create, createState] = useCreateRestaurantMutation()
@@ -64,6 +88,9 @@ export function RestaurantsPage() {
   const [posType, setPosType] = useState<PosType>('CUSTOM')
   const [managerEmail, setManagerEmail] = useState('')
   const [addingTo, setAddingTo] = useState<PlatformRestaurant | null>(null)
+  const [subscribing, setSubscribing] = useState<PlatformRestaurant | null>(
+    null,
+  )
 
   const valid =
     name.trim() !== '' &&
@@ -193,6 +220,7 @@ export function RestaurantsPage() {
               <TableHead>Restoran</TableHead>
               <TableHead>POS</TableHead>
               <TableHead>Menecerlər</TableHead>
+              <TableHead>Abunəlik</TableHead>
               <TableHead>Vəziyyət</TableHead>
               <TableHead className="sr-only">Əməliyyat</TableHead>
             </TableRow>
@@ -224,12 +252,33 @@ export function RestaurantsPage() {
                 </TableCell>
                 <TableCell>
                   <Badge
+                    variant={STATUS_VARIANTS[restaurant.subscription.status]}
+                  >
+                    {STATUS_LABELS[restaurant.subscription.status]}
+                  </Badge>
+                  {restaurant.subscription.endsOn && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Son gün {formatDay(restaurant.subscription.endsOn)}
+                    </p>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge
                     variant={restaurant.active ? 'success' : 'destructive'}
                   >
                     {restaurant.active ? 'Aktiv' : 'Deaktiv'}
                   </Badge>
                 </TableCell>
                 <TableCell className="space-x-1 whitespace-nowrap text-right">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSubscribing(restaurant)}
+                    aria-label={`${restaurant.name} abunəlik`}
+                  >
+                    <CalendarClock aria-hidden />
+                    Abunəlik
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -259,7 +308,7 @@ export function RestaurantsPage() {
             {restaurants.data?.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="py-10 text-center text-muted-foreground"
                 >
                   Hələ restoran yoxdur.
@@ -273,6 +322,10 @@ export function RestaurantsPage() {
       <AddManagerDialog
         restaurant={addingTo}
         onClose={() => setAddingTo(null)}
+      />
+      <SubscriptionDialog
+        restaurant={subscribing}
+        onClose={() => setSubscribing(null)}
       />
     </div>
   )

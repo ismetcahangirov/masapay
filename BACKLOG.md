@@ -26,6 +26,7 @@ iyerarxiyası ilə). Repo: [ismetcahangirov/masapay](https://github.com/ismetcah
 | 8. POS Sinxronizasiyası | [#38](https://github.com/ismetcahangirov/masapay/issues/38) | 3 | epic, pos-integration, backend |
 | 9. Admin Panel | [#42](https://github.com/ismetcahangirov/masapay/issues/42) | 6 | epic, admin-panel, frontend |
 | 10. DevOps, Test və Yerləşdirmə | [#49](https://github.com/ismetcahangirov/masapay/issues/49) | 5 | epic, devops |
+| 12. İstifadəçi rəyi - mətbəx, responsivlik, bəxşiş, sidebar | [#177](https://github.com/ismetcahangirov/masapay/issues/177) | 9 | epic, frontend, backend, admin-panel |
 | **Cəmi** | | **44** | |
 
 ## Detallı Backlog
@@ -117,3 +118,16 @@ iyerarxiyası ilə). Repo: [ismetcahangirov/masapay](https://github.com/ismetcah
 | #156 | 10.6 Production təhlükəsizlik parametrləri (secret-lər, proxy, cookie, Swagger) | codelady-ship | devops, auth |
 | #157 | 10.7 Payriff və iiko açarlarını DB-də şifrələmək (AES-GCM) | codelady-ship | backend, database, payment, pos-integration |
 | #158 | 10.8 Rate limit sayğaclarını Redis-ə köçürmək | codelady-ship | backend, devops |
+
+### EPIC 12 — İstifadəçi rəyi: mətbəx statusu, responsivlik, bəxşiş, ödəniş təklifi, sidebar (#177 · @codelady-ship)
+| # | Sub-issue | Assignee | Labels |
+|---|---|---|---|
+| #178 | 12.1 Mətbəxdə "Hazırdır" statusu sifarişdə canlı görünsün | codelady-ship | frontend, backend |
+| #179 | 12.2 Bütün ekranların responsivliyi (telefon, planşet, kompüter) | codelady-ship | frontend, design |
+| #180 | 12.3 Müştəri menyusu - solda kateqoriyalar, ortada yeməklər, sağda seçilənlər | codelady-ship | frontend, design |
+| #181 | 12.4 Müştəri ödənişində bəxşiş (hazır faiz və xüsusi məbləğ) | codelady-ship | frontend, backend, payment |
+| #182 | 12.5 Ofisiant öz bəxşişlərini masa ilə birlikdə görsün | codelady-ship | frontend, backend, admin-panel |
+| #183 | 12.6 Ödənişi təsdiqləyəndə əlavə məhsul təklifi popup-u | codelady-ship | frontend, backend, payment |
+| #184 | 12.7 Admin panel üçün collapsible sidebar (shadcn Sidebar) | codelady-ship | frontend, admin-panel, design |
+| #185 | 12.8 Təsdiqdən əvvəl əlavələr sualı (sous, su) - KFC kimi | codelady-ship | frontend, backend, admin-panel |
+| #186 | 12.9 Təsdiqlənmiş sifarişi yalnız menecer ləğv edə bilsin | codelady-ship | frontend, backend, admin-panel |

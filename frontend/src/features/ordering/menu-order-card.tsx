@@ -25,7 +25,7 @@ import {
   useCustomerMenuQuery,
   usePlaceOrderMutation,
 } from './customer-menu-api'
-import { upsellFor } from './upsell'
+import { extrasToAsk, upsellFor } from './upsell'
 import { UpsellDialog } from './upsell-dialog'
 import { MAX_QUANTITY, useBasket } from './use-basket'
 
@@ -45,7 +45,10 @@ export function MenuOrderCard({
   const { syncWithMenu } = basket
   const [browsing, setBrowsing] = useState(true)
   const [confirming, setConfirming] = useState(false)
-  const [upsell, setUpsell] = useState<CustomerDish[] | null>(null)
+  const [upsell, setUpsell] = useState<{
+    suggestions: CustomerDish[]
+    extras: CustomerDish[]
+  } | null>(null)
   const [addedExtras, setAddedExtras] = useState<Set<string>>(new Set())
   const [justOrdered, setJustOrdered] = useState(false)
   const [placeOrder, placeState] = usePlaceOrderMutation()
@@ -60,19 +63,23 @@ export function MenuOrderCard({
     setBrowsing(true)
   }
 
-  // Extras (#141) are worked out when the customer asks to confirm, and shown
-  // first; with nothing to offer, "Əminsiniz?" opens straight away.
+  // Suggestions (#141) and the extras every customer is asked about, such as
+  // ketchup or water (#185), are worked out when the customer asks to confirm
+  // and shown together in one dialog first; with nothing to offer or ask,
+  // "Əminsiniz?" opens straight away.
   function askToConfirm() {
-    const extras = upsellFor(
-      basket.entries,
-      (menu.data ?? []).flatMap((c) => c.items),
+    const today = (menu.data ?? []).flatMap((c) => c.items)
+    const suggestions = upsellFor(basket.entries, today)
+    const suggested = new Set(suggestions.map((dish) => dish.id))
+    const extras = extrasToAsk(basket.entries, today).filter(
+      (dish) => !suggested.has(dish.id),
     )
-    if (extras.length === 0) {
+    if (suggestions.length === 0 && extras.length === 0) {
       setConfirming(true)
       return
     }
     setAddedExtras(new Set())
-    setUpsell(extras)
+    setUpsell({ suggestions, extras })
   }
 
   function addExtra(dish: CustomerDish) {
@@ -244,7 +251,12 @@ export function MenuOrderCard({
 
       <UpsellDialog
         open={upsell !== null}
-        extras={upsell ?? []}
+        extras={upsell?.suggestions ?? []}
+        asked={upsell?.extras ?? []}
+        quantityOf={(id) =>
+          basket.entries.find((entry) => entry.dish.id === id)?.quantity ?? 0
+        }
+        onChangeAsked={(dish, delta) => basket.change(dish, delta)}
         added={addedExtras}
         currency={currency}
         onAdd={addExtra}

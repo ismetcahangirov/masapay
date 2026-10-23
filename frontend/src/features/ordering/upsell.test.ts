@@ -1,14 +1,40 @@
 import { describe, expect, it } from 'vitest'
 import type { CustomerDish } from './customer-menu-api'
-import { upsellFor } from './upsell'
+import { extrasToAsk, upsellFor } from './upsell'
 
-const dish = (id: string, suggestionIds: string[] = []): CustomerDish => ({
+const dish = (
+  id: string,
+  suggestionIds: string[] = [],
+  askBeforeConfirm = false,
+): CustomerDish => ({
   id,
   name: id,
   description: null,
   price: 100,
   components: [],
   suggestionIds,
+  askBeforeConfirm,
+})
+
+describe('extrasToAsk (#185)', () => {
+  it('asks about the marked extras that are not in the basket yet', () => {
+    const kebab = dish('kebab')
+    const ketchup = dish('ketchup', [], true)
+    const water = dish('water', [], true)
+
+    expect(
+      extrasToAsk([{ dish: kebab, quantity: 1 }], [kebab, ketchup, water]),
+    ).toEqual([ketchup, water])
+    expect(
+      extrasToAsk(
+        [
+          { dish: kebab, quantity: 1 },
+          { dish: water, quantity: 2 },
+        ],
+        [kebab, ketchup, water],
+      ),
+    ).toEqual([ketchup])
+  })
 })
 
 describe('upsellFor (#141)', () => {

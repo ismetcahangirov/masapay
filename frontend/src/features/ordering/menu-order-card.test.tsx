@@ -5,6 +5,11 @@ import { MenuOrderCard } from '@/features/ordering/menu-order-card'
 import { mockApi, renderWithProviders, requestsOf } from '@/test/utils'
 
 const QR = 'q1'
+
+/** The menu opens from the card's "Menyu" button (#180). */
+async function openMenu() {
+  await userEvent.click(await screen.findByRole('button', { name: 'Menyu' }))
+}
 const BASE = `/api/public/tables/${QR}`
 
 const menu = [
@@ -60,10 +65,10 @@ describe('MenuOrderCard (#140)', () => {
       },
     })
     renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+    await openMenu()
 
-    expect(await screen.findByText('Kombo')).toBeInTheDocument()
     await userEvent.click(
-      screen.getByRole('button', { name: 'Dolma əlavə et' }),
+      await screen.findByRole('button', { name: 'Dolma əlavə et' }),
     )
     await userEvent.click(screen.getByRole('button', { name: 'Dolma artır' }))
     await userEvent.click(
@@ -74,9 +79,10 @@ describe('MenuOrderCard (#140)', () => {
       screen.getByRole('button', { name: 'Ayran səbətdən çıxar' }),
     )
 
-    const basket = screen.getByRole('list', { name: 'Səbət' })
-    expect(within(basket).getByText('2 x Dolma')).toBeInTheDocument()
-    expect(within(basket).queryByText(/Ayran/)).not.toBeInTheDocument()
+    const picked = screen.getByRole('complementary', { name: 'Seçilənlər' })
+    expect(within(picked).getByText('Dolma')).toBeInTheDocument()
+    expect(within(picked).getByText(/^2 x/)).toBeInTheDocument()
+    expect(within(picked).queryByText(/Ayran/)).not.toBeInTheDocument()
 
     await userEvent.click(
       screen.getByRole('button', { name: /Sifarişi təsdiqlə/ }),
@@ -107,6 +113,7 @@ describe('MenuOrderCard (#140)', () => {
       [`POST ${BASE}/order/items`]: bill,
     })
     renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+    await openMenu()
 
     await userEvent.click(
       await screen.findByRole('button', { name: 'Ayran əlavə et' }),
@@ -134,6 +141,7 @@ describe('MenuOrderCard (#140)', () => {
     const first = renderWithProviders(
       <MenuOrderCard qrToken={QR} currency="AZN" />,
     )
+    await openMenu()
     await userEvent.click(
       await screen.findByRole('button', { name: 'Dolma əlavə et' }),
     )
@@ -154,6 +162,7 @@ describe('MenuOrderCard (#140)', () => {
       ),
     })
     renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+    await openMenu()
 
     await userEvent.click(
       await screen.findByRole('button', { name: 'Dolma əlavə et' }),
@@ -220,6 +229,7 @@ describe('MenuOrderCard (#140)', () => {
         },
       })
       renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+      await openMenu()
 
       await userEvent.click(
         await screen.findByRole('button', { name: 'Dolma əlavə et' }),
@@ -260,6 +270,7 @@ describe('MenuOrderCard (#140)', () => {
     it('goes on without extras after "Xeyr, təşəkkürlər"', async () => {
       mockApi({ [`GET ${BASE}/menu`]: withExtras })
       renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+      await openMenu()
 
       await userEvent.click(
         await screen.findByRole('button', { name: 'Dolma əlavə et' }),
@@ -279,6 +290,7 @@ describe('MenuOrderCard (#140)', () => {
     it('skips the offer when the basket has nothing to suggest', async () => {
       mockApi({ [`GET ${BASE}/menu`]: withExtras })
       renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+      await openMenu()
 
       await userEvent.click(
         await screen.findByRole('button', { name: 'Ayran əlavə et' }),
@@ -349,6 +361,7 @@ describe('MenuOrderCard (#140)', () => {
         },
       })
       renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+      await openMenu()
 
       await userEvent.click(
         await screen.findByRole('button', { name: 'Dolma əlavə et' }),
@@ -389,6 +402,7 @@ describe('MenuOrderCard (#140)', () => {
     it('goes straight to "Əminsiniz?" after "Xeyr, təşəkkürlər"', async () => {
       mockApi({ [`GET ${BASE}/menu`]: withAsked })
       renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+      await openMenu()
 
       await userEvent.click(
         await screen.findByRole('button', { name: 'Dolma əlavə et' }),
@@ -404,5 +418,38 @@ describe('MenuOrderCard (#140)', () => {
       expect(within(confirm).getByText('1 x Dolma')).toBeInTheDocument()
       expect(within(confirm).queryByText(/Ketçup|Su/)).not.toBeInTheDocument()
     })
+  })
+
+  it('shows categories on the left, their dishes in the middle and the picks on the right (#180)', async () => {
+    mockApi({ [`GET ${BASE}/menu`]: menu })
+    renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+    await openMenu()
+
+    const categories = screen.getByRole('navigation', { name: 'Kateqoriyalar' })
+    const first = within(categories).getByRole('button', { name: 'Əsas' })
+    expect(first).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('region', { name: 'Əsas' })).toHaveTextContent(
+      'Dolma',
+    )
+    expect(screen.queryByText('Lanç 1')).not.toBeInTheDocument()
+
+    await userEvent.click(
+      within(categories).getByRole('button', { name: 'Biznes lanç' }),
+    )
+    const lunches = screen.getByRole('region', { name: 'Biznes lanç' })
+    expect(within(lunches).getByText('Kombo')).toBeInTheDocument()
+    await userEvent.click(
+      within(lunches).getByRole('button', { name: 'Lanç 1 əlavə et' }),
+    )
+
+    const picked = screen.getByRole('complementary', { name: 'Seçilənlər' })
+    expect(within(picked).getByText('Lanç 1')).toBeInTheDocument()
+    await userEvent.click(
+      within(picked).getByRole('button', { name: 'Seçilən Lanç 1 artır' }),
+    )
+    expect(within(picked).getByText(/^2 x/)).toBeInTheDocument()
+    expect(
+      within(picked).getByRole('button', { name: /Sifarişi təsdiqlə/ }),
+    ).toHaveTextContent('22')
   })
 })

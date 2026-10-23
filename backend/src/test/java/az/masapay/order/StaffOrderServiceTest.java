@@ -85,6 +85,7 @@ class StaffOrderServiceTest {
 		table.setRestaurant(restaurant);
 		when(tableRepository.findById(table.getId())).thenReturn(Optional.of(table));
 		waiterUser.setName("Aysel");
+		waiterUser.setRole(UserRole.WAITER);
 		waiterUser.setRestaurant(restaurant);
 		when(userRepository.findById(waiter.id())).thenReturn(Optional.of(waiterUser));
 		when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -197,6 +198,69 @@ class StaffOrderServiceTest {
 		verify(orderItemRepository, never()).save(any());
 	}
 
+	// Who serves the table and gets its tips (#182)
+
+	@Test
+	void theFirstWaiterWhoAddsToABillTakesTheTable() {
+		Order order = new Order();
+		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
+
+		service.addItem(table.getId(), kabab, waiter);
+
+		assertThat(order.getWaiter()).isSameAs(waiterUser);
+	}
+
+	@Test
+	void aManagerAddingOrASecondWaiterDoesNotTakeTheTable() {
+		User aysel = new User();
+		Order order = new Order();
+		order.setWaiter(aysel);
+		AuthenticatedUser manager = new AuthenticatedUser(UUID.randomUUID(), "m@x.az", UserRole.RESTO_MANAGER);
+		User managerUser = new User();
+		managerUser.setRole(UserRole.RESTO_MANAGER);
+		managerUser.setRestaurant(restaurant);
+		when(userRepository.findById(manager.id())).thenReturn(Optional.of(managerUser));
+		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
+
+		service.addItem(table.getId(), kabab, waiter);
+		service.addItem(table.getId(), kabab, manager);
+
+		assertThat(order.getWaiter()).isSameAs(aysel);
+
+		Order fresh = new Order();
+		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(fresh));
+		service.addItem(table.getId(), kabab, manager);
+		assertThat(fresh.getWaiter()).isNull();
+	}
+
+	@Test
+	void aWaiterTakesOverATableAndEveryScreenHearsIt() {
+		Order order = new Order();
+		order.setWaiter(new User());
+		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.of(order));
+
+		service.claim(table.getId(), waiter);
+
+		assertThat(order.getWaiter()).isSameAs(waiterUser);
+		verify(realtime).broadcastOrderUpdate(table.getQrToken());
+	}
+
+	@Test
+	void onlyAWaiterTakesATableAndOnlyOneWithABill() {
+		when(orderRepository.findOpenOrderForUpdate(table.getId())).thenReturn(Optional.empty());
+		assertThatThrownBy(() -> service.claim(table.getId(), waiter))
+				.isInstanceOfSatisfying(ResponseStatusException.class,
+						e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+
+		AuthenticatedUser manager = new AuthenticatedUser(UUID.randomUUID(), "m@x.az", UserRole.RESTO_MANAGER);
+		User managerUser = new User();
+		managerUser.setRestaurant(restaurant);
+		when(userRepository.findById(manager.id())).thenReturn(Optional.of(managerUser));
+		assertThatThrownBy(() -> service.claim(table.getId(), manager))
+				.isInstanceOfSatisfying(ResponseStatusException.class,
+						e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+	}
+
 	// Manager / staff view of a table (#144)
 
 	private OrderItem line(String total) {
@@ -265,7 +329,7 @@ class StaffOrderServiceTest {
 	void paymentsOfTheCurrentBillComeNewestFirst() {
 		UUID orderId = UUID.randomUUID();
 		OrderView open = new OrderView(orderId, "OPEN", new BigDecimal("20.00"), new BigDecimal("5.00"),
-				new BigDecimal("15.00"), Instant.now(), List.of(), null, null);
+				new BigDecimal("15.00"), Instant.now(), List.of(), null, null, null);
 		when(customerOrderService.getCurrentOrder(table.getQrToken())).thenReturn(
 				new TableOrderResponse(table.getId(), "Masa 1", restaurant.getId(), "Cafe", "AZN", null, open));
 		Transaction older = payment("2.00", Instant.parse("2026-10-22T10:00:00Z"));

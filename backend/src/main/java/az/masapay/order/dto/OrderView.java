@@ -2,6 +2,7 @@ package az.masapay.order.dto;
 
 import az.masapay.domain.Order;
 import az.masapay.domain.OrderItem;
+import az.masapay.domain.User;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -10,11 +11,22 @@ import java.util.UUID;
 /**
  * The live order (adisyon) for a table with its line items. {@code equalSplit} is
  * null unless an equal split has been started; {@code serviceCharge} is null
- * unless the total is more than the items (e.g. a service charge).
+ * unless the total is more than the items (e.g. a service charge). {@code waiter} is who serves the
+ * table and gets its tips (#182); null when nobody has taken it, and always null for customers.
  */
 public record OrderView(
 		UUID orderId, String status, BigDecimal totalAmount, BigDecimal paidAmount, BigDecimal outstanding,
-		Instant openedAt, List<OrderItemView> items, EqualSplitView equalSplit, ServiceChargeView serviceCharge) {
+		Instant openedAt, List<OrderItemView> items, EqualSplitView equalSplit, ServiceChargeView serviceCharge,
+		Waiter waiter) {
+
+	/** The waiter serving the table; {@code name} falls back to the email. */
+	public record Waiter(UUID id, String name) {
+
+		static Waiter of(User user) {
+			return user == null ? null
+				: new Waiter(user.getId(), user.getName() != null ? user.getName() : user.getEmail());
+		}
+	}
 
 	/**
 	 * {@code paidAmount} is what successful payments have covered so far (tips excluded), so the
@@ -35,12 +47,12 @@ public record OrderView(
 		BigDecimal outstanding = order.getTotalAmount().subtract(paidAmount).max(BigDecimal.ZERO);
 		return new OrderView(
 			order.getId(), order.getStatus().name(), order.getTotalAmount(), paidAmount, outstanding,
-			order.getOpenedAt(), itemViews, equalSplit, serviceCharge);
+			order.getOpenedAt(), itemViews, equalSplit, serviceCharge, Waiter.of(order.getWaiter()));
 	}
 
 	/** The same bill without staff names, for customers (#144). */
 	public OrderView withoutStaffNames() {
 		return new OrderView(orderId, status, totalAmount, paidAmount, outstanding, openedAt,
-			items.stream().map(OrderItemView::withoutStaffName).toList(), equalSplit, serviceCharge);
+			items.stream().map(OrderItemView::withoutStaffName).toList(), equalSplit, serviceCharge, null);
 	}
 }

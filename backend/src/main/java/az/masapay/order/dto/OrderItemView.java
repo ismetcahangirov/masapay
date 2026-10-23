@@ -11,10 +11,12 @@ import java.util.UUID;
  * {@code kitchenStatus} tells staff whether it is ready (#142), null for lines that never go to
  * the kitchen. {@code source}, {@code addedBy} and {@code addedAt} say who put it on the bill and
  * when (#144): a staff member (by name), a customer from the menu, or a POS sync.
+ * {@code menuItemId} is the menu dish a line came from, null for a typed or POS line; the payment
+ * offer uses it to skip what the table already has (#183).
  */
 public record OrderItemView(
 		UUID id, String name, BigDecimal quantity, BigDecimal unitPrice, BigDecimal totalPrice, boolean paid,
-		KitchenStatus kitchenStatus, Source source, String addedBy, Instant addedAt) {
+		KitchenStatus kitchenStatus, Source source, String addedBy, Instant addedAt, UUID menuItemId) {
 
 	public enum Source {
 		STAFF, CUSTOMER, POS
@@ -28,12 +30,13 @@ public record OrderItemView(
 			: Source.STAFF;
 		String addedBy = item.getAddedBy() == null ? null : item.getAddedBy().getName();
 		return new OrderItemView(item.getId(), item.getName(), item.getQuantity(), item.getUnitPrice(),
-			item.getTotalPrice(), item.isPaid(), item.getKitchenStatus(), source, addedBy, item.getCreatedAt());
+			item.getTotalPrice(), item.isPaid(), item.getKitchenStatus(), source, addedBy, item.getCreatedAt(),
+			item.getMenuItem() == null ? null : item.getMenuItem().getId());
 	}
 
 	/** Customers see that staff added a line, not who: names stay with the restaurant. */
 	public OrderItemView withoutStaffName() {
 		return new OrderItemView(id, name, quantity, unitPrice, totalPrice, paid, kitchenStatus, source, null,
-			addedAt);
+			addedAt, menuItemId);
 	}
 }

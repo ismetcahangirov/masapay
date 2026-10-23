@@ -37,7 +37,7 @@ class OrderRealtimeRelayTest {
 		UUID qrToken = UUID.randomUUID();
 		OrderItemView byWaiter = new OrderItemView(UUID.randomUUID(), "Çay", BigDecimal.ONE, new BigDecimal("7.00"),
 			new BigDecimal("7.00"), false, null, OrderItemView.Source.STAFF, "Aysel",
-			Instant.parse("2026-01-01T00:00:00Z"));
+			Instant.parse("2026-01-01T00:00:00Z"), null);
 		OrderView order = new OrderView(
 			UUID.randomUUID(), "OPEN", new BigDecimal("7.00"), BigDecimal.ZERO, new BigDecimal("7.00"), Instant.parse("2026-01-01T00:00:00Z"), List.of(byWaiter), null, null, null);
 		TableOrderResponse snapshot =

@@ -5,11 +5,19 @@ import { orderBalance, type Order } from '@/features/order/types'
 import { FullPaymentDialog } from '@/features/payment/full-payment-dialog'
 import { EqualSplitDialog } from '@/features/payment/equal-split-dialog'
 import { ItemPaymentDialog } from '@/features/payment/item-payment-dialog'
+import { PaymentOfferDialog } from '@/features/payment/payment-offer-dialog'
+import { paymentOffers } from '@/features/payment/payment-offer'
+import {
+  type CustomerDish,
+  useCustomerMenuQuery,
+} from '@/features/ordering/customer-menu-api'
 
 type Mode = 'full' | 'equal' | 'items' | null
 
 // The three ways to pay, shown under the live bill. Each button opens its own
-// dialog that first quotes the amount, then pays it.
+// dialog that first quotes the amount, then pays it. The first time a guest
+// goes to pay a bill, the restaurant's extras for it are offered (#183); not
+// once an equal split has started, as a new dish would change everyone's share.
 export function PaymentActions({
   qrToken,
   order,
@@ -18,6 +26,25 @@ export function PaymentActions({
   order: Order
 }) {
   const [mode, setMode] = useState<Mode>(null)
+  const [offering, setOffering] = useState<Mode>(null)
+  const [offeredFor, setOfferedFor] = useState<string | null>(null)
+  // Kept as offered, so a dish just added stays in the list as "Əlavə olundu".
+  const [offerList, setOfferList] = useState<CustomerDish[]>([])
+  const menu = useCustomerMenuQuery(qrToken)
+  const offers = paymentOffers(
+    order,
+    (menu.data ?? []).flatMap((category) => category.items),
+  )
+
+  function choose(next: Exclude<Mode, null>) {
+    if (offers.length > 0 && !order.equalSplit && offeredFor !== order.id) {
+      setOfferedFor(order.id)
+      setOfferList(offers)
+      setOffering(next)
+      return
+    }
+    setMode(next)
+  }
 
   // Nothing to pay on a settled bill, or on one the manager cancelled (#186).
   if (
@@ -33,18 +60,18 @@ export function PaymentActions({
 
   return (
     <div className="w-full max-w-md space-y-3">
-      <Button className="h-12 w-full" onClick={() => setMode('full')}>
+      <Button className="h-12 w-full" onClick={() => choose('full')}>
         <Wallet aria-hidden />
         Tam ödə
       </Button>
       <div className="grid grid-cols-2 gap-3">
-        <Button className="h-12" onClick={() => setMode('equal')}>
+        <Button className="h-12" onClick={() => choose('equal')}>
           <Users aria-hidden />
           Bərabər böl
         </Button>
         <Button
           className="h-12"
-          onClick={() => setMode('items')}
+          onClick={() => choose('items')}
           disabled={splitStarted}
           title={
             splitStarted
@@ -63,6 +90,17 @@ export function PaymentActions({
         </p>
       )}
 
+      <PaymentOfferDialog
+        qrToken={qrToken}
+        open={offering !== null}
+        offers={offerList}
+        currency={order.currency}
+        onContinue={() => {
+          setMode(offering)
+          setOffering(null)
+        }}
+        onClose={() => setOffering(null)}
+      />
       <FullPaymentDialog
         qrToken={qrToken}
         currency={order.currency}

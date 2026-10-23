@@ -35,6 +35,8 @@ export interface OrderItem {
   addedBy: string | null
   /** When it was added (ISO time). */
   addedAt: string | null
+  /** The menu dish it came from (#183); null for a typed or POS line. */
+  menuItemId?: string | null
 }
 
 export interface Order {

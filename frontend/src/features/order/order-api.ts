@@ -23,6 +23,7 @@ interface OrderItemDto {
   source?: LineSource
   addedBy?: string | null
   addedAt?: string
+  menuItemId?: string | null
 }
 
 interface EqualSplitDto {
@@ -73,6 +74,7 @@ function toOrder(dto: OrderDto, currency: string): Order {
     source: item.source ?? 'STAFF',
     addedBy: item.addedBy ?? null,
     addedAt: item.addedAt ?? null,
+    menuItemId: item.menuItemId ?? null,
   }))
   const totalAmount = toMinor(dto.totalAmount)
 

@@ -1,0 +1,30 @@
+# Production profile (#156): start the backend with SPRING_PROFILES_ACTIVE=prod.
+# These settings are fixed here, so a deployment gets them without setting any
+# variable. An environment variable with the exact property name (for example
+# MASAPAY_AUTH_COOKIE_SECURE=false) would still win over this file; the startup
+# guard then refuses to start, so an insecure value never runs. The
+# secrets themselves still come from the environment (see README, Production):
+# MASAPAY_JWT_SECRET, MASAPAY_PAYRIFF_WEBHOOK_SECRET, MASAPAY_SECRETS_ENCRYPTION_KEY,
+# MASAPAY_PAYRIFF_APP_KEY, SPRING_DATASOURCE_PASSWORD, and the backend refuses to
+# start without real values.
+
+server:
+  # Behind nginx / a load balancer: trust X-Forwarded-For and X-Forwarded-Proto, so
+  # the rate limit sees each customer's own IP instead of the proxy's.
+  forward-headers-strategy: framework
+
+masapay:
+  auth:
+    # The refresh-token cookie travels only over HTTPS.
+    cookie-secure: true
+    dev-login:
+      enabled: false
+  security:
+    allow-dev-secrets: false
+
+springdoc:
+  # The endpoint map is not published in production.
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

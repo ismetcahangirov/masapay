@@ -172,6 +172,7 @@ hər birini eyni adlı environment dəyişəni əvəz edir. Production üçün v
 | `MASAPAY_QR_BASE_URL` | `http://localhost:5173` | QR kodların içindəki saytın ünvanı |
 | `MASAPAY_IIKO_BASE_URL` | `https://api-ru.iiko.services` | |
 | `SPRING_DATA_REDIS_HOST` / `SPRING_DATA_REDIS_PORT` | `localhost` / `6379` | |
+| `MASAPAY_PAYRIFF_RECONCILE_INTERVAL` / `..._MIN_AGE` / `..._GIVE_UP_AFTER` | `PT1M` / `PT10M` / `P2D` | Payriff-in callback göndərmədiyi PENDING ödənişlər bu qrafiklə Payriff-dən yoxlanılır və yekunlaşdırılır (müştəri ödəniş səhifəsini tərk edib, callback itib). `MASAPAY_PAYRIFF_RECONCILE_ENABLED=false` söndürür; mock rejimdə özü işləmir |
 | `MASAPAY_REDIS_ENABLED` | `true` | birdən çox nüsxədə mütləq `true` (canlı yeniləmələr və rate limit nüsxələr arası paylaşılır) |
 
 ### Təhlükəsizlik və limitlər

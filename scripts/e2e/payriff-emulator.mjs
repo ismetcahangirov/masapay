@@ -13,7 +13,8 @@
 //   MASAPAY_PAYRIFF_MOCK=false MASAPAY_PAYRIFF_BASE_URL=http://localhost:4010 \
 //   MASAPAY_PAYRIFF_APP_KEY=emulator-secret-key MASAPAY_DEV_LOGIN_ENABLED=true \
 //   MASAPAY_PAYRIFF_CALLBACK_URL=http://localhost:8081/api/public/payriff/webhook \
-//   MASAPAY_RATE_LIMIT_PAYMENT_PER_MINUTE=1000 SERVER_PORT=8081 ./gradlew bootRun
+//   MASAPAY_RATE_LIMIT_PAYMENT_PER_MINUTE=1000 SERVER_PORT=8081 \
+//   MASAPAY_PAYRIFF_RECONCILE_MIN_AGE=PT0S MASAPAY_PAYRIFF_RECONCILE_INTERVAL=PT1S ./gradlew bootRun
 // Then:
 //   node scripts/e2e/payriff-emulator.mjs
 //
@@ -291,6 +292,25 @@ await scenario('12. Each create request carries a UUID X-REQUEST-RRN (idempotenc
   const order = await emulatorOrder(checkout.orderId)
   const rrn = order.json?.payload?.requestRrn
   check(rrn === checkout.transactionId, 'the RRN is our transaction id, so a retry finds the same order', `rrn ${rrn}`)
+})
+
+await scenario('13. The guest leaves the payment page unpaid: no callback, the reconciliation fails it', async () => {
+  const { qr } = await newBill(13)
+  const checkout = await checkoutFull(qr)
+  // Payriff lets the unpaid order expire and calls nobody back.
+  const expired = await fetch(`${EMULATOR}/api/v3/expire-status?orderId=${checkout.orderId}`, {
+    method: 'PATCH',
+    headers: { Authorization: 'emulator-secret-key' },
+  })
+  check(expired.status === 200, 'the order expired at Payriff', String(expired.status))
+  const order = await emulatorOrder(checkout.orderId)
+  check((order.json?.payload?.callbacks ?? []).length === 0, 'no callback was sent', JSON.stringify(order.json?.payload?.callbacks))
+  const status = await waitFor(() => paymentStatus(checkout.transactionId), (r) => r.json?.status !== 'PENDING', {
+    timeoutMs: 15000,
+  })
+  check(status.json?.status === 'FAILED', 'the scheduled check marked the payment FAILED', `got ${status.json?.status}`)
+  const again = await checkoutFull(qr)
+  check(again.status === 200, 'the bill can be paid again', `${again.status} ${again.text}`)
 })
 
 console.log(failures === 0 ? '\nAll checks passed.' : `\n${failures} check(s) failed.`)

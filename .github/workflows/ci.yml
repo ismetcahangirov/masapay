@@ -4,7 +4,8 @@
 #   backend   - Gradle check (unit tests + Testcontainers PostgreSQL tests)
 #   frontend  - eslint, stylelint, prettier, type check + build, vitest
 #   payriff-e2e - real payments against the Payriff emulator: approve, decline,
-#               duplicate and forged callbacks, refunds, outages, the guest's return
+#               duplicate and forged callbacks, refunds, outages, the guest's return,
+#               an unpaid order Payriff never calls back about
 #   docker    - both production images build (nothing is pushed)
 name: CI
 
@@ -129,6 +130,10 @@ jobs:
           MASAPAY_RATE_LIMIT_PAYMENT_PER_MINUTE: "1000"
           MASAPAY_RATE_LIMIT_PUBLIC_PER_MINUTE: "1000"
           MASAPAY_RATE_LIMIT_AUTH_PER_MINUTE: "1000"
+          # Check unpaid Payriff orders every second, so scenario 13 does not wait minutes.
+          MASAPAY_PAYRIFF_RECONCILE_MIN_AGE: PT0S
+          MASAPAY_PAYRIFF_RECONCILE_INTERVAL: PT1S
+          MASAPAY_PAYRIFF_RECONCILE_INITIAL_DELAY: PT1S
           SERVER_PORT: "8081"
         run: |
           ./gradlew bootJar -x test --no-daemon -q

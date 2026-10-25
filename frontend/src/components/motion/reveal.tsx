@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react'
 import { motion, useReducedMotion, type HTMLMotionProps } from 'framer-motion'
 
-export interface RevealProps
-  extends Omit<
-    HTMLMotionProps<'div'>,
-    'initial' | 'whileInView' | 'transition' | 'variants'
-  > {
+export interface RevealProps extends Omit<
+  HTMLMotionProps<'div'>,
+  'initial' | 'whileInView' | 'transition' | 'variants'
+> {
   children: ReactNode
   /** Upward travel distance (px) the content rises from. */
   y?: number

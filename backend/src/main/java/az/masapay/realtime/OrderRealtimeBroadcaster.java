@@ -13,13 +13,18 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Pushes a fresh order snapshot to the table's WebSocket subscribers. With Redis enabled the
  * snapshot goes through Redis so every backend instance relays it to its own clients; with Redis
  * disabled (single instance, e.g. local development) it is sent straight to the STOMP topic (#21).
  * Either way the restaurant's live floor plan also gets the table's new floor entry (#44).
- * Call this after any change to a table's order.
+ * Call this after any change to a table's order. Inside a transaction the push waits until it
+ * commits: screens such as the staff orders page reload on the push, and a reload that arrived
+ * before the commit used to read the old state (a dish the chef marked ready still showed
+ * "Hazırlanır"). A rolled back change sends nothing.
  */
 @Service
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -46,6 +51,19 @@ public class OrderRealtimeBroadcaster {
 
 	/** Rebuilds the table's current order snapshot and broadcasts it to all instances. */
 	public void broadcastOrderUpdate(UUID qrToken) {
+		if (TransactionSynchronizationManager.isSynchronizationActive()) {
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+				@Override
+				public void afterCommit() {
+					send(qrToken);
+				}
+			});
+			return;
+		}
+		send(qrToken);
+	}
+
+	private void send(UUID qrToken) {
 		TableOrderResponse snapshot = customerOrderService.getCurrentOrder(qrToken);
 		if (stringRedisTemplate == null) {
 			OrderRealtimeRelay.deliver(messagingTemplate, qrToken, snapshot);

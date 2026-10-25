@@ -20,6 +20,8 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 class OrderRealtimeBroadcasterTest {
 
@@ -72,5 +74,24 @@ class OrderRealtimeBroadcasterTest {
 			assertThat(entry.tableId()).isEqualTo(snapshot.tableId());
 			assertThat(entry.status()).isEqualTo(FloorStatus.EMPTY);
 		});
+	}
+
+	@Test
+	void insideATransactionThePushWaitsForTheCommit() {
+		OrderRealtimeBroadcaster broadcaster = broadcaster(false);
+		TransactionSynchronizationManager.initSynchronization();
+		try {
+			broadcaster.broadcastOrderUpdate(qrToken);
+			// Not yet: a screen reloading now would still read the old bill.
+			verify(messagingTemplate, never()).convertAndSend(anyString(), any(Object.class));
+
+			for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+				sync.afterCommit();
+			}
+			verify(messagingTemplate).convertAndSend("/topic/tables/" + qrToken, snapshot);
+		}
+		finally {
+			TransactionSynchronizationManager.clearSynchronization();
+		}
 	}
 }

@@ -1,0 +1,92 @@
+# CI (#51): every pull request and every push to main is built, linted and
+# tested before it may be merged. Four independent jobs run side by side:
+#   rules     - the project's no-emoji rule over every tracked file
+#   backend   - Gradle check (unit tests + Testcontainers PostgreSQL tests)
+#   frontend  - eslint, stylelint, prettier, type check + build, vitest
+#   docker    - both production images build (nothing is pushed)
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same branch cancels the run that is still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rules:
+    name: Project rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: No emoji in tracked files
+        run: git ls-files -z | xargs -0 node scripts/check-no-emoji.mjs
+
+  backend:
+    name: Backend (Gradle check)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      # The runner has Docker, so the Testcontainers PostgreSQL tests run here
+      # too (they are skipped on machines without Docker).
+      - name: Check
+        run: ./gradlew check --no-daemon
+      - name: Test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: backend/build/reports/tests
+          retention-days: 7
+
+  frontend:
+    name: Frontend (lint, types, tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: ESLint
+        run: npm run lint
+      - name: Stylelint
+        run: npm run lint:css
+      - name: Prettier
+        run: npm run format:check
+      - name: Tests
+        run: npm test
+      - name: Type check and build
+        run: npm run build
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Backend image
+        run: docker build --tag masapay-backend:ci backend
+      - name: Frontend image
+        run: docker build --tag masapay-frontend:ci frontend

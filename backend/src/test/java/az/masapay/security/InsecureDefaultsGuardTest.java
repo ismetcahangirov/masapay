@@ -36,4 +36,17 @@ class InsecureDefaultsGuardTest {
 	void localDevelopmentMayOptIn() {
 		assertThatCode(new InsecureDefaultsGuard(SHIPPED_JWT, "", true)::check).doesNotThrowAnyException();
 	}
+
+	@Test
+	void outsideDevelopmentAPlainHttpCookieOrDevLoginStopsTheStartup() {
+		assertThatThrownBy(new InsecureDefaultsGuard(REAL, REAL + "x", false, false, false)::check)
+			.hasMessageContaining("MASAPAY_AUTH_COOKIE_SECURE");
+		assertThatThrownBy(new InsecureDefaultsGuard(REAL, REAL + "x", false, true, true)::check)
+			.hasMessageContaining("MASAPAY_DEV_LOGIN_ENABLED");
+		assertThatCode(new InsecureDefaultsGuard(REAL, REAL + "x", false, true, false)::check)
+			.doesNotThrowAnyException();
+		// Local development is not held to it.
+		assertThatCode(new InsecureDefaultsGuard(REAL, REAL + "x", true, false, true)::check)
+			.doesNotThrowAnyException();
+	}
 }

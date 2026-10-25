@@ -23,6 +23,14 @@ public record IntegrationSettings(
 		BigDecimal serviceChargePercent) {
 
 	public static IntegrationSettings from(Restaurant restaurant) {
+		return from(restaurant, true);
+	}
+
+	/**
+	 * {@code withPayriff} false leaves the Payriff fields out: they are the platform's, set by the
+	 * super admin only, and a restaurant's manager does not see them.
+	 */
+	public static IntegrationSettings from(Restaurant restaurant, boolean withPayriff) {
 		return new IntegrationSettings(
 			restaurant.getId(),
 			restaurant.getPosType(),
@@ -30,9 +38,9 @@ public record IntegrationSettings(
 			hasValue(restaurant.getIikoApiLogin()),
 			restaurant.getIikoOrganizationId(),
 			restaurant.getIikoPaymentTypeId(),
-			restaurant.getPayriffMerchantId(),
-			SecretMasker.mask(restaurant.getPayriffSecretKey()),
-			hasValue(restaurant.getPayriffSecretKey()),
+			withPayriff ? restaurant.getPayriffMerchantId() : null,
+			withPayriff ? SecretMasker.mask(restaurant.getPayriffSecretKey()) : null,
+			withPayriff && hasValue(restaurant.getPayriffSecretKey()),
 			restaurant.getServiceChargePercent());
 	}
 

@@ -18,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * Reads and updates a restaurant's POS and Payriff settings. A SUPER_ADMIN may
  * manage any restaurant; a RESTO_MANAGER only the restaurant they belong to.
+ * The Payriff merchant id and secret key are the platform's: only a SUPER_ADMIN
+ * sees or changes them; a manager neither gets them nor may send them (403).
  */
 @Service
 @ConditionalOnProperty(prefix = "masapay.auth", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -33,13 +35,16 @@ public class IntegrationSettingsService {
 
 	@Transactional(readOnly = true)
 	public IntegrationSettings getSettings(UUID restaurantId, AuthenticatedUser principal) {
-		return IntegrationSettings.from(loadAuthorized(restaurantId, principal));
+		return IntegrationSettings.from(loadAuthorized(restaurantId, principal), isSuperAdmin(principal));
 	}
 
 	@Transactional
 	public IntegrationSettings updateSettings(
 			UUID restaurantId, UpdateIntegrationSettingsRequest request, AuthenticatedUser principal) {
 		Restaurant restaurant = loadAuthorized(restaurantId, principal);
+		if (!isSuperAdmin(principal) && (request.payriffMerchantId() != null || request.payriffSecretKey() != null)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Payriff settings are managed by the platform");
+		}
 
 		if (request.posType() != null) {
 			restaurant.setPosType(request.posType());
@@ -68,7 +73,11 @@ public class IntegrationSettingsService {
 			}
 			restaurant.setServiceChargePercent(request.serviceChargePercent());
 		}
-		return IntegrationSettings.from(restaurantRepository.save(restaurant));
+		return IntegrationSettings.from(restaurantRepository.save(restaurant), isSuperAdmin(principal));
+	}
+
+	private static boolean isSuperAdmin(AuthenticatedUser principal) {
+		return principal.role() == UserRole.SUPER_ADMIN;
 	}
 
 	/**

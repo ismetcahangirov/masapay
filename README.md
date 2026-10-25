@@ -182,8 +182,9 @@ hər birini eyni adlı environment dəyişəni əvəz edir. Production üçün v
 | `MASAPAY_SECRETS_KEY_ID` / `MASAPAY_SECRETS_OLD_KEYS` | `k1` / boş | açar rotasiyası, aşağıya bax |
 | `MASAPAY_RATE_LIMIT_ENABLED` | `true` | |
 | `MASAPAY_RATE_LIMIT_AUTH_PER_MINUTE` | `20` | IP üzrə |
-| `MASAPAY_RATE_LIMIT_PAYMENT_PER_MINUTE` / `..._PER_DAY` | `10` / `100` | IP üzrə |
-| `MASAPAY_RATE_LIMIT_PUBLIC_PER_MINUTE` | `120` | IP üzrə |
+| `MASAPAY_RATE_LIMIT_PAYMENT_PER_MINUTE` / `..._PER_DAY` | `10` / `100` | masa + IP üzrə (restoranın Wi-Fi-ı bir IP-dir, hər masanın öz payı var) |
+| `MASAPAY_RATE_LIMIT_PUBLIC_PER_MINUTE` | `120` | masa + IP üzrə |
+| `MASAPAY_RATE_LIMIT_PUBLIC_PER_MINUTE_PER_IP` | `3000` | bir IP-dən bütün masalar üzrə cəmi (token təxminlərinə qarşı) |
 | `MASAPAY_RATE_LIMIT_STAFF_PER_MINUTE` | `300` | istifadəçi üzrə |
 | `MASAPAY_JWT_ACCESS_TTL` / `MASAPAY_JWT_REFRESH_TTL` | `PT15M` / `P7D` | |
 

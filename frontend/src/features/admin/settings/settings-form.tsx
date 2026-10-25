@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { useAppSelector } from '@/app/hooks'
 import { cn } from '@/lib/utils'
 
 const UUID_PATTERN =
@@ -55,7 +56,11 @@ function toFormValues(settings: IntegrationSettings): FormValues {
   }
 }
 
-function toRequest(values: FormValues): UpdateIntegrationSettings {
+/** {@code withPayriff} false (a manager) leaves the Payriff fields out: they are the platform's. */
+function toRequest(
+  values: FormValues,
+  withPayriff: boolean,
+): UpdateIntegrationSettings {
   const trimmed = (value: string) => value.trim() || undefined
   return {
     posType: values.posType,
@@ -66,9 +71,11 @@ function toRequest(values: FormValues): UpdateIntegrationSettings {
     iikoApiLogin: trimmed(values.iikoApiLogin),
     iikoOrganizationId: trimmed(values.iikoOrganizationId),
     iikoPaymentTypeId: trimmed(values.iikoPaymentTypeId),
-    // Sent even when blank: a blank merchant id clears it on the server.
-    payriffMerchantId: values.payriffMerchantId.trim(),
-    payriffSecretKey: trimmed(values.payriffSecretKey),
+    ...(withPayriff && {
+      // Sent even when blank: a blank merchant id clears it on the server.
+      payriffMerchantId: values.payriffMerchantId.trim(),
+      payriffSecretKey: trimmed(values.payriffSecretKey),
+    }),
   }
 }
 
@@ -112,6 +119,9 @@ function FieldError({ message }: { message?: string }) {
 export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
   const [save, saveState] = useUpdateIntegrationSettingsMutation()
   const [saved, setSaved] = useState(false)
+  // Payriff (merchant id, secret key) is set by the platform, not by the restaurant.
+  const superAdmin =
+    useAppSelector((state) => state.auth.user?.role) === 'SUPER_ADMIN'
   const {
     control,
     register,
@@ -133,7 +143,7 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
     try {
       await save({
         restaurantId: settings.restaurantId,
-        body: toRequest(values),
+        body: toRequest(values, superAdmin),
       }).unwrap()
       setSaved(true)
     } catch {
@@ -276,37 +286,49 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <KeyRound className="size-5" aria-hidden />
-            Payriff
-          </CardTitle>
-          <CardDescription>
-            Gizli açar heç vaxt tam göstərilmir, yalnız son 4 simvolu görünür.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="space-y-1">
-            <Label htmlFor="payriffMerchantId">Merchant ID</Label>
-            <Input id="payriffMerchantId" {...register('payriffMerchantId')} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="payriffSecretKey">Secret Key</Label>
-            <Input
-              id="payriffSecretKey"
-              type="password"
-              autoComplete="off"
-              placeholder={
-                settings.payriffSecretKeySet
-                  ? `${settings.payriffSecretKey} (dəyişmək üçün yenisini yazın)`
-                  : 'Daxil edilməyib'
-              }
-              {...register('payriffSecretKey')}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {superAdmin ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <KeyRound className="size-5" aria-hidden />
+              Payriff
+            </CardTitle>
+            <CardDescription>
+              Gizli açar heç vaxt tam göstərilmir, yalnız son 4 simvolu görünür.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="payriffMerchantId">Merchant ID</Label>
+              <Input
+                id="payriffMerchantId"
+                {...register('payriffMerchantId')}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="payriffSecretKey">Secret Key</Label>
+              <Input
+                id="payriffSecretKey"
+                type="password"
+                autoComplete="off"
+                placeholder={
+                  settings.payriffSecretKeySet
+                    ? `${settings.payriffSecretKey} (dəyişmək üçün yenisini yazın)`
+                    : 'Daxil edilməyib'
+                }
+                {...register('payriffSecretKey')}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <p className="flex items-start gap-2 rounded-lg border p-4 text-sm text-muted-foreground">
+          <KeyRound className="mt-0.5 size-4 shrink-0" aria-hidden />
+          Payriff ödəniş ayarları (Merchant ID, Secret Key) masapay platforması
+          tərəfindən idarə olunur. Dəyişiklik lazımdırsa, bizimlə əlaqə
+          saxlayın.
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={!isDirty || saveState.isLoading}>

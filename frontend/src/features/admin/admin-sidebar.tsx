@@ -7,8 +7,8 @@ import {
   ClipboardList,
   HandCoins,
   LayoutDashboard,
-  LayoutGrid,
   type LucideIcon,
+  MonitorDot,
   QrCode,
   ReceiptText,
   Settings,
@@ -76,7 +76,7 @@ const RESTAURANT_LINKS: AdminLink[] = [
   {
     to: '/admin/live',
     label: 'Canlı masalar',
-    icon: LayoutGrid,
+    icon: MonitorDot,
     end: false,
     roles: STAFF,
   },
@@ -211,8 +211,10 @@ export function AdminSidebar() {
               <NavLink
                 to={role === 'SUPER_ADMIN' ? '/admin/restaurants' : '/admin'}
               >
-                <BrandMark className="size-6" />
-                <span className="text-lg tracking-tight">masapay</span>
+                <BrandMark className="size-6 shrink-0" />
+                <span className="text-lg tracking-tight group-data-[collapsible=icon]:hidden">
+                  masapay
+                </span>
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>

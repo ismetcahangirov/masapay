@@ -128,6 +128,16 @@ masapay:
     # in a deployed environment.
     mock: ${MASAPAY_PAYRIFF_MOCK:false}
     mock-page-url: ${MASAPAY_PAYRIFF_MOCK_PAGE_URL:http://localhost:5173/payment/mock}
+    # Payments Payriff never called back about (the guest left the payment page, or a callback
+    # was lost) are checked with Payriff on a schedule and settled or failed. Off in mock mode.
+    reconcile:
+      enabled: ${MASAPAY_PAYRIFF_RECONCILE_ENABLED:true}
+      # How often, and how old a PENDING payment must be before it is checked.
+      interval: ${MASAPAY_PAYRIFF_RECONCILE_INTERVAL:PT1M}
+      initial-delay: ${MASAPAY_PAYRIFF_RECONCILE_INITIAL_DELAY:PT30S}
+      min-age: ${MASAPAY_PAYRIFF_RECONCILE_MIN_AGE:PT10M}
+      # Still open at Payriff after this long: the payment page is long gone, mark it failed.
+      give-up-after: ${MASAPAY_PAYRIFF_RECONCILE_GIVE_UP_AFTER:P2D}
 
 springdoc:
   # OpenAPI spec and Swagger UI for trying the API by hand. Off unless asked for

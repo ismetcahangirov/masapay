@@ -39,6 +39,11 @@ public class PayriffWebhookService {
 		this.settlementService = settlementService;
 	}
 
+	/** A status after which Payriff will not change its mind: approved or failed for good. */
+	public static boolean isFinal(String paymentStatus) {
+		return APPROVED.equals(paymentStatus) || FAILED.contains(paymentStatus);
+	}
+
 	@Transactional
 	public void handle(String txId, String sig, PayriffCallback callback) {
 		signature.verify(txId, sig);

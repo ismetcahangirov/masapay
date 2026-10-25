@@ -8,9 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Counts requests per key in fixed windows (e.g. one minute) kept in memory. Good enough for one
- * instance; several instances would each allow the limit, so move the counters to Redis then.
+ * instance and for local runs without Redis; with Redis on, {@link RedisRateLimiter} is used so
+ * several instances share the counters (#158).
  */
-public class FixedWindowRateLimiter {
+public class FixedWindowRateLimiter implements RateLimiter {
 
 	/** Above this many keys, expired windows are dropped so memory stays bounded. */
 	static final int CLEANUP_THRESHOLD = 50_000;
@@ -29,10 +30,7 @@ public class FixedWindowRateLimiter {
 		this.clock = clock;
 	}
 
-	/**
-	 * Counts one request for {@code key}. Empty when it is allowed; otherwise the seconds until the
-	 * window resets, for a Retry-After header.
-	 */
+	@Override
 	public OptionalLong tryAcquire(String key, int limit, Duration window) {
 		long now = clock.millis();
 		long length = window.toMillis();

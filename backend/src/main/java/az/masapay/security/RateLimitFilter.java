@@ -34,10 +34,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
 	private static final Pattern PAYMENT_START = Pattern.compile("^/api/public/tables/[^/]+/payment/.+/checkout$");
 
 	private final RateLimitProperties limits;
-	private final FixedWindowRateLimiter limiter;
+	private final RateLimiter limiter;
 	private final ObjectMapper objectMapper;
 
-	public RateLimitFilter(RateLimitProperties limits, FixedWindowRateLimiter limiter, ObjectMapper objectMapper) {
+	public RateLimitFilter(RateLimitProperties limits, RateLimiter limiter, ObjectMapper objectMapper) {
 		this.limits = limits;
 		this.limiter = limiter;
 		this.objectMapper = objectMapper;

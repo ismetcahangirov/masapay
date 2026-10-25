@@ -3,6 +3,7 @@ package az.masapay.payment.refund;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,7 @@ import az.masapay.domain.User;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.payment.payriff.PayriffClient;
+import az.masapay.payment.payriff.PayriffException;
 import az.masapay.payment.payriff.PayriffRefundRequest;
 import az.masapay.repository.TransactionRepository;
 import az.masapay.repository.UserRepository;
@@ -111,5 +113,31 @@ class RefundServiceTest {
 		service.refund(transaction.getId(), manager, null);
 
 		assertThat(transaction.getStatus()).isEqualTo(TransactionStatus.REFUNDED);
+	}
+
+	@Test
+	void payriffsRefusalReachesTheManagerAndThePaymentStays() {
+		doThrow(new PayriffException("refund", 400, "01000", "Refund time expired.\n Support ticket: 1"))
+				.when(payriffClient).refund(any());
+
+		assertThatThrownBy(() -> service.refund(transaction.getId(), superAdmin, null))
+				.isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+					assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+					assertThat(e.getReason()).isEqualTo(RefundService.REFUND_WINDOW_EXPIRED);
+				});
+		assertThat(transaction.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
+	}
+
+	@Test
+	void payriffDownIsABadGatewayNotARefusal() {
+		doThrow(new PayriffException("refund", 503, null, "Service Unavailable"))
+				.when(payriffClient).refund(any());
+
+		assertThatThrownBy(() -> service.refund(transaction.getId(), superAdmin, null))
+				.isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+					assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+					assertThat(e.getReason()).isEqualTo(RefundService.PAYRIFF_UNAVAILABLE);
+				});
+		assertThat(transaction.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
 	}
 }

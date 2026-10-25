@@ -5,10 +5,12 @@ import az.masapay.domain.User;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.payment.payriff.PayriffClient;
+import az.masapay.payment.payriff.PayriffException;
 import az.masapay.payment.payriff.PayriffRefundRequest;
 import az.masapay.repository.TransactionRepository;
 import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,11 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class RefundService {
+
+	/** Reasons sent with a refused refund, so the admin panel can say why. */
+	public static final String REFUND_WINDOW_EXPIRED = "REFUND_WINDOW_EXPIRED";
+	public static final String PAYRIFF_REFUSED = "PAYRIFF_REFUSED";
+	public static final String PAYRIFF_UNAVAILABLE = "PAYRIFF_UNAVAILABLE";
 
 	private final TransactionRepository transactionRepository;
 	private final UserRepository userRepository;
@@ -52,13 +59,33 @@ public class RefundService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "This payment did not go through Payriff");
 		}
 
-		payriffClient.refund(new PayriffRefundRequest(
-				transaction.getPayriffOrderId(), transaction.getTotalAmount(), reason));
+		try {
+			payriffClient.refund(new PayriffRefundRequest(
+					transaction.getPayriffOrderId(), transaction.getTotalAmount(), reason));
+		}
+		catch (PayriffException e) {
+			throw refusal(e);
+		}
 
 		transaction.setStatus(TransactionStatus.REFUNDED);
 		transaction.setRefundedAmount(transaction.getTotalAmount());
 		transactionRepository.save(transaction);
 		return RefundResult.of(transaction);
+	}
+
+	/**
+	 * What the manager is told when Payriff does not refund: 409 with why when Payriff refused
+	 * (past the 30-day window: {@value #REFUND_WINDOW_EXPIRED}), 502 when it could not be reached.
+	 * The payment stays SUCCESS either way.
+	 */
+	static ResponseStatusException refusal(PayriffException e) {
+		if (!e.refused()) {
+			return new ResponseStatusException(HttpStatus.BAD_GATEWAY, PAYRIFF_UNAVAILABLE);
+		}
+		String message = e.payriffMessage() == null ? "" : e.payriffMessage();
+		return new ResponseStatusException(HttpStatus.CONFLICT,
+			message.toLowerCase(Locale.ROOT).contains("refund time expired") ? REFUND_WINDOW_EXPIRED
+				: PAYRIFF_REFUSED);
 	}
 
 	/** A restaurant manager may refund only their own restaurant's payments; a super admin any. */

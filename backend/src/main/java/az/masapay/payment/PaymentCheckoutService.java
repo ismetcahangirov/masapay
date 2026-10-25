@@ -9,6 +9,7 @@ import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.payment.dto.CheckoutResponse;
 import az.masapay.payment.dto.PaymentStatusView;
 import az.masapay.payment.payriff.PayriffCheckout;
+import az.masapay.payment.payriff.PayriffException;
 import az.masapay.payment.payriff.PayriffService;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
@@ -18,6 +19,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,11 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class PaymentCheckoutService {
+
+	private static final Logger log = LoggerFactory.getLogger(PaymentCheckoutService.class);
+
+	/** Reason sent with the 502, so the phone can say Payriff is not answering. */
+	public static final String PAYRIFF_UNAVAILABLE = "PAYRIFF_UNAVAILABLE";
 
 	private final PaymentSettlementService settlementService;
 	private final PayriffService payriffService;
@@ -138,10 +146,23 @@ public class PaymentCheckoutService {
 		return transaction;
 	}
 
-	/** Saves the pending payment first (Payriff needs its id), then opens the Payriff page. */
+	/**
+	 * Saves the pending payment first (Payriff needs its id), then opens the Payriff page. If
+	 * Payriff can not open it, the payment is marked FAILED, so no PENDING row is left behind to
+	 * block the bill, and the guest gets 502 with {@value #PAYRIFF_UNAVAILABLE}.
+	 */
 	private CheckoutResponse start(Transaction transaction) {
 		Transaction saved = transactionRepository.save(transaction);
-		PayriffCheckout checkout = payriffService.startCheckout(saved);
+		PayriffCheckout checkout;
+		try {
+			checkout = payriffService.startCheckout(saved);
+		}
+		catch (PayriffException e) {
+			log.warn("Payriff could not open payment {}: {}", saved.getId(), e.getMessage());
+			saved.setStatus(TransactionStatus.FAILED);
+			transactionRepository.save(saved);
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, PAYRIFF_UNAVAILABLE);
+		}
 		return new CheckoutResponse(saved.getId(), checkout.paymentUrl());
 	}
 }

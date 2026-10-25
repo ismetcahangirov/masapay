@@ -15,7 +15,10 @@ import { readFileSync, existsSync, statSync } from 'node:fs'
 
 // Extended_Pictographic covers the emoji code points; variation selector 16
 // (U+FE0F) and zero-width joiner sequences are caught by the pictographic base.
-const EMOJI_RE = /\p{Extended_Pictographic}/u
+// The copyright, registered and trade mark signs are pictographic too, but as
+// plain text they are ordinary typography (e.g. the Gradle wrapper's licence
+// header); only their emoji form, followed by U+FE0F, is refused.
+const EMOJI_RE = /(?![©®™](?!️))\p{Extended_Pictographic}/u
 
 // Files we never scan (binary, generated or lockfiles).
 const SKIP_RE =

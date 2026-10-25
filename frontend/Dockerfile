@@ -9,6 +9,10 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+# Vite bakes VITE_* values into the bundle at build time, so the Google client id
+# is a build argument: docker build --build-arg VITE_GOOGLE_CLIENT_ID=... frontend
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 RUN npm run build
 
 # --- run stage -------------------------------------------------------------

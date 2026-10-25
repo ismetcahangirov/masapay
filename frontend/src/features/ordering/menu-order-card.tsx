@@ -119,7 +119,7 @@ export function MenuOrderCard({
 
   return (
     <Card className="w-full max-w-md">
-      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+      <CardHeader className="flex-col items-stretch gap-3 space-y-0 min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between">
         <div className="space-y-1">
           <CardTitle className="text-xl">
             <h2>Menyu və sifariş</h2>

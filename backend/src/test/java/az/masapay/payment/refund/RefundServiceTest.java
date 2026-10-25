@@ -12,14 +12,12 @@ import static org.mockito.Mockito.when;
 
 import az.masapay.domain.Restaurant;
 import az.masapay.domain.Transaction;
-import az.masapay.domain.User;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.payment.payriff.PayriffClient;
 import az.masapay.payment.payriff.PayriffException;
 import az.masapay.payment.payriff.PayriffRefundRequest;
 import az.masapay.repository.TransactionRepository;
-import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -32,9 +30,8 @@ import org.springframework.web.server.ResponseStatusException;
 class RefundServiceTest {
 
 	private final TransactionRepository transactionRepository = mock(TransactionRepository.class);
-	private final UserRepository userRepository = mock(UserRepository.class);
 	private final PayriffClient payriffClient = mock(PayriffClient.class);
-	private final RefundService service = new RefundService(transactionRepository, userRepository, payriffClient);
+	private final RefundService service = new RefundService(transactionRepository, payriffClient);
 
 	private final AuthenticatedUser superAdmin = new AuthenticatedUser(UUID.randomUUID(), "a@x.az", UserRole.SUPER_ADMIN);
 	private final Restaurant restaurant = new Restaurant();
@@ -89,30 +86,14 @@ class RefundServiceTest {
 	}
 
 	@Test
-	void aManagerCannotRefundAnotherRestaurantsPayment() {
+	void aManagerCannotRefundEvenTheirOwnRestaurantsPayment() {
 		AuthenticatedUser manager = new AuthenticatedUser(UUID.randomUUID(), "m@x.az", UserRole.RESTO_MANAGER);
-		Restaurant other = new Restaurant();
-		other.setId(UUID.randomUUID());
-		User user = new User();
-		user.setRestaurant(other);
-		when(userRepository.findById(manager.id())).thenReturn(Optional.of(user));
 
 		assertThatThrownBy(() -> service.refund(transaction.getId(), manager, null))
 				.isInstanceOfSatisfying(ResponseStatusException.class,
 						e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
 		verify(payriffClient, never()).refund(any());
-	}
-
-	@Test
-	void aManagerCanRefundTheirOwnRestaurantsPayment() {
-		AuthenticatedUser manager = new AuthenticatedUser(UUID.randomUUID(), "m@x.az", UserRole.RESTO_MANAGER);
-		User user = new User();
-		user.setRestaurant(restaurant);
-		when(userRepository.findById(manager.id())).thenReturn(Optional.of(user));
-
-		service.refund(transaction.getId(), manager, null);
-
-		assertThat(transaction.getStatus()).isEqualTo(TransactionStatus.REFUNDED);
+		assertThat(transaction.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
 	}
 
 	@Test

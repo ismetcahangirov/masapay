@@ -105,4 +105,36 @@ describe('TransactionsPage Excel download (#170)', () => {
     await screen.findByText('Heç bir əməliyyat tapılmadı.')
     expect(screen.getByRole('button', { name: 'Excel yüklə' })).toBeDisabled()
   })
+
+  it('tells the manager why Payriff did not refund (past 30 days)', async () => {
+    mockApi({
+      'GET /api/admin/restaurants': [{ id: 'r1', name: 'Dolma' }],
+      [`GET ${LIST}`]: page,
+      'POST /api/admin/transactions/x1/refund': () =>
+        new Response(
+          JSON.stringify({ status: 409, detail: 'REFUND_WINDOW_EXPIRED' }),
+          {
+            status: 409,
+            headers: { 'Content-Type': 'application/problem+json' },
+          },
+        ),
+    })
+    renderWithProviders(<TransactionsPage />)
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: /Geri qaytar/ }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    await userEvent.click(
+      Array.from(dialog.querySelectorAll('button')).find((b) =>
+        /Geri qaytar/.test(b.textContent ?? ''),
+      )!,
+    )
+
+    expect(
+      await screen.findByText(
+        /30 gündən çox keçib: Payriff pulu geri qaytarmağa icazə vermir/,
+      ),
+    ).toBeInTheDocument()
+  })
 })

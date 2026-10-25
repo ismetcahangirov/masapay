@@ -43,4 +43,13 @@ describe('API problem details (#147)', () => {
     expect(isRestaurantClosed(expired)).toBe(false)
     expect(paymentErrorMessage(expired)).toMatch(/onlayn ödəniş qəbul etmir/)
   })
+
+  it('tells the customer when Payriff is not answering', () => {
+    expect(
+      paymentErrorMessage({
+        status: 502,
+        data: { detail: 'PAYRIFF_UNAVAILABLE' },
+      }),
+    ).toMatch(/Ödəniş sistemi hazırda cavab vermir, pul çəkilməyib/)
+  })
 })

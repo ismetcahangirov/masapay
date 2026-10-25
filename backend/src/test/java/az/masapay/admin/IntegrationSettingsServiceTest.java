@@ -155,12 +155,22 @@ class IntegrationSettingsServiceTest {
 	}
 
 	@Test
-	void managerCanManageOwnRestaurant() {
+	void managerCanManageOwnRestaurantButNotItsPayriffSettings() {
 		AuthenticatedUser manager = managerOf(restaurantId);
 
-		service.updateSettings(restaurantId, secretsOnly(null, "sk_live_mine_0000"), manager);
+		IntegrationSettings result = service.updateSettings(restaurantId, secretsOnly("iiko-login-mine", null), manager);
 
-		assertThat(restaurant.getPayriffSecretKey()).isEqualTo("sk_live_mine_0000");
+		assertThat(restaurant.getIikoApiLogin()).isEqualTo("iiko-login-mine");
+		// Payriff is the platform's: a manager does not see it...
+		assertThat(result.payriffMerchantId()).isNull();
+		assertThat(result.payriffSecretKey()).isNull();
+		assertThat(result.payriffSecretKeySet()).isFalse();
+		assertThat(service.getSettings(restaurantId, manager).payriffMerchantId()).isNull();
+		// ...and may not change it.
+		assertThatThrownBy(() -> service.updateSettings(restaurantId, secretsOnly(null, "sk_live_mine_0000"), manager))
+			.isInstanceOfSatisfying(ResponseStatusException.class,
+				e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+		assertThat(restaurant.getPayriffSecretKey()).isEqualTo(SECRET_KEY);
 	}
 
 	@Test

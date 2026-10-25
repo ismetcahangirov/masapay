@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -28,6 +29,20 @@ public interface TransactionRepository
 
 	/** Look up a transaction by its Payriff order id for idempotent webhook handling (#35). */
 	Optional<Transaction> findByPayriffOrderId(String payriffOrderId);
+
+	/**
+	 * Payriff payments still PENDING that were started before {@code startedBefore}, oldest first,
+	 * for the reconciliation. Mock payments (local development) are left out.
+	 */
+	@Query("""
+		select t from Transaction t
+		where t.status = az.masapay.domain.enums.TransactionStatus.PENDING
+			and t.payriffOrderId is not null
+			and t.payriffOrderId not like 'MOCK-%'
+			and t.createdAt < :startedBefore
+		order by t.createdAt asc
+		""")
+	List<Transaction> findStalePayriffPayments(@Param("startedBefore") Instant startedBefore, Pageable page);
 
 	/**
 	 * Loads a transaction with a row lock held until the transaction ends (#35). Payriff may send

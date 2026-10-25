@@ -69,10 +69,7 @@ public class PayriffService {
 				.queryParam("tx", txId)
 				.queryParam("sig", sig)
 				.toUriString();
-		// Payriff sends the guest back here; the result page polls the payment by its id.
-		String returnUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-				.queryParam("tx", txId)
-				.toUriString();
+		String returnUrl = resultPage(txId);
 
 		if (mock) {
 			return startMockCheckout(transaction, txId, sig);
@@ -85,7 +82,7 @@ public class PayriffService {
 				LANGUAGE,
 				"masapay payment " + txId,
 				signedCallback,
-				returnUrl));
+				returnUrl), txId);
 
 		transaction.setPayriffOrderId(order.orderId());
 		transaction.setPayriffSessionId(order.sessionId());
@@ -94,6 +91,15 @@ public class PayriffService {
 		}
 		transactionRepository.save(transaction);
 		return new PayriffCheckout(order.orderId(), order.paymentUrl());
+	}
+
+	/**
+	 * Our result page for a payment, which polls it by its id. Payriff is given it as
+	 * {@code redirectUrl}, but in practice it sends the guest's browser to the callback URL with a
+	 * GET, which then redirects here (see {@link PayriffWebhookController}).
+	 */
+	public String resultPage(String txId) {
+		return UriComponentsBuilder.fromUriString(redirectUrl).queryParam("tx", txId).toUriString();
 	}
 
 	private PayriffCheckout startMockCheckout(Transaction transaction, String txId, String sig) {

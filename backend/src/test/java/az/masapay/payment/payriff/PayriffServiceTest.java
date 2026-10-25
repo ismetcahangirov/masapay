@@ -2,6 +2,7 @@ package az.masapay.payment.payriff;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -30,7 +31,7 @@ class PayriffServiceTest {
 		Transaction transaction = new Transaction();
 		transaction.setId(UUID.randomUUID());
 		transaction.setTotalAmount(new BigDecimal("27.50"));
-		when(client.createOrder(any()))
+		when(client.createOrder(any(), any()))
 				.thenReturn(new PayriffOrder("ord-1", "ses-1", "https://pay.payriff.com/ord-1", 777L));
 
 		PayriffCheckout checkout = service.startCheckout(transaction);
@@ -42,7 +43,8 @@ class PayriffServiceTest {
 		verify(transactionRepository).save(transaction);
 
 		ArgumentCaptor<PayriffCreateOrderRequest> sent = ArgumentCaptor.forClass(PayriffCreateOrderRequest.class);
-		verify(client).createOrder(sent.capture());
+		// The RRN is the transaction id, so asking Payriff again finds the same order.
+		verify(client).createOrder(sent.capture(), eq(transaction.getId().toString()));
 		assertThat(sent.getValue().amount()).isEqualByComparingTo("27.50");
 		assertThat(sent.getValue().currency()).isEqualTo("AZN");
 		assertThat(sent.getValue().redirectUrl())

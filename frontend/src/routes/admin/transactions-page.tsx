@@ -8,6 +8,7 @@ import {
   Undo2,
   X,
 } from 'lucide-react'
+import { useAppSelector } from '@/app/hooks'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
 import {
   formatAmount,
@@ -72,6 +73,9 @@ export function TransactionsPage() {
   const [to, setTo] = useState('')
   const [page, setPage] = useState(0)
   const [refunding, setRefunding] = useState<TransactionRow | null>(null)
+  // Refunds go through the platform's Payriff account: the super admin's call.
+  const superAdmin =
+    useAppSelector((state) => state.auth.user?.role) === 'SUPER_ADMIN'
 
   // Search only after the user stops typing, not on every key.
   useEffect(() => {
@@ -329,7 +333,7 @@ export function TransactionsPage() {
                   {row.payriffOrderId ?? '-'}
                 </TableCell>
                 <TableCell className="text-right">
-                  {row.refundable && (
+                  {superAdmin && row.refundable && (
                     <Button
                       variant="outline"
                       size="sm"

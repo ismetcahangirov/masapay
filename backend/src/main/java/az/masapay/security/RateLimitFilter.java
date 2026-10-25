@@ -1,5 +1,7 @@
 package az.masapay.security;
 
+import java.util.regex.Matcher;
+import java.util.Locale;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -32,6 +34,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 	private static final Duration MINUTE = Duration.ofMinutes(1);
 	private static final Duration DAY = Duration.ofDays(1);
 	private static final Pattern PAYMENT_START = Pattern.compile("^/api/public/tables/[^/]+/payment/.+/checkout$");
+	private static final Pattern TABLE_PATH = Pattern.compile("^/api/public/tables/([0-9a-fA-F-]{36})(/|$)");
 
 	private final RateLimitProperties limits;
 	private final RateLimiter limiter;
@@ -63,14 +66,23 @@ public class RateLimitFilter extends OncePerRequestFilter {
 		if (path.startsWith("/api/auth/")) {
 			return limiter.tryAcquire("auth:" + ip, limits.authPerMinute(), MINUTE);
 		}
+		// Everyone in a restaurant usually shares its Wi-Fi, so one IP is every table at once.
+		// Customer limits are therefore counted per table and IP: each table has its own
+		// allowance, however busy the room. One much higher cap per IP still stops a single
+		// address from walking through tokens.
+		String table = tableOf(path);
 		if ("POST".equals(request.getMethod()) && PAYMENT_START.matcher(path).matches()) {
-			OptionalLong perMinute = limiter.tryAcquire("pay-min:" + ip, limits.paymentPerMinute(), MINUTE);
-			return perMinute.isPresent()
-				? perMinute
-				: limiter.tryAcquire("pay-day:" + ip, limits.paymentPerDay(), DAY);
+			String key = ip + ":" + table;
+			OptionalLong perMinute = limiter.tryAcquire("pay-min:" + key, limits.paymentPerMinute(), MINUTE);
+			if (perMinute.isPresent()) {
+				return perMinute;
+			}
+			OptionalLong perDay = limiter.tryAcquire("pay-day:" + key, limits.paymentPerDay(), DAY);
+			return perDay.isPresent() ? perDay : ipCap(ip);
 		}
 		if (path.startsWith("/api/public/")) {
-			return limiter.tryAcquire("public:" + ip, limits.publicPerMinute(), MINUTE);
+			OptionalLong perTable = limiter.tryAcquire("public:" + ip + ":" + table, limits.publicPerMinute(), MINUTE);
+			return perTable.isPresent() ? perTable : ipCap(ip);
 		}
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth != null && auth.getPrincipal() instanceof AuthenticatedUser user) {
@@ -78,6 +90,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
 		}
 		// Not signed in: the request will get 401, but guessing tokens still costs a slot.
 		return limiter.tryAcquire("anon:" + ip, limits.publicPerMinute(), MINUTE);
+	}
+
+	/** The QR token in /api/public/tables/{qrToken}/..., or "-" for other public paths. */
+	static String tableOf(String path) {
+		Matcher matcher = TABLE_PATH.matcher(path);
+		return matcher.lookingAt() ? matcher.group(1).toLowerCase(Locale.ROOT) : "-";
+	}
+
+	/** All customer requests from one IP, whatever the table. */
+	private OptionalLong ipCap(String ip) {
+		return limiter.tryAcquire("public-ip:" + ip, limits.publicPerMinutePerIp(), MINUTE);
 	}
 
 	private void reject(HttpServletRequest request, HttpServletResponse response, long retryAfterSeconds)

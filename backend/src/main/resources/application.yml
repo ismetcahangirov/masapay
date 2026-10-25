@@ -91,6 +91,8 @@ masapay:
     auth-per-minute: ${MASAPAY_RATE_LIMIT_AUTH_PER_MINUTE:20}
     # Customer endpoints reached through a table QR code, per IP.
     public-per-minute: ${MASAPAY_RATE_LIMIT_PUBLIC_PER_MINUTE:120}
+    # All customer requests from one IP (a restaurant's Wi-Fi), across its tables.
+    public-per-minute-per-ip: ${MASAPAY_RATE_LIMIT_PUBLIC_PER_MINUTE_PER_IP:3000}
     # Starting a payment creates a Payriff order, so it gets its own, tighter limits per IP.
     payment-per-minute: ${MASAPAY_RATE_LIMIT_PAYMENT_PER_MINUTE:10}
     payment-per-day: ${MASAPAY_RATE_LIMIT_PAYMENT_PER_DAY:100}

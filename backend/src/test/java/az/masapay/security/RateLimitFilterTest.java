@@ -45,7 +45,7 @@ class RateLimitFilterTest {
 	}
 
 	private final TestClock clock = new TestClock();
-	private final RateLimitProperties limits = new RateLimitProperties(true, 2, 3, 2, 3, 4);
+	private final RateLimitProperties limits = new RateLimitProperties(true, 2, 3, 2, 3, 4, 5);
 	private final RateLimitFilter filter = new RateLimitFilter(limits, new FixedWindowRateLimiter(clock),
 			new ObjectMapper());
 
@@ -110,6 +110,34 @@ class RateLimitFilterTest {
 			assertThat(call("GET", bill, "4.4.4.4")).isEqualTo(200);
 		}
 		assertThat(call("GET", bill, "4.4.4.4")).isEqualTo(429);
+	}
+
+	@Test
+	void eachTableOnOneRestaurantWifiHasItsOwnAllowance() throws Exception {
+		String firstTable = "/api/public/tables/" + UUID.randomUUID() + "/order";
+		String secondTable = "/api/public/tables/" + UUID.randomUUID() + "/order";
+		for (int i = 0; i < 3; i++) {
+			assertThat(call("GET", firstTable, "6.6.6.6")).isEqualTo(200);
+		}
+		assertThat(call("GET", firstTable, "6.6.6.6")).isEqualTo(429);
+		// Same Wi-Fi (same IP), another table: not held back by the first table.
+		assertThat(call("GET", secondTable, "6.6.6.6")).isEqualTo(200);
+
+		String firstPay = "/api/public/tables/" + UUID.randomUUID() + "/payment/full/checkout";
+		String secondPay = "/api/public/tables/" + UUID.randomUUID() + "/payment/full/checkout";
+		assertThat(call("POST", firstPay, "7.7.7.7")).isEqualTo(200);
+		assertThat(call("POST", firstPay, "7.7.7.7")).isEqualTo(200);
+		assertThat(call("POST", firstPay, "7.7.7.7")).isEqualTo(429);
+		assertThat(call("POST", secondPay, "7.7.7.7")).isEqualTo(200);
+	}
+
+	@Test
+	void oneIpWalkingThroughTokensHitsTheOverallCap() throws Exception {
+		// 5 requests over all tables of one IP; each to a different (guessed) table.
+		for (int i = 0; i < 5; i++) {
+			assertThat(call("GET", "/api/public/tables/" + UUID.randomUUID() + "/order", "8.8.8.8")).isEqualTo(200);
+		}
+		assertThat(call("GET", "/api/public/tables/" + UUID.randomUUID() + "/order", "8.8.8.8")).isEqualTo(429);
 	}
 
 	@Test

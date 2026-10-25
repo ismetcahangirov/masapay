@@ -267,7 +267,7 @@ describe('OrdersPage (#143)', () => {
     await userEvent.click(confirm)
 
     expect(
-      await within(dialog).findByText(/Əvvəlcə pulu geri qaytarın/),
+      await within(dialog).findByText(/Əvvəlcə pul geri qaytarılmalıdır/),
     ).toBeInTheDocument()
     expect(sent).toEqual({ reason: 'Müştəri getdi' })
 

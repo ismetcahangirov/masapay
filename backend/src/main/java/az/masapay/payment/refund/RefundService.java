@@ -1,14 +1,12 @@
 package az.masapay.payment.refund;
 
 import az.masapay.domain.Transaction;
-import az.masapay.domain.User;
 import az.masapay.domain.enums.TransactionStatus;
 import az.masapay.domain.enums.UserRole;
 import az.masapay.payment.payriff.PayriffClient;
 import az.masapay.payment.payriff.PayriffException;
 import az.masapay.payment.payriff.PayriffRefundRequest;
 import az.masapay.repository.TransactionRepository;
-import az.masapay.repository.UserRepository;
 import az.masapay.security.AuthenticatedUser;
 import java.util.Locale;
 import java.util.UUID;
@@ -20,7 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * One-click full refund of a Payriff payment from the admin panel (#36). The transaction row is
- * locked for the whole call, so a double click cannot send the money back twice.
+ * locked for the whole call, so a double click cannot send the money back twice. Only a
+ * SUPER_ADMIN refunds: the Payriff account is the platform's, not the restaurant's.
  */
 @Service
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -32,21 +31,20 @@ public class RefundService {
 	public static final String PAYRIFF_UNAVAILABLE = "PAYRIFF_UNAVAILABLE";
 
 	private final TransactionRepository transactionRepository;
-	private final UserRepository userRepository;
 	private final PayriffClient payriffClient;
 
-	public RefundService(TransactionRepository transactionRepository, UserRepository userRepository,
-			PayriffClient payriffClient) {
+	public RefundService(TransactionRepository transactionRepository, PayriffClient payriffClient) {
 		this.transactionRepository = transactionRepository;
-		this.userRepository = userRepository;
 		this.payriffClient = payriffClient;
 	}
 
 	@Transactional
 	public RefundResult refund(UUID transactionId, AuthenticatedUser admin, String reason) {
+		if (admin.role() != UserRole.SUPER_ADMIN) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Refunds are made by the platform");
+		}
 		Transaction transaction = transactionRepository.findByIdForUpdate(transactionId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
-		checkOwnRestaurant(admin, transaction);
 
 		if (transaction.getStatus() == TransactionStatus.REFUNDED) {
 			// Already done (e.g. a double click that waited for the lock): nothing to send again.
@@ -74,7 +72,7 @@ public class RefundService {
 	}
 
 	/**
-	 * What the manager is told when Payriff does not refund: 409 with why when Payriff refused
+	 * What the super admin is told when Payriff does not refund: 409 with why when Payriff refused
 	 * (past the 30-day window: {@value #REFUND_WINDOW_EXPIRED}), 502 when it could not be reached.
 	 * The payment stays SUCCESS either way.
 	 */
@@ -86,18 +84,5 @@ public class RefundService {
 		return new ResponseStatusException(HttpStatus.CONFLICT,
 			message.toLowerCase(Locale.ROOT).contains("refund time expired") ? REFUND_WINDOW_EXPIRED
 				: PAYRIFF_REFUSED);
-	}
-
-	/** A restaurant manager may refund only their own restaurant's payments; a super admin any. */
-	private void checkOwnRestaurant(AuthenticatedUser admin, Transaction transaction) {
-		if (admin.role() == UserRole.SUPER_ADMIN) {
-			return;
-		}
-		User user = userRepository.findById(admin.id())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-		UUID restaurantId = transaction.getRestaurant().getId();
-		if (user.getRestaurant() == null || !user.getRestaurant().getId().equals(restaurantId)) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your restaurant");
-		}
 	}
 }

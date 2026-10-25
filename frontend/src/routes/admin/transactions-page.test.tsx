@@ -106,7 +106,21 @@ describe('TransactionsPage Excel download (#170)', () => {
     expect(screen.getByRole('button', { name: 'Excel yüklə' })).toBeDisabled()
   })
 
-  it('tells the manager why Payriff did not refund (past 30 days)', async () => {
+  it('does not offer a refund to a restaurant manager', async () => {
+    mockApi({
+      'GET /api/admin/restaurants': [{ id: 'r1', name: 'Dolma' }],
+      [`GET ${LIST}`]: page,
+    })
+    renderWithProviders(<TransactionsPage />)
+
+    expect(await screen.findByText('PRF-1')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Geri qaytar/ })).toBeNull()
+  })
+
+  it('tells the super admin why Payriff did not refund (past 30 days)', async () => {
+    store.dispatch(
+      userLoaded({ id: 'a1', email: 'a@masapay.az', role: 'SUPER_ADMIN' }),
+    )
     mockApi({
       'GET /api/admin/restaurants': [{ id: 'r1', name: 'Dolma' }],
       [`GET ${LIST}`]: page,

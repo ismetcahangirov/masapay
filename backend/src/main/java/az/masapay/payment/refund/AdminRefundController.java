@@ -11,10 +11,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Admin panel refund action (#36): refunds a whole Payriff payment in one call. */
+/**
+ * Admin panel refund action (#36): refunds a whole Payriff payment in one call. Money goes back
+ * through the platform's Payriff account, so only a SUPER_ADMIN may do it, not a restaurant.
+ */
 @RestController
 @RequestMapping("/api/admin/transactions")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'RESTO_MANAGER')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 @ConditionalOnProperty(prefix = "masapay.orders", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AdminRefundController {
 

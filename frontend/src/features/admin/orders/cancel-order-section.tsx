@@ -8,7 +8,7 @@ import { useCancelOrderMutation } from './orders-api'
 
 // Cancelling a table's confirmed order (#186), for managers only. It asks for
 // a reason and a second click; a bill with a payment on it is refused by the
-// backend, which needs a refund first.
+// backend, which needs a refund (by the super admin) first.
 export function CancelOrderSection({
   restaurantId,
   tableId,
@@ -37,7 +37,7 @@ export function CancelOrderSection({
   const error = !cancelState.isError
     ? null
     : problemReason(cancelState.error) === 'ORDER_HAS_PAYMENTS'
-      ? 'Bu hesabda ödəniş var (və ya gedir). Əvvəlcə pulu geri qaytarın, sonra ləğv edin.'
+      ? 'Bu hesabda ödəniş var (və ya gedir). Əvvəlcə pul geri qaytarılmalıdır: masapay platforması ilə əlaqə saxlayın.'
       : 'Ləğv etmək alınmadı.'
 
   if (!open) {

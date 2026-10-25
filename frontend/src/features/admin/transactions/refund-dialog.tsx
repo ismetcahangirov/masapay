@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { problemReason } from '@/lib/api-errors'
 import { formatAmount } from './format'
 import {
   type TransactionRow,
@@ -19,6 +20,20 @@ import {
 
 // Confirms a full refund of one Payriff payment (#45). The money goes back in
 // one call; the list is refetched so the row then shows "Geri qaytarılıb".
+/** Why the refund did not go through, from the reason the backend sent. */
+function refundErrorMessage(reason: string | null): string {
+  switch (reason) {
+    case 'REFUND_WINDOW_EXPIRED':
+      return 'Ödənişdən 30 gündən çox keçib: Payriff pulu geri qaytarmağa icazə vermir. Ödəniş olduğu kimi qalır.'
+    case 'PAYRIFF_REFUSED':
+      return 'Payriff geri qaytarmanı rədd etdi. Ödəniş olduğu kimi qalır.'
+    case 'PAYRIFF_UNAVAILABLE':
+      return 'Payriff hazırda cavab vermir. Bir az sonra yenidən cəhd edin.'
+    default:
+      return 'Geri qaytarmaq alınmadı. Yenidən cəhd edin.'
+  }
+}
+
 export function RefundDialog({
   restaurantId,
   transaction,
@@ -77,7 +92,7 @@ export function RefundDialog({
         </div>
         {refundState.isError && (
           <p className="text-sm text-destructive">
-            Geri qaytarmaq alınmadı. Yenidən cəhd edin.
+            {refundErrorMessage(problemReason(refundState.error))}
           </p>
         )}
         <DialogFooter className="gap-2">

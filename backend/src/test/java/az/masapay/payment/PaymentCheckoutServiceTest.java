@@ -3,6 +3,7 @@ package az.masapay.payment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -20,6 +21,7 @@ import az.masapay.payment.dto.EqualPaymentQuote;
 import az.masapay.payment.dto.PaymentQuote;
 import az.masapay.payment.dto.PaymentStatusView;
 import az.masapay.payment.payriff.PayriffCheckout;
+import az.masapay.payment.payriff.PayriffException;
 import az.masapay.payment.payriff.PayriffService;
 import az.masapay.repository.OrderRepository;
 import az.masapay.repository.RestaurantTableRepository;
@@ -191,5 +193,20 @@ class PaymentCheckoutServiceTest {
 			});
 		assertThatThrownBy(() -> service.checkoutEqual(qrToken, 2, 1)).isInstanceOf(ResponseStatusException.class);
 		verifyNoInteractions(payriffService, transactionRepository);
+	}
+
+	@Test
+	void whenPayriffCanNotOpenThePageThePaymentIsFailedNotLeftPending() {
+		when(settlementService.quoteFullPayment(qrToken)).thenReturn(new PaymentQuote(new BigDecimal("25.00"), "AZN"));
+		when(payriffService.startCheckout(any())).thenThrow(new PayriffException("createOrder", 502, null, "Bad Gateway"));
+
+		assertThatThrownBy(() -> service.checkoutFull(qrToken))
+			.isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+				assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+				assertThat(e.getReason()).isEqualTo(PaymentCheckoutService.PAYRIFF_UNAVAILABLE);
+			});
+		ArgumentCaptor<Transaction> saved = ArgumentCaptor.forClass(Transaction.class);
+		verify(transactionRepository, atLeastOnce()).save(saved.capture());
+		assertThat(saved.getValue().getStatus()).isEqualTo(TransactionStatus.FAILED);
 	}
 }

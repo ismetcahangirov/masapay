@@ -42,22 +42,33 @@ public class PayriffWebhookService {
 	@Transactional
 	public void handle(String txId, String sig, PayriffCallback callback) {
 		signature.verify(txId, sig);
-
-		Transaction transaction = transactionRepository.findByIdForUpdate(UUID.fromString(txId))
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
 		PayriffCallback.Payload payload = callback == null ? null : callback.payload();
-		if (payload == null || !Objects.equals(payload.orderId(), transaction.getPayriffOrderId())) {
+		if (payload == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Callback does not match the transaction");
+		}
+		apply(UUID.fromString(txId), payload.orderId(), payload.paymentStatus());
+	}
+
+	/**
+	 * Applies Payriff's status of {@code orderId} to its transaction, from a callback or from asking
+	 * Payriff when the guest comes back. Idempotent: a transaction no longer PENDING is left alone.
+	 */
+	@Transactional
+	public void apply(UUID txId, String orderId, String paymentStatus) {
+		Transaction transaction = transactionRepository.findByIdForUpdate(txId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
+		if (orderId == null || !Objects.equals(orderId, transaction.getPayriffOrderId())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Callback does not match the transaction");
 		}
 		if (transaction.getStatus() != TransactionStatus.PENDING) {
-			log.info("Duplicate Payriff callback for transaction {} ignored", txId);
+			log.info("Payriff status for transaction {} already applied, ignored", txId);
 			return;
 		}
 
-		if (APPROVED.equals(payload.paymentStatus())) {
+		if (APPROVED.equals(paymentStatus)) {
 			// Applies the split the guest chose (items, equal parts or the whole bill) and marks it SUCCESS.
 			settlementService.settlePending(transaction);
-		} else if (FAILED.contains(payload.paymentStatus())) {
+		} else if (FAILED.contains(paymentStatus)) {
 			transaction.setStatus(TransactionStatus.FAILED);
 			transactionRepository.save(transaction);
 		}

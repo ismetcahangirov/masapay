@@ -228,11 +228,11 @@ export function MenuPage() {
                     return (
                       <li
                         key={dish.id}
-                        className="flex items-start justify-between gap-4 py-3"
+                        className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                       >
                         <div
                           className={cn(
-                            'min-w-0 space-y-0.5',
+                            'min-w-0 flex-1 space-y-0.5',
                             !dish.availableToday && 'opacity-60',
                           )}
                         >
@@ -283,8 +283,8 @@ export function MenuPage() {
                             </p>
                           )}
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          <span className="mr-2 font-medium tabular-nums">
+                        <div className="flex flex-wrap items-center gap-1 sm:shrink-0 sm:flex-nowrap">
+                          <span className="mr-2 w-full font-medium tabular-nums sm:w-auto">
                             {formatAmount(dish.price, 'AZN')}
                           </span>
                           {canEdit && (

@@ -218,7 +218,7 @@ export function PlatformAnalyticsPage() {
 function CurrencyKpis({ totals }: { totals: CurrencyTotals }) {
   return (
     <section aria-label={`Cəmi, ${totals.currency}`} className="space-y-2">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-4">
         <KpiCard
           label={`Dövriyyə (${totals.currency})`}
           value={formatCurrency(totals.revenueMinor, totals.currency)}

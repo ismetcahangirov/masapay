@@ -207,7 +207,13 @@ export function AdminSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild tooltip="masapay">
+            {/* Collapsed, the logo gets the same padding as the icons, so it sits in their column. */}
+            <SidebarMenuButton
+              size="lg"
+              asChild
+              tooltip="masapay"
+              className="group-data-[collapsible=icon]:!p-2"
+            >
               <NavLink
                 to={role === 'SUPER_ADMIN' ? '/admin/restaurants' : '/admin'}
               >

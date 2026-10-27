@@ -107,6 +107,20 @@ masapay:
   orders:
     # Enables the customer-facing order endpoints; disabled in the infra-free smoke test.
     enabled: ${MASAPAY_ORDERS_ENABLED:true}
+  menu-import:
+    ocr:
+      # Tesseract reads scanned PDFs and photos of printed menus. The Docker image installs it
+      # with the Azerbaijani, English and Russian data; elsewhere install it and put it on PATH
+      # (or give its full path here). Without it those files answer OCR_UNAVAILABLE.
+      command: ${MASAPAY_OCR_COMMAND:tesseract}
+      languages: ${MASAPAY_OCR_LANGUAGES:aze+eng+rus}
+      # Tesseract page mode: 6 reads the page as one block, so a dish and its price stay on
+      # one line; try 4 or 3 for menus laid out in several columns.
+      page-mode: ${MASAPAY_OCR_PAGE_MODE:6}
+      # Per page; a longer read is given up.
+      timeout: ${MASAPAY_OCR_TIMEOUT:60s}
+      # Pages read at the same time across all requests; OCR is heavy on the CPU.
+      parallel: ${MASAPAY_OCR_PARALLEL:2}
   jwt:
     # HMAC-SHA256 signing secret (>= 32 bytes). Override per environment; never ship the default.
     secret: ${MASAPAY_JWT_SECRET:masapay-dev-secret-change-me-0123456789-abcdefghij}

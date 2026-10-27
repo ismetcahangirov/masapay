@@ -11,9 +11,9 @@ import java.util.Base64;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 
-class MenuImagesTest {
+public class MenuImagesTest {
 
-	static byte[] png(int width, int height) throws IOException {
+	public static byte[] png(int width, int height) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ImageIO.write(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB), "png", out);
 		return out.toByteArray();

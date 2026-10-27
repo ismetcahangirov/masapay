@@ -9,6 +9,7 @@ import az.masapay.menu.dto.MenuImportItem;
 import az.masapay.menu.dto.MenuImportRequest;
 import az.masapay.menu.dto.MenuImportResult;
 import az.masapay.menu.importing.MenuDocumentReader;
+import az.masapay.menu.importing.MenuOcr;
 import az.masapay.menu.importing.MenuTextParser;
 import az.masapay.repository.MenuCategoryRepository;
 import az.masapay.repository.MenuItemRepository;
@@ -29,7 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * A whole menu from a PDF or Word file, in two steps. First the file is read and guessed into
+ * A whole menu from a PDF or Word file, or a photo or scan of a printed one (read with OCR), in
+ * two steps. First the file is read and guessed into
  * categories and dishes, and nothing is saved: the manager reviews it, fixes names and prices,
  * adds photos. Then the approved list is saved at once. A category or dish whose name is already
  * on the menu (any letter case) is reused and updated, so importing a new price list twice does
@@ -46,22 +48,28 @@ public class MenuImportService {
 	private final MenuCategoryRepository categoryRepository;
 	private final MenuItemRepository itemRepository;
 	private final RestaurantRepository restaurantRepository;
+	private final MenuOcr ocr;
 
 	public MenuImportService(MenuService menuService, MenuImageService imageService,
 			MenuCategoryRepository categoryRepository, MenuItemRepository itemRepository,
-			RestaurantRepository restaurantRepository) {
+			RestaurantRepository restaurantRepository, MenuOcr ocr) {
 		this.menuService = menuService;
 		this.imageService = imageService;
 		this.categoryRepository = categoryRepository;
 		this.itemRepository = itemRepository;
 		this.restaurantRepository = restaurantRepository;
+		this.ocr = ocr;
 	}
 
-	/** The file as a menu to review; 422 NO_DISHES when no line looked like a dish with a price. */
-	@Transactional(readOnly = true)
+	/**
+	 * The file as a menu to review; 422 NO_DISHES when no line looked like a dish with a price.
+	 * Not one transaction: OCR of a scan can take a minute, and no database connection should
+	 * wait for it. Each lookup below reads on its own.
+	 */
 	public MenuImportDraft preview(UUID restaurantId, byte[] file, AuthenticatedUser caller) {
 		menuService.checkManager(caller, restaurantId);
-		List<MenuTextParser.Category> parsed = MenuTextParser.parse(MenuDocumentReader.read(file));
+		MenuDocumentReader.Read read = MenuDocumentReader.read(file, ocr);
+		List<MenuTextParser.Category> parsed = MenuTextParser.parse(read.lines());
 		if (parsed.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "NO_DISHES");
 		}
@@ -91,7 +99,7 @@ public class MenuImportService {
 			String name = cut(category.name(), 100);
 			categories.add(new MenuImportCategory(name, items, categoryNames.contains(key(name))));
 		}
-		return new MenuImportDraft(categories, skippedImages);
+		return new MenuImportDraft(categories, skippedImages, read.ocr());
 	}
 
 	/** Saves the approved menu; one dish name twice answers 400 DUPLICATE_DISH and nothing is saved. */

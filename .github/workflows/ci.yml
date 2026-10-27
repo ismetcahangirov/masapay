@@ -47,6 +47,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+      # Tesseract with the Azerbaijani data, as in the backend image: the OCR test
+      # of the menu import reads a real picture with it (skipped where it is missing).
+      - name: Install Tesseract OCR
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends tesseract-ocr tesseract-ocr-aze tesseract-ocr-rus
       # The runner has Docker, so the Testcontainers PostgreSQL tests run here
       # too (they are skipped on machines without Docker).
       - name: Check

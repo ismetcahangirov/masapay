@@ -59,11 +59,13 @@ class MenuTextParserTest {
 
 	@Test
 	void phoneNumbersAndOpeningHoursAreNotDishes() {
-		List<Category> menu = parse("Tel: 012 555 55 55", "Açıq: 09:00 - 23:00", "Desertlər", "Paxlava 3");
+		List<Category> menu = parse("Tel: 012 555 55 55", "Açıq: 09:00 - 23:00", "Desertlər", "Paxlava 3",
+			"Tel: 012 555 55 55");
 
 		assertThat(menu).singleElement().satisfies(category -> {
 			assertThat(category.name()).isEqualTo("Desertlər");
-			assertThat(category.dishes()).extracting(Dish::name).containsExactly("Paxlava");
+			assertThat(category.dishes()).extracting(Dish::name, Dish::description)
+				.containsExactly(tuple("Paxlava", null));
 		});
 	}
 

@@ -73,7 +73,8 @@ public final class MenuTextParser {
 				continue;
 			}
 			pendingPicture = line.picture() != null ? line.picture() : pendingPicture;
-			if (!hasLetter(text)) {
+			// No letters, or mostly digits (a phone number, opening hours): not part of the menu.
+			if (!hasLetter(text) || digits(text) > letters(text)) {
 				continue;
 			}
 			if (last != null && looksLikeDescription(text)) {

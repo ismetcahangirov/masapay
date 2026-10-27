@@ -80,6 +80,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
 			OptionalLong perDay = limiter.tryAcquire("pay-day:" + key, limits.paymentPerDay(), DAY);
 			return perDay.isPresent() ? perDay : ipCap(ip);
 		}
+		// A menu shows a photo per dish and they are cached for good: only the per-IP cap counts them.
+		if (path.startsWith("/api/public/menu-images/")) {
+			return ipCap(ip);
+		}
 		if (path.startsWith("/api/public/")) {
 			OptionalLong perTable = limiter.tryAcquire("public:" + ip + ":" + table, limits.publicPerMinute(), MINUTE);
 			return perTable.isPresent() ? perTable : ipCap(ip);

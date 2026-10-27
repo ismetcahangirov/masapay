@@ -17,6 +17,12 @@ spring:
   # Errors from ResponseStatusException go out as RFC 7807 problem details, with our short
   # reason in "detail" (e.g. RESTAURANT_CLOSED, #147) for the client to act on. Unexpected
   # exceptions still show no message.
+  # Dish photos and whole menus (PDF/Word) are uploaded; photos are shrunk before storing.
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
   mvc:
     problemdetails:
       enabled: true

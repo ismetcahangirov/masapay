@@ -30,6 +30,8 @@ export interface MenuDish {
   suggestionIds: string[]
   /** Every customer is asked about it before confirming, e.g. ketchup (#185). */
   askBeforeConfirm: boolean
+  /** The dish photo customers see, or null; the URL changes with each new photo. */
+  imageUrl: string | null
 }
 
 export type AvailabilityMode = 'ALWAYS' | 'OFF' | 'OFF_TODAY' | 'DATES'
@@ -59,6 +61,38 @@ export interface DishInput {
   price: number
   /** Replaces a combo's contents; empty for an ordinary dish. */
   components: { itemId: string; quantity: number }[]
+}
+
+/**
+ * A dish of a menu read from a PDF or Word file, as the manager reviews it.
+ * `image` is a data: URL; `existingId` is the dish of the same name already on
+ * the menu, which the import updates instead of adding a second one.
+ */
+export interface ImportDish {
+  name: string
+  description: string | null
+  price: number
+  image: string | null
+  existingId: string | null
+}
+
+export interface ImportCategory {
+  name: string
+  items: ImportDish[]
+  /** The menu already has a category of this name; the dishes join it. */
+  existing: boolean
+}
+
+export interface ImportDraft {
+  categories: ImportCategory[]
+  /** Pictures in the file that were not JPEG, PNG or WebP photos. */
+  skippedImages: number
+}
+
+export interface ImportResult {
+  categoriesCreated: number
+  dishesCreated: number
+  dishesUpdated: number
 }
 
 const menuUrl = (restaurantId: string) =>
@@ -175,6 +209,63 @@ export const menuApi = api.injectEndpoints({
         { type: 'Menu', id: restaurantId },
       ],
     }),
+    setDishImage: build.mutation<
+      MenuDish,
+      { restaurantId: string; dishId: string; file: Blob }
+    >({
+      query: ({ restaurantId, dishId, file }) => {
+        const body = new FormData()
+        body.append('file', file)
+        return {
+          url: `${menuUrl(restaurantId)}/items/${dishId}/image`,
+          method: 'PUT',
+          body,
+        }
+      },
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Menu', id: restaurantId },
+      ],
+    }),
+    deleteDishImage: build.mutation<
+      MenuDish,
+      { restaurantId: string; dishId: string }
+    >({
+      query: ({ restaurantId, dishId }) => ({
+        url: `${menuUrl(restaurantId)}/items/${dishId}/image`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Menu', id: restaurantId },
+      ],
+    }),
+    /** Reads a PDF or Word menu; nothing is saved until applyImport. */
+    previewImport: build.mutation<
+      ImportDraft,
+      { restaurantId: string; file: Blob }
+    >({
+      query: ({ restaurantId, file }) => {
+        const body = new FormData()
+        body.append('file', file)
+        return {
+          url: `${menuUrl(restaurantId)}/import/preview`,
+          method: 'POST',
+          body,
+        }
+      },
+    }),
+    applyImport: build.mutation<
+      ImportResult,
+      { restaurantId: string; categories: ImportCategory[] }
+    >({
+      query: ({ restaurantId, categories }) => ({
+        url: `${menuUrl(restaurantId)}/import`,
+        method: 'POST',
+        body: { categories },
+      }),
+      invalidatesTags: (_r, _e, { restaurantId }) => [
+        { type: 'Menu', id: restaurantId },
+      ],
+    }),
     deleteDish: build.mutation<void, { restaurantId: string; dishId: string }>({
       query: ({ restaurantId, dishId }) => ({
         url: `${menuUrl(restaurantId)}/items/${dishId}`,
@@ -198,4 +289,8 @@ export const {
   useSetExtraMutation,
   useSetSuggestionsMutation,
   useDeleteDishMutation,
+  useSetDishImageMutation,
+  useDeleteDishImageMutation,
+  usePreviewImportMutation,
+  useApplyImportMutation,
 } = menuApi

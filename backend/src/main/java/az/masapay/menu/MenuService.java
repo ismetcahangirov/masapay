@@ -177,7 +177,7 @@ public class MenuService {
 		item.setAvailableUntil(until);
 	}
 
-	private LocalDate today() {
+	LocalDate today() {
 		return LocalDate.now(clock.withZone(MENU_ZONE));
 	}
 
@@ -302,13 +302,13 @@ public class MenuService {
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
 	}
 
-	private MenuItem item(UUID restaurantId, UUID itemId) {
+	MenuItem item(UUID restaurantId, UUID itemId) {
 		return itemRepository.findById(itemId)
 			.filter(item -> item.getRestaurant().getId().equals(restaurantId))
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish not found"));
 	}
 
-	private void checkManager(AuthenticatedUser caller, UUID restaurantId) {
+	void checkManager(AuthenticatedUser caller, UUID restaurantId) {
 		if (caller.role() == UserRole.WAITER) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Waiters cannot change the menu");
 		}

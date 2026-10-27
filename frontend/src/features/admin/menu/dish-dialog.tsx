@@ -18,10 +18,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { DishPhotoField } from './dish-photo-field'
 import {
   type MenuCategory,
   type MenuDish,
   useCreateDishMutation,
+  useDeleteDishImageMutation,
+  useSetDishImageMutation,
   useUpdateDishMutation,
 } from './menu-api'
 import { parsePrice } from './menu-price'
@@ -31,6 +34,7 @@ const MAX_QUANTITY = 99
 // Adds a dish to a category or edits one, including moving it to another
 // category (#137). In combo mode it also picks the dishes a combo or business
 // lunch is made of, with a quantity each; the combo has its own price (#138).
+// The photo customers see is chosen here too and sent after the dish is saved.
 export function DishDialog({
   restaurantId,
   open,
@@ -56,9 +60,20 @@ export function DishDialog({
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
+  const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(
+    null,
+  )
+  const [removePhoto, setRemovePhoto] = useState(false)
+  // A new dish saved before its photo failed: a retry edits it, not adds another.
+  const [savedId, setSavedId] = useState<string | null>(null)
   const [create, createState] = useCreateDishMutation()
   const [update, updateState] = useUpdateDishMutation()
-  const state = dish ? updateState : createState
+  const [setImage, setImageState] = useSetDishImageMutation()
+  const [deleteImage, deleteImageState] = useDeleteDishImageMutation()
+  const state = dish || savedId ? updateState : createState
+  const photoFailed = setImageState.isError || deleteImageState.isError
+  const busy =
+    state.isLoading || setImageState.isLoading || deleteImageState.isLoading
 
   useEffect(() => {
     if (!open) return
@@ -71,8 +86,13 @@ export function DishDialog({
         (dish?.components ?? []).map((c) => [c.itemId, c.quantity]),
       ),
     )
+    setPhoto(null)
+    setRemovePhoto(false)
+    setSavedId(null)
     createState.reset()
     updateState.reset()
+    setImageState.reset()
+    deleteImageState.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, dish, defaultCategoryId])
 
@@ -114,10 +134,19 @@ export function DishDialog({
       components: combo ? components : [],
     }
     try {
-      if (dish) {
-        await update({ restaurantId, dishId: dish.id, body }).unwrap()
-      } else {
-        await create({ restaurantId, body }).unwrap()
+      const editing = dish?.id ?? savedId
+      const saved = editing
+        ? await update({ restaurantId, dishId: editing, body }).unwrap()
+        : await create({ restaurantId, body }).unwrap()
+      setSavedId(saved.id)
+      if (photo) {
+        await setImage({
+          restaurantId,
+          dishId: saved.id,
+          file: photo.file,
+        }).unwrap()
+      } else if (removePhoto && saved.imageUrl) {
+        await deleteImage({ restaurantId, dishId: saved.id }).unwrap()
       }
       onClose()
     } catch {
@@ -154,6 +183,24 @@ export function DishDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <span className="text-sm font-medium">Şəkil (istəyə bağlı)</span>
+            <DishPhotoField
+              src={
+                photo?.preview ??
+                (removePhoto ? null : (dish?.imageUrl ?? null))
+              }
+              label={name.trim() || 'Məhsul'}
+              onPick={(file) => {
+                setPhoto({ file, preview: URL.createObjectURL(file) })
+                setRemovePhoto(false)
+              }}
+              onRemove={() => {
+                setPhoto(null)
+                setRemovePhoto(true)
+              }}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="dish-name">Ad</Label>
@@ -262,12 +309,18 @@ export function DishDialog({
           {state.isError && (
             <p className="text-sm text-destructive">Yadda saxlamaq alınmadı.</p>
           )}
+          {photoFailed && (
+            <p className="text-sm text-destructive">
+              Məhsul yadda saxlandı, amma şəkil alınmadı. JPEG, PNG və ya WebP
+              şəkil seçib yenidən yoxlayın.
+            </p>
+          )}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               İmtina
             </Button>
-            <Button type="submit" disabled={!valid || state.isLoading}>
-              {state.isLoading ? 'Yadda saxlanılır...' : 'Yadda saxla'}
+            <Button type="submit" disabled={!valid || busy}>
+              {busy ? 'Yadda saxlanılır...' : 'Yadda saxla'}
             </Button>
           </DialogFooter>
         </form>

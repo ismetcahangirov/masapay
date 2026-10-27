@@ -14,6 +14,7 @@ const dish = (
   components: [],
   suggestionIds,
   askBeforeConfirm,
+  imageUrl: null,
 })
 
 describe('extrasToAsk (#185)', () => {

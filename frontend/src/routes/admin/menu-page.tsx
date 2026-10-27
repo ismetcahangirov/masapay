@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   CalendarClock,
+  FileUp,
   Layers,
   LoaderCircle,
   MessageCircleQuestion,
@@ -15,6 +16,7 @@ import { AvailabilityDialog } from '@/features/admin/menu/availability-dialog'
 import { CategoryDialog } from '@/features/admin/menu/category-dialog'
 import { DeleteDialog } from '@/features/admin/menu/delete-dialog'
 import { DishDialog } from '@/features/admin/menu/dish-dialog'
+import { ImportMenuDialog } from '@/features/admin/menu/import-dialog'
 import { SuggestionsDialog } from '@/features/admin/menu/suggestions-dialog'
 import {
   type MenuCategory,
@@ -39,7 +41,8 @@ type Removing =
 
 // The restaurant menu (#137). Managers add, edit and delete categories and
 // dishes; waiters see the same menu read-only. The customer menu is built from
-// this data later (#140).
+// this data later (#140). Dishes are added one by one, or a whole menu at once
+// from a PDF or Word file, reviewed before it is saved.
 export function MenuPage() {
   const role = useAppSelector((state) => state.auth.user?.role)
   const canEdit = role === 'SUPER_ADMIN' || role === 'RESTO_MANAGER'
@@ -64,6 +67,7 @@ export function MenuPage() {
   const [removing, setRemoving] = useState<Removing | null>(null)
   const [scheduling, setScheduling] = useState<MenuDish | null>(null)
   const [suggesting, setSuggesting] = useState<MenuDish | null>(null)
+  const [importing, setImporting] = useState(false)
   const [setExtra] = useSetExtraMutation()
   const dishNames = new Map(
     categories.flatMap((c) => c.items).map((item) => [item.id, item.name]),
@@ -118,10 +122,16 @@ export function MenuPage() {
           </p>
         </div>
         {canEdit && restaurantId && (
-          <Button onClick={() => setCategoryDialog({ category: null })}>
-            <Plus aria-hidden />
-            Kateqoriya əlavə et
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setImporting(true)}>
+              <FileUp aria-hidden />
+              Menyunu fayldan yüklə
+            </Button>
+            <Button onClick={() => setCategoryDialog({ category: null })}>
+              <Plus aria-hidden />
+              Kateqoriya əlavə et
+            </Button>
+          </div>
         )}
       </header>
 
@@ -152,7 +162,8 @@ export function MenuPage() {
       {menu.data?.length === 0 && (
         <p className="text-sm text-muted-foreground">
           Menyu hələ boşdur.
-          {canEdit && ' İlk kateqoriyanı əlavə edin, sonra ona məhsullar.'}
+          {canEdit &&
+            ' İlk kateqoriyanı əlavə edin, sonra ona məhsullar, və ya bütün menyunu PDF/Word faylından yükləyin.'}
         </p>
       )}
 
@@ -230,6 +241,17 @@ export function MenuPage() {
                         key={dish.id}
                         className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                       >
+                        {dish.imageUrl && (
+                          <img
+                            src={dish.imageUrl}
+                            alt=""
+                            loading="lazy"
+                            className={cn(
+                              'size-16 shrink-0 rounded-md object-cover',
+                              !dish.availableToday && 'opacity-60',
+                            )}
+                          />
+                        )}
                         <div
                           className={cn(
                             'min-w-0 flex-1 space-y-0.5',
@@ -383,6 +405,12 @@ export function MenuPage() {
             restaurantId={restaurantId}
             dish={scheduling}
             onClose={() => setScheduling(null)}
+          />
+          <ImportMenuDialog
+            restaurantId={restaurantId}
+            open={importing}
+            menu={categories}
+            onClose={() => setImporting(false)}
           />
           <SuggestionsDialog
             restaurantId={restaurantId}

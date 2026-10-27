@@ -223,7 +223,15 @@ function DishRow({
         quantity > 0 && 'bg-success/5',
       )}
     >
-      <div className="min-w-0 space-y-0.5">
+      {dish.imageUrl && (
+        <img
+          src={dish.imageUrl}
+          alt=""
+          loading="lazy"
+          className="size-20 shrink-0 rounded-md object-cover sm:size-24"
+        />
+      )}
+      <div className="min-w-0 flex-1 space-y-0.5">
         <p className="flex flex-wrap items-center gap-2 font-medium">
           {dish.name}
           {dish.components.length > 0 && (

@@ -131,3 +131,8 @@ iyerarxiyası ilə). Repo: [ismetcahangirov/masapay](https://github.com/ismetcah
 | #184 | 12.7 Admin panel üçün collapsible sidebar (shadcn Sidebar) | codelady-ship | frontend, admin-panel, design |
 | #185 | 12.8 Təsdiqdən əvvəl əlavələr sualı (sous, su) - KFC kimi | codelady-ship | frontend, backend, admin-panel |
 | #186 | 12.9 Təsdiqlənmiş sifarişi yalnız menecer ləğv edə bilsin | codelady-ship | frontend, backend, admin-panel |
+
+### Əlavə tapşırıqlar (EPIC-dən kənar)
+| # | Tapşırıq | Assignee | Labels |
+|---|---|---|---|
+| #209 | Menyunu PDF/Word faylından idxal etmək və məhsul şəkilləri | codelady-ship | frontend, backend, admin-panel, database |

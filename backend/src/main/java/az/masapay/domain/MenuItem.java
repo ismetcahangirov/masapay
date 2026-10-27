@@ -71,6 +71,10 @@ public class MenuItem extends BaseEntity {
 	@Column(name = "ask_before_confirm", nullable = false)
 	private boolean askBeforeConfirm;
 
+	/** Bumped on every new photo, so its URL changes; 0 means the dish has no photo. */
+	@Column(name = "image_version", nullable = false)
+	private int imageVersion;
+
 	/** The dishes a combo is made of (#138); empty for an ordinary dish. */
 	@OneToMany(mappedBy = "combo", cascade = CascadeType.ALL, orphanRemoval = true)
 	@BatchSize(size = 50)

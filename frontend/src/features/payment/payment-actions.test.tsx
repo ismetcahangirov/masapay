@@ -49,6 +49,7 @@ const dish = (id: string, suggestionIds: string[] = []): CustomerDish => ({
   components: [],
   suggestionIds,
   askBeforeConfirm: false,
+  imageUrl: null,
 })
 
 describe('paymentOffers (#183)', () => {

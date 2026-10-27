@@ -22,6 +22,8 @@ export interface CustomerDish {
   suggestionIds: string[]
   /** Asked about before every order is confirmed, e.g. ketchup or water (#185). */
   askBeforeConfirm: boolean
+  /** The dish photo, or null when the restaurant has not added one. */
+  imageUrl: string | null
 }
 
 export interface CustomerCategory {
@@ -41,6 +43,7 @@ interface CategoryDto {
     components: { name: string; quantity: number }[]
     suggestionIds?: string[]
     askBeforeConfirm?: boolean
+    imageUrl?: string | null
   }[]
 }
 
@@ -71,6 +74,7 @@ export const customerMenuApi = api.injectEndpoints({
             })),
             suggestionIds: item.suggestionIds ?? [],
             askBeforeConfirm: item.askBeforeConfirm ?? false,
+            imageUrl: item.imageUrl ?? null,
           })),
         })),
       providesTags: (_r, _e, qrToken) => [

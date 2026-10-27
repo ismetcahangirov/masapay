@@ -16,6 +16,7 @@ const dish = (overrides: Partial<MenuDish>): MenuDish => ({
   availableToday: true,
   suggestionIds: [],
   askBeforeConfirm: false,
+  imageUrl: null,
   ...overrides,
 })
 

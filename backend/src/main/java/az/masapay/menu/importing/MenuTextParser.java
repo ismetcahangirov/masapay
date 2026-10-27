@@ -37,7 +37,9 @@ public final class MenuTextParser {
 	private static final Pattern WITH_PRICE = Pattern.compile(
 		"^(.*?\\p{L}.*?)[\\s.·…_\\-–—:|/]+(?:" + CURRENCY + "\\s*)?(\\d{1,5}(?:[.,]\\d{1,2})?)\\s*" + CURRENCY
 			+ "?$", Pattern.CASE_INSENSITIVE);
-	private static final Pattern LEADING_MARK = Pattern.compile("^(?:[•·*▪●◦‣-]+|\\d{1,3}[.)])\\s+");
+	/** A bullet (as escapes: the project rules ban emoji-like symbols in source) or "1." / "1)". */
+	private static final Pattern LEADING_MARK = Pattern.compile(
+		"^(?:[\\u2022\\u00B7*\\u25AA\\u25CF\\u25E6\\u2023-]+|\\d{1,3}[.)])\\s+");
 	private static final Pattern NAME_WITH_BRACKETS = Pattern.compile("^(.+?)\\s*\\((.+)\\)$");
 	private static final Pattern NAME_DASH_DESCRIPTION = Pattern.compile("^(.+?)\\s+[-–—]\\s+(.+)$");
 	private static final Pattern TRAILING_JUNK = Pattern.compile("[\\s.·…_\\-–—:|/]+$");

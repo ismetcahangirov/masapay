@@ -87,6 +87,8 @@ export interface ImportDraft {
   categories: ImportCategory[]
   /** Pictures in the file that were not JPEG, PNG or WebP photos. */
   skippedImages: number
+  /** The text was recognised from pictures (a scan or a photo): check closely. */
+  ocr: boolean
 }
 
 export interface ImportResult {

@@ -64,6 +64,7 @@ const draft = {
     },
   ],
   skippedImages: 1,
+  ocr: false,
 }
 
 function backend(extra: Record<string, unknown> = {}) {
@@ -173,10 +174,34 @@ describe('menu import from a file', () => {
     ).toBeDisabled()
   })
 
-  it('explains a scanned PDF', async () => {
+  it('reads a photo of a printed menu and asks for a closer look at the OCR result', async () => {
+    backend({
+      [`POST ${MENU_URL}/import/preview`]: { ...draft, ocr: true },
+    })
+    const user = userEvent.setup()
+    renderWithProviders(<MenuPage />)
+
+    await user.click(
+      await screen.findByRole('button', { name: /Menyunu fayldan yüklə/ }),
+    )
+    await user.upload(
+      screen.getByTestId('menu-file-input'),
+      new File(['jpeg'], 'menyu.jpg', { type: 'image/jpeg' }),
+    )
+
+    expect(
+      await screen.findByText(/Yazılar şəkildən tanındı \(OCR\)/),
+    ).toBeInTheDocument()
+  })
+
+  it.each([
+    ['NO_TEXT', /oxunaqlı mətn tapılmadı/],
+    ['OCR_UNAVAILABLE', /bu serverdə qurulmayıb/],
+    ['OCR_TIMEOUT', /çox uzun çəkdi/],
+  ])('explains %s', async (reason, message) => {
     backend({
       [`POST ${MENU_URL}/import/preview`]: new Response(
-        JSON.stringify({ status: 422, detail: 'NO_TEXT' }),
+        JSON.stringify({ status: 422, detail: reason }),
         {
           status: 422,
           headers: { 'Content-Type': 'application/problem+json' },
@@ -191,9 +216,7 @@ describe('menu import from a file', () => {
     )
     await user.upload(screen.getByTestId('menu-file-input'), pdf())
 
-    expect(
-      await screen.findByText(/skan edilmiş şəkil ola bilər/),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(message)).toBeInTheDocument()
   })
 })
 

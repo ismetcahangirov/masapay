@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   CircleCheck,
   FileUp,
+  ScanText,
   LoaderCircle,
   Plus,
   Trash2,
@@ -32,9 +33,12 @@ import {
 import { parsePrice } from './menu-price'
 import { photoDataUrl } from './photo'
 
-/** The menu file types we read: PDF with text, Word .docx and old .doc. */
+/**
+ * The menu files we read: PDF (with text, or scanned), Word .docx and old .doc,
+ * and a photo of a printed menu (JPEG, PNG). Scans and photos are read with OCR.
+ */
 const MENU_FILES =
-  '.pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword'
+  '.pdf,.docx,.doc,.jpg,.jpeg,.png,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,image/jpeg,image/png'
 
 interface Row {
   key: string
@@ -74,23 +78,31 @@ function previewError(error: Parameters<typeof problemReason>[0]): string {
     return 'Fayl 10 MB-dan böyükdür.'
   }
   if (error && 'status' in error && error.status === 415) {
-    return 'Bu fayl növü oxunmur. PDF, DOCX və ya DOC faylı seçin.'
+    return 'Bu fayl növü oxunmur. PDF, DOCX, DOC faylı və ya JPG, PNG şəkli seçin.'
+  }
+  if (error && 'status' in error && error.status === 503) {
+    return 'Server indi başqa skanları oxuyur. Bir az sonra yenidən yoxlayın.'
   }
   switch (problemReason(error)) {
     case 'NO_TEXT':
-      return 'PDF-də mətn tapılmadı: bu, skan edilmiş şəkil ola bilər. Mətnli PDF və ya Word faylı seçin.'
+      return 'Faylda oxunaqlı mətn tapılmadı. Skan və ya şəkildirsə, daha aydın, düz və işıqlı çəkilmiş nüsxə yükləyin.'
+    case 'OCR_UNAVAILABLE':
+      return 'Skan edilmiş fayl və şəkilləri oxumaq bu serverdə qurulmayıb. Mətnli PDF və ya Word faylı seçin.'
+    case 'OCR_TIMEOUT':
+      return 'Skanı oxumaq çox uzun çəkdi. Daha az səhifəli və ya daha kiçik fayl yükləyin.'
     case 'NO_DISHES':
       return 'Faylda qiyməti olan məhsul tapılmadı. Başqa fayl seçin və ya məhsulları tək-tək əlavə edin.'
     case 'PROTECTED_FILE':
       return 'Fayl parolla qorunur. Parolsuz nüsxəni yükləyin.'
     case 'TOO_MANY_PAGES':
-      return 'Faylda 60-dan çox səhifə var.'
+      return 'Fayl çox uzundur: mətnli PDF ən çox 60, skan ən çox 15 səhifə ola bilər.'
     default:
       return 'Faylı oxumaq alınmadı.'
   }
 }
 
-// The whole menu at once from a PDF or Word file. The file is read and turned
+// The whole menu at once from a PDF or Word file, or a scan or photo of a
+// printed menu (read with OCR, so marked for a closer look). The file is read and turned
 // into categories and dishes by the backend, but nothing is saved yet: the
 // manager checks every line, fixes names and prices, adds or removes dishes
 // and photos, and only "Təsdiqlə" saves it. A dish or category whose name is
@@ -111,6 +123,7 @@ export function ImportMenuDialog({
   const fileInput = useRef<HTMLInputElement>(null)
   const [groups, setGroups] = useState<Group[] | null>(null)
   const [skippedImages, setSkippedImages] = useState(0)
+  const [ocr, setOcr] = useState(false)
   const [result, setResult] = useState<ImportResult | null>(null)
   const [preview, previewState] = usePreviewImportMutation()
   const [apply, applyState] = useApplyImportMutation()
@@ -120,6 +133,7 @@ export function ImportMenuDialog({
     setGroups(null)
     setResult(null)
     setSkippedImages(0)
+    setOcr(false)
     previewState.reset()
     applyState.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -135,6 +149,7 @@ export function ImportMenuDialog({
       const draft = await preview({ restaurantId, file }).unwrap()
       setGroups(toGroups(draft))
       setSkippedImages(draft.skippedImages)
+      setOcr(draft.ocr)
     } catch {
       // previewState.error is shown below.
     }
@@ -221,7 +236,7 @@ export function ImportMenuDialog({
               ? 'Menyu yeniləndi.'
               : groups
                 ? 'Tapılanları yoxlayın: adları, qiymətləri və şəkilləri düzəldin, lazım olmayanı silin, sonra təsdiqləyin. Təsdiqə qədər heç nə saxlanmır.'
-                : 'PDF və ya Word (DOCX, DOC) faylındakı menyunu oxuyuruq. Sonra hər sətri yoxlayıb düzəldə bilərsiniz.'}
+                : 'PDF, Word (DOCX, DOC) faylındakı və ya menyunun şəklindəki (JPG, PNG, skan) yazıları oxuyuruq. Sonra hər sətri yoxlayıb düzəldə bilərsiniz.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -253,7 +268,9 @@ export function ImportMenuDialog({
               ) : (
                 <FileUp aria-hidden />
               )}
-              {previewState.isLoading ? 'Fayl oxunur...' : 'Fayl seçin'}
+              {previewState.isLoading
+                ? 'Fayl oxunur...'
+                : 'Fayl və ya şəkil seçin'}
             </Button>
             <input
               ref={fileInput}
@@ -270,7 +287,8 @@ export function ImportMenuDialog({
             <p className="text-xs text-muted-foreground">
               Ən yaxşı nəticə: hər məhsul bir sətirdə, adı və qiyməti ilə
               (məsələn "Sezar salatı ... 9 AZN"), kateqoriya adları ayrıca
-              sətirdə. Skan edilmiş PDF oxunmur. Ən çox 10 MB.
+              sətirdə. Skan və şəkil üçün yazılar aydın və düz görünsün; onların
+              oxunması bir dəqiqəyə qədər çəkə bilər. Ən çox 10 MB.
             </p>
             {previewState.isError && (
               <p className="text-sm text-destructive">
@@ -283,6 +301,13 @@ export function ImportMenuDialog({
         {groups && !result && (
           <>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+              {ocr && (
+                <p className="flex items-start gap-2 rounded-md border p-3 text-sm">
+                  <ScanText className="mt-0.5 size-4 shrink-0" aria-hidden />
+                  Yazılar şəkildən tanındı (OCR). Hərf və rəqəmlər səhv oxuna
+                  bilər: xüsusilə qiymətləri faylla tutuşdurun.
+                </p>
+              )}
               {skippedImages > 0 && (
                 <p className="flex items-start gap-2 text-sm text-muted-foreground">
                   <TriangleAlert

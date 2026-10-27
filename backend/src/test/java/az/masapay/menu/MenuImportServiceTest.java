@@ -52,7 +52,8 @@ class MenuImportServiceTest {
 		mock(MenuComboComponentRepository.class), restaurantRepository, mock(RestaurantTableRepository.class),
 		userRepository);
 	private final MenuImportService service = new MenuImportService(menuService,
-		new MenuImageService(menuService, imageRepository), categoryRepository, itemRepository, restaurantRepository);
+		new MenuImageService(menuService, imageRepository), categoryRepository, itemRepository, restaurantRepository,
+		image -> "Desertlər\nPaxlava 3\n");
 
 	private final Restaurant restaurant = new Restaurant();
 	private final AuthenticatedUser manager = new AuthenticatedUser(UUID.randomUUID(), "m@x.az", UserRole.RESTO_MANAGER);
@@ -118,8 +119,18 @@ class MenuImportServiceTest {
 		assertThat(draft.categories().get(0).items()).extracting(MenuImportItem::name, MenuImportItem::existingId)
 			.containsExactly(org.assertj.core.groups.Tuple.tuple("SEZAR", caesar.getId()),
 				org.assertj.core.groups.Tuple.tuple("Çoban", null));
+		assertThat(draft.ocr()).isFalse();
 		verify(itemRepository, never()).save(any());
 		verify(categoryRepository, never()).save(any());
+	}
+
+	@Test
+	void aPhotoOfAMenuIsReadWithOcrAndFlaggedForACloserLook() throws IOException {
+		MenuImportDraft draft = service.preview(restaurant.getId(), MenuImagesTest.png(30, 30), manager);
+
+		assertThat(draft.ocr()).isTrue();
+		assertThat(draft.categories()).singleElement()
+			.satisfies(category -> assertThat(category.items()).extracting(MenuImportItem::name).containsExactly("Paxlava"));
 	}
 
 	@Test

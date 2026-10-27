@@ -8,6 +8,7 @@ import az.masapay.menu.importing.MenuDocumentReader.SourceLine;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -25,9 +26,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 class MenuDocumentReaderTest {
 
-	@Test
-	void aPdfIsReadLineByLine() throws IOException {
-		byte[] pdf;
+	/** OCR that must not be needed. */
+	private static final MenuOcr NO_OCR = image -> {
+		throw new AssertionError("OCR was not expected");
+	};
+
+	private static byte[] pdf(String... lines) throws IOException {
 		try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 			PDPage page = new PDPage();
 			document.addPage(page);
@@ -36,33 +40,85 @@ class MenuDocumentReaderTest {
 				text.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
 				text.setLeading(16);
 				text.newLineAtOffset(50, 700);
-				text.showText("SALADS");
-				text.newLine();
-				text.showText("Caesar ........ 9 AZN");
+				for (String line : lines) {
+					text.showText(line);
+					text.newLine();
+				}
 				text.endText();
 			}
 			document.save(out);
-			pdf = out.toByteArray();
+			return out.toByteArray();
 		}
+	}
 
-		assertThat(MenuDocumentReader.read(pdf)).extracting(SourceLine::text)
-			.containsExactly("SALADS", "Caesar ........ 9 AZN");
+	private static byte[] blankPdf(int pages) throws IOException {
+		try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			for (int i = 0; i < pages; i++) {
+				document.addPage(new PDPage());
+			}
+			document.save(out);
+			return out.toByteArray();
+		}
 	}
 
 	@Test
-	void aPdfWithoutTextIsAScan() throws IOException {
-		byte[] pdf;
-		try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-			document.addPage(new PDPage());
-			document.save(out);
-			pdf = out.toByteArray();
-		}
+	void aPdfWithTextIsReadLineByLineWithoutOcr() throws IOException {
+		MenuDocumentReader.Read read = MenuDocumentReader.read(
+			pdf("SALADS", "Caesar ........ 9 AZN", "Greek salad ..... 7 AZN"), NO_OCR);
 
-		assertThatThrownBy(() -> MenuDocumentReader.read(pdf))
+		assertThat(read.ocr()).isFalse();
+		assertThat(read.lines()).extracting(SourceLine::text)
+			.containsExactly("SALADS", "Caesar ........ 9 AZN", "Greek salad ..... 7 AZN");
+	}
+
+	@Test
+	void aScannedPdfIsReadPageByPageWithOcr() throws IOException {
+		List<byte[]> pictures = new ArrayList<>();
+		MenuOcr ocr = image -> {
+			pictures.add(image);
+			return pictures.size() == 1 ? "SALATLAR\nSezar 9 AZN\n" : "İÇKİLƏR\nAyran 2\n";
+		};
+
+		MenuDocumentReader.Read read = MenuDocumentReader.read(blankPdf(2), ocr);
+
+		assertThat(read.ocr()).isTrue();
+		assertThat(read.lines()).extracting(SourceLine::text)
+			.containsExactly("SALATLAR", "Sezar 9 AZN", "İÇKİLƏR", "Ayran 2");
+		// Every page went to OCR as a PNG drawn at 300 dpi.
+		assertThat(pictures).hasSize(2).allSatisfy(picture -> assertThat(picture[1]).isEqualTo((byte) 'P'));
+	}
+
+	@Test
+	void aScanWhereOcrFindsNothingSaysSo() throws IOException {
+		byte[] pdf = blankPdf(1);
+
+		assertThatThrownBy(() -> MenuDocumentReader.read(pdf, image -> "  \n"))
 			.isInstanceOfSatisfying(ResponseStatusException.class, e -> {
 				assertThat(e.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
 				assertThat(e.getReason()).isEqualTo("NO_TEXT");
 			});
+	}
+
+	@Test
+	void aLongScanIsRefusedBeforeAnyOcr() throws IOException {
+		byte[] pdf = blankPdf(MenuDocumentReader.MAX_OCR_PAGES + 1);
+
+		assertThatThrownBy(() -> MenuDocumentReader.read(pdf, NO_OCR))
+			.isInstanceOfSatisfying(ResponseStatusException.class,
+				e -> assertThat(e.getReason()).isEqualTo("TOO_MANY_PAGES"));
+	}
+
+	@Test
+	void aPhotoOfAMenuIsReadWithOcr() throws IOException {
+		byte[] photo = MenuImagesTest.png(30, 30);
+
+		MenuDocumentReader.Read read = MenuDocumentReader.read(photo, image -> {
+			assertThat(image).isEqualTo(photo);
+			return "Desertlər\nPaxlava 3\n";
+		});
+
+		assertThat(read.ocr()).isTrue();
+		assertThat(read.lines()).extracting(SourceLine::text).containsExactly("Desertlər", "Paxlava 3");
 	}
 
 	@Test
@@ -82,16 +138,17 @@ class MenuDocumentReaderTest {
 			docx = out.toByteArray();
 		}
 
-		List<SourceLine> lines = MenuDocumentReader.read(docx);
+		MenuDocumentReader.Read read = MenuDocumentReader.read(docx, NO_OCR);
 
-		assertThat(lines.get(0).text()).isEqualTo("Şorbalar");
-		assertThat(lines.get(1).cells()).containsExactly("Mərci", "limon ilə", "4,50");
-		assertThat(lines.get(1).picture()).isEqualTo(photo);
+		assertThat(read.ocr()).isFalse();
+		assertThat(read.lines().get(0).text()).isEqualTo("Şorbalar");
+		assertThat(read.lines().get(1).cells()).containsExactly("Mərci", "limon ilə", "4,50");
+		assertThat(read.lines().get(1).picture()).isEqualTo(photo);
 	}
 
 	@Test
 	void anythingElseIsNotAMenuFile() {
-		assertThatThrownBy(() -> MenuDocumentReader.read("Plov 12".getBytes()))
+		assertThatThrownBy(() -> MenuDocumentReader.read("Plov 12".getBytes(), NO_OCR))
 			.isInstanceOfSatisfying(ResponseStatusException.class,
 				e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.UNSUPPORTED_MEDIA_TYPE));
 	}

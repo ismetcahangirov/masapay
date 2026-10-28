@@ -195,7 +195,8 @@ export function DishDetail({
   const ingredients = dish ? ingredientList(dish.ingredients) : []
   return (
     <Dialog open={dish !== null} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-h-[92svh] max-w-md gap-0 overflow-y-auto p-0">
+      {/* The photo goes edge to edge below a top strip of its own for the close button, so the X never sits on the picture. */}
+      <DialogContent className="max-h-[92svh] max-w-md gap-0 overflow-y-auto p-0 pt-12 sm:p-0 sm:pt-12">
         {dish && (
           <>
             <DishPicture dish={dish} className="aspect-[4/3] w-full" />

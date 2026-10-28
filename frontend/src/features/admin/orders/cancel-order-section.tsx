@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Ban } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -18,6 +19,7 @@ export function CancelOrderSection({
   tableId: string
   onCancelled: () => void
 }) {
+  const { t } = useTranslation('orders')
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [cancel, cancelState] = useCancelOrderMutation()
@@ -37,8 +39,8 @@ export function CancelOrderSection({
   const error = !cancelState.isError
     ? null
     : problemReason(cancelState.error) === 'ORDER_HAS_PAYMENTS'
-      ? 'Bu hesabda ödəniş var (və ya gedir). Əvvəlcə pul geri qaytarılmalıdır: masapay platforması ilə əlaqə saxlayın.'
-      : 'Ləğv etmək alınmadı.'
+      ? t('cancel.hasPayments')
+      : t('cancel.error')
 
   if (!open) {
     return (
@@ -50,7 +52,7 @@ export function CancelOrderSection({
           onClick={() => setOpen(true)}
         >
           <Ban aria-hidden />
-          Sifarişi ləğv et
+          {t('cancel.open')}
         </Button>
       </section>
     )
@@ -58,21 +60,18 @@ export function CancelOrderSection({
 
   return (
     <section
-      aria-label="Sifarişin ləğvi"
+      aria-label={t('cancel.sectionLabel')}
       className="space-y-3 rounded-lg border border-destructive p-4"
     >
-      <p className="text-sm font-medium">
-        Bütün sifariş ləğv olunacaq: mətbəx ekranından çıxacaq, masa boşalacaq.
-        Bunu geri qaytarmaq olmur.
-      </p>
+      <p className="text-sm font-medium">{t('cancel.warning')}</p>
       <div className="space-y-1">
-        <Label htmlFor="cancel-reason">Səbəb</Label>
+        <Label htmlFor="cancel-reason">{t('cancel.reason')}</Label>
         <Textarea
           id="cancel-reason"
           value={reason}
           maxLength={500}
           onChange={(event) => setReason(event.target.value)}
-          placeholder="Məsələn, müştəri getdi, heç nə hazırlanmayıb"
+          placeholder={t('cancel.reasonPlaceholder')}
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
@@ -85,7 +84,7 @@ export function CancelOrderSection({
             cancelState.reset()
           }}
         >
-          İmtina
+          {t('cancel.back')}
         </Button>
         <Button
           type="button"
@@ -93,7 +92,7 @@ export function CancelOrderSection({
           disabled={!reason.trim() || cancelState.isLoading}
           onClick={() => void onConfirm()}
         >
-          {cancelState.isLoading ? 'Ləğv olunur...' : 'Ləğvi təsdiqlə'}
+          {cancelState.isLoading ? t('cancel.cancelling') : t('cancel.confirm')}
         </Button>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BellRing, CircleCheck, Hand, Info, UserRound } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -72,6 +73,7 @@ export function TableBillCard({
   onClaim?: () => void
   claiming?: boolean
 }) {
+  const { t } = useTranslation('orders')
   const left = orderBalance(order)
   const justReady = useJustReady(order)
   const readyCount = order.items.filter(
@@ -92,7 +94,7 @@ export function TableBillCard({
           {readyCount > 0 && (
             <Badge variant="success" className="gap-1">
               <BellRing className="size-3" aria-hidden />
-              {readyCount} yemək hazırdır
+              {t('billCard.readyCount', { count: readyCount })}
             </Badge>
           )}
           <OrderStatusBadge status={order.status} />
@@ -101,10 +103,10 @@ export function TableBillCard({
               variant="outline"
               size="sm"
               onClick={onOpenDetail}
-              aria-label={`${tableLabel} ətraflı`}
+              aria-label={t('billCard.detailLabel', { table: tableLabel })}
             >
               <Info aria-hidden />
-              Ətraflı
+              {t('billCard.detail')}
             </Button>
           )}
         </div>
@@ -114,8 +116,8 @@ export function TableBillCard({
           <span className="flex items-center gap-1 text-muted-foreground">
             <UserRound className="size-4" aria-hidden />
             {order.waiter
-              ? `Ofisiant: ${order.waiter.name}`
-              : 'Ofisiant yoxdur'}
+              ? t('billCard.waiter', { name: order.waiter.name })
+              : t('billCard.noWaiter')}
           </span>
           {onClaim && (
             <Button
@@ -123,15 +125,17 @@ export function TableBillCard({
               variant="outline"
               onClick={onClaim}
               disabled={claiming}
-              aria-label={`${tableLabel} masanı götür`}
+              aria-label={t('billCard.claimLabel', { table: tableLabel })}
             >
               <Hand aria-hidden />
-              Masanı götür
+              {t('billCard.claim')}
             </Button>
           )}
         </div>
         {order.items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Hələ məhsul yoxdur.</p>
+          <p className="text-sm text-muted-foreground">
+            {t('billCard.noItems')}
+          </p>
         ) : (
           <ul className="divide-y text-sm">
             {order.items.map((item) => (
@@ -159,7 +163,7 @@ export function TableBillCard({
                     {item.paid && (
                       <Badge variant="secondary">
                         <CircleCheck className="mr-1 size-3" aria-hidden />
-                        Ödənilib
+                        {t('billCard.paid')}
                       </Badge>
                     )}
                   </div>
@@ -176,7 +180,7 @@ export function TableBillCard({
         <div
           className="h-2 w-full overflow-hidden rounded-full bg-muted"
           role="progressbar"
-          aria-label="Ödənilib"
+          aria-label={t('billCard.paid')}
           aria-valuenow={progress}
           aria-valuemin={0}
           aria-valuemax={100}
@@ -188,19 +192,25 @@ export function TableBillCard({
         </div>
         <dl className="grid grid-cols-3 gap-2 tabular-nums">
           <div>
-            <dt className="text-xs text-muted-foreground">Cəmi</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t('billCard.total')}
+            </dt>
             <dd className="font-medium">
               {formatCurrency(order.totalAmount, order.currency)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Ödənilib</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t('billCard.paid')}
+            </dt>
             <dd className="font-medium">
               {formatCurrency(order.paidAmount, order.currency)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Qalıb</dt>
+            <dt className="text-xs text-muted-foreground">
+              {t('billCard.left')}
+            </dt>
             <dd className="font-semibold">
               {formatCurrency(left, order.currency)}
             </dd>

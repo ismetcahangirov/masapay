@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { FloorTable } from '@/features/admin/live/floor-api'
 import { FLOOR_STATUS, formatMinutes } from '@/features/admin/live/floor-status'
 import { formatCurrency } from '@/features/order/format'
@@ -21,6 +22,7 @@ export function FloorTableTile({
   table: FloorTable
   now: number
 }) {
+  const { t } = useTranslation('orders')
   const style = FLOOR_STATUS[table.status]
   const Icon = style.icon
   const minutes = openMinutes(table, now)
@@ -33,7 +35,7 @@ export function FloorTableTile({
         'flex min-h-36 flex-col justify-between gap-3 rounded-lg border-2 p-4 transition-colors',
         style.tile,
       )}
-      aria-label={`${table.label}: ${style.label}`}
+      aria-label={`${table.label}: ${t(style.label)}`}
     >
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-lg font-semibold">{table.label}</h2>
@@ -44,23 +46,23 @@ export function FloorTableTile({
           )}
         >
           <Icon className="size-3.5" aria-hidden />
-          {style.label}
+          {t(style.label)}
         </span>
       </div>
 
       {table.status === 'EMPTY' ? (
-        <p className="text-sm">Açıq hesab yoxdur</p>
+        <p className="text-sm">{t('tile.noBill')}</p>
       ) : (
         <dl className="space-y-1 text-sm">
           <div className="flex justify-between gap-2">
-            <dt>Cəmi</dt>
+            <dt>{t('tile.total')}</dt>
             <dd className="font-medium tabular-nums">
               {money(table.totalAmount)}
             </dd>
           </div>
           {table.status !== 'CLOSED' && (
             <div className="flex justify-between gap-2">
-              <dt>Qalıq</dt>
+              <dt>{t('tile.outstanding')}</dt>
               <dd className="font-semibold tabular-nums">
                 {money(table.outstanding)}
               </dd>
@@ -68,7 +70,7 @@ export function FloorTableTile({
           )}
           {minutes !== null && (
             <div className="flex justify-between gap-2">
-              <dt>Açıqdır</dt>
+              <dt>{t('tile.openFor')}</dt>
               <dd className="tabular-nums">{formatMinutes(minutes)}</dd>
             </div>
           )}

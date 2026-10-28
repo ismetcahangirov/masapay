@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LoaderCircle } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import {
@@ -26,6 +27,7 @@ const ALL = 'ALL'
 // line and when, the payments, and adding a dish from the menu (#144). A waiter
 // can take a table, so its tips are theirs (#182).
 export function OrdersPage() {
+  const { t } = useTranslation('orders')
   const user = useAppSelector((state) => state.auth.user)
   const [claim, claimState] = useClaimTableMutation()
   const restaurants = useMyRestaurantsQuery()
@@ -47,20 +49,21 @@ export function OrdersPage() {
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Sifarişlər</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('ordersPage.title')}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Masalarda nə sifariş olunub, nə ödənilib və nə qalıb. Canlı
-            yenilənir.
+            {t('ordersPage.subtitle')}
           </p>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="orders-table">Masa</Label>
+          <Label htmlFor="orders-table">{t('ordersPage.tableLabel')}</Label>
           <Select value={tableId} onValueChange={setTableId}>
             <SelectTrigger id="orders-table" className="w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>Bütün masalar</SelectItem>
+              <SelectItem value={ALL}>{t('ordersPage.allTables')}</SelectItem>
               {withBills.map((table) => (
                 <SelectItem key={table.tableId} value={table.tableId}>
                   {table.tableLabel}
@@ -93,24 +96,18 @@ export function OrdersPage() {
       {bills.isLoading && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('loading')}
         />
       )}
       {bills.isError && (
-        <p className="text-sm text-destructive">
-          Sifarişləri yükləmək alınmadı.
-        </p>
+        <p className="text-sm text-destructive">{t('ordersPage.loadError')}</p>
       )}
       {bills.data && withBills.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Hazırda açıq hesabı olan masa yoxdur.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('ordersPage.empty')}</p>
       )}
 
       {claimState.isError && (
-        <p className="text-sm text-destructive">
-          Masanı götürmək alınmadı. Hesab bağlanmış ola bilər.
-        </p>
+        <p className="text-sm text-destructive">{t('ordersPage.claimError')}</p>
       )}
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,19rem),1fr))] gap-4">

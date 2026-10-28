@@ -1,6 +1,112 @@
 import type { Messages } from '@/i18n/messages'
 import type az from '../az/orders'
 
-const ru: Messages<typeof az> = {}
+const ru: Messages<typeof az> = {
+  loading: 'Загрузка',
+  ordersPage: {
+    title: 'Заказы',
+    subtitle:
+      'Что заказано за столами, что оплачено и что осталось. Обновляется в реальном времени.',
+    tableLabel: 'Стол',
+    allTables: 'Все столы',
+    loadError: 'Не удалось загрузить заказы.',
+    empty: 'Сейчас нет столов с открытым счётом.',
+    claimError: 'Не удалось взять стол. Возможно, счёт уже закрыт.',
+  },
+  billCard: {
+    readyCount_one: '{{count}} блюдо готово',
+    readyCount_few: '{{count}} блюда готовы',
+    readyCount_many: '{{count}} блюд готово',
+    readyCount_other: '{{count}} блюда готово',
+    detailLabel: '{{table}}: подробнее',
+    detail: 'Подробнее',
+    waiter: 'Официант: {{name}}',
+    noWaiter: 'Нет официанта',
+    claimLabel: 'Взять стол {{table}}',
+    claim: 'Взять стол',
+    noItems: 'Пока нет позиций.',
+    paid: 'Оплачено',
+    total: 'Итого',
+    left: 'Осталось',
+  },
+  detail: {
+    description: 'Позиции, кто и когда их добавил, и платежи.',
+    items: 'Позиции',
+    noItems: 'Пока нет позиций.',
+    payments: 'Платежи',
+    noPayments: 'Платежей пока не было.',
+    paymentsError: 'Не удалось загрузить платежи.',
+    tip: ' (чаевые {{amount}})',
+    addDish: 'Добавить позицию',
+    todaysMenu: 'Меню на сегодня',
+    decrease: 'Уменьшить',
+    quantity: 'Количество',
+    increase: 'Увеличить',
+    adding: 'Добавляется...',
+    add: 'Добавить',
+    addError: 'Не удалось добавить. Возможно, этой позиции сегодня нет в меню.',
+  },
+  lineAuthor: {
+    customer: 'Гость (QR)',
+    staff: 'Сотрудник',
+  },
+  cancel: {
+    open: 'Отменить заказ',
+    sectionLabel: 'Отмена заказа',
+    warning:
+      'Весь заказ будет отменён: он исчезнет с экрана кухни, стол освободится. Это нельзя отменить.',
+    reason: 'Причина',
+    reasonPlaceholder: 'Например, гость ушёл, ничего не готовилось',
+    back: 'Назад',
+    cancelling: 'Отменяется...',
+    confirm: 'Подтвердить отмену',
+    hasPayments:
+      'По этому счёту есть платёж (или он проходит). Сначала нужен возврат: свяжитесь с платформой masapay.',
+    error: 'Не удалось отменить заказ.',
+  },
+  live: {
+    title: 'Столы онлайн',
+    subtitle:
+      'Состояние столов обновляется в реальном времени: цвет меняется сразу, как только добавлен заказ или сделана оплата.',
+    filterLabel: 'Фильтр по статусу',
+    showAll: 'Показать все',
+    loadError: 'Не удалось загрузить столы.',
+    noTables: 'Столов пока нет.',
+    noTablesInStatus: 'Нет столов с этим статусом.',
+  },
+  floorStatus: {
+    empty: 'Свободен',
+    active: 'Активен',
+    partiallyPaid: 'Частично оплачен',
+    closed: 'Закрыт',
+  },
+  tile: {
+    noBill: 'Нет открытого счёта',
+    total: 'Итого',
+    outstanding: 'Остаток',
+    openFor: 'Открыт',
+    minutes: '{{minutes}} мин',
+    hours: '{{hours}} ч',
+    hoursMinutes: '{{hours}} ч {{minutes}} мин',
+  },
+  kitchen: {
+    title: 'Кухня',
+    subtitle: 'Подтверждённые заказы по столам, дольше всех ждущие первыми.',
+    loadError: 'Не удалось загрузить заказы.',
+    empty: 'Сейчас нет ожидающих заказов.',
+    minutes: '{{minutes}} мин',
+    status: {
+      new: 'Новый',
+      preparing: 'Готовится',
+      ready: 'Готово',
+    },
+    startLabel: 'Начать готовить {{name}}',
+    start: 'Готовится',
+    readyLabel: '{{name}} готово',
+    ready: 'Готово',
+    undoLabel: 'Вернуть {{name}}',
+    undo: 'Вернуть',
+  },
+}
 
 export default ru

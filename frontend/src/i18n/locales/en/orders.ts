@@ -1,6 +1,110 @@
 import type { Messages } from '@/i18n/messages'
 import type az from '../az/orders'
 
-const en: Messages<typeof az> = {}
+const en: Messages<typeof az> = {
+  loading: 'Loading',
+  ordersPage: {
+    title: 'Orders',
+    subtitle:
+      'What each table ordered, what is paid and what is left. Updates live.',
+    tableLabel: 'Table',
+    allTables: 'All tables',
+    loadError: 'Could not load the orders.',
+    empty: 'No table has an open bill right now.',
+    claimError: 'Could not take the table. The bill may be closed.',
+  },
+  billCard: {
+    readyCount_one: '{{count}} dish ready',
+    readyCount_other: '{{count}} dishes ready',
+    detailLabel: '{{table}} details',
+    detail: 'Details',
+    waiter: 'Waiter: {{name}}',
+    noWaiter: 'No waiter',
+    claimLabel: 'Take table {{table}}',
+    claim: 'Take table',
+    noItems: 'No items yet.',
+    paid: 'Paid',
+    total: 'Total',
+    left: 'Left',
+  },
+  detail: {
+    description: 'Items, who added them and when, and payments.',
+    items: 'Items',
+    noItems: 'No items yet.',
+    payments: 'Payments',
+    noPayments: 'No payments yet.',
+    paymentsError: 'Could not load the payments.',
+    tip: ' (tip {{amount}})',
+    addDish: 'Add an item',
+    todaysMenu: "Today's menu",
+    decrease: 'Decrease',
+    quantity: 'Quantity',
+    increase: 'Increase',
+    adding: 'Adding...',
+    add: 'Add',
+    addError: 'Could not add it. The item may not be on the menu today.',
+  },
+  lineAuthor: {
+    customer: 'Customer (QR)',
+    staff: 'Staff',
+  },
+  cancel: {
+    open: 'Cancel order',
+    sectionLabel: 'Order cancellation',
+    warning:
+      'The whole order will be cancelled: it leaves the kitchen screen and the table becomes free. This cannot be undone.',
+    reason: 'Reason',
+    reasonPlaceholder: 'For example, the customer left, nothing was prepared',
+    back: 'Back',
+    cancelling: 'Cancelling...',
+    confirm: 'Confirm cancellation',
+    hasPayments:
+      'This bill has a payment (or one in progress). It must be refunded first: contact the masapay platform.',
+    error: 'Could not cancel the order.',
+  },
+  live: {
+    title: 'Live tables',
+    subtitle:
+      'Table states update in real time: the colour changes as soon as an order is added or a payment is made.',
+    filterLabel: 'Filter by status',
+    showAll: 'Show all',
+    loadError: 'Could not load the tables.',
+    noTables: 'No tables yet.',
+    noTablesInStatus: 'No tables with this status.',
+  },
+  floorStatus: {
+    empty: 'Empty',
+    active: 'Active',
+    partiallyPaid: 'Partially paid',
+    closed: 'Closed',
+  },
+  tile: {
+    noBill: 'No open bill',
+    total: 'Total',
+    outstanding: 'Outstanding',
+    openFor: 'Open for',
+    minutes: '{{minutes}} min',
+    hours: '{{hours}} h',
+    hoursMinutes: '{{hours}} h {{minutes}} min',
+  },
+  kitchen: {
+    title: 'Kitchen',
+    subtitle: 'Confirmed orders by table, longest waiting first.',
+    loadError: 'Could not load the orders.',
+    empty: 'No orders waiting right now.',
+    minutes: '{{minutes}} min',
+    status: {
+      new: 'New',
+      preparing: 'Preparing',
+      ready: 'Ready',
+    },
+    startLabel: 'Start preparing {{name}}',
+    start: 'Preparing',
+    readyLabel: '{{name}} is ready',
+    ready: 'Ready',
+    undoLabel: 'Undo {{name}}',
+    undo: 'Undo',
+  },
+}
 
 export default en

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LoaderCircle, Radio, X } from 'lucide-react'
 import {
   type FloorStatus,
@@ -18,6 +19,7 @@ import { cn } from '@/lib/utils'
 // status pills count the tables and filter them: press one to see only that
 // status, press it again to see all.
 export function LiveTablesPage() {
+  const { t } = useTranslation('orders')
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const [filter, setFilter] = useState<FloorStatus | null>(null)
@@ -47,13 +49,10 @@ export function LiveTablesPage() {
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-          Canlı masalar
+          {t('live.title')}
           <Radio className="size-5 text-success" aria-hidden />
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Masaların vəziyyəti real vaxtda yenilənir: sifariş əlavə olunanda və
-          ya ödəniş ediləndə rəng dərhal dəyişir.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('live.subtitle')}</p>
       </header>
 
       {restaurants.data && restaurants.data.length > 1 && (
@@ -72,7 +71,7 @@ export function LiveTablesPage() {
       )}
 
       {floor.data && floor.data.length > 0 && (
-        <ul className="flex flex-wrap gap-2" aria-label="Status üzrə filtr">
+        <ul className="flex flex-wrap gap-2" aria-label={t('live.filterLabel')}>
           {counts.map(({ status, count }) => {
             const style = FLOOR_STATUS[status]
             const Icon = style.icon
@@ -91,7 +90,7 @@ export function LiveTablesPage() {
                   )}
                 >
                   <Icon className="size-4" aria-hidden />
-                  {style.label}
+                  {t(style.label)}
                   <span className="tabular-nums">{count}</span>
                 </button>
               </li>
@@ -105,7 +104,7 @@ export function LiveTablesPage() {
                 className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium text-muted-foreground underline-offset-4 hover:underline"
               >
                 <X className="size-4" aria-hidden />
-                Hamısını göstər
+                {t('live.showAll')}
               </button>
             </li>
           )}
@@ -115,19 +114,19 @@ export function LiveTablesPage() {
       {floor.isLoading && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('loading')}
         />
       )}
       {floor.isError && (
-        <p className="text-sm text-destructive">Masaları yükləmək alınmadı.</p>
+        <p className="text-sm text-destructive">{t('live.loadError')}</p>
       )}
       {floor.data?.length === 0 && (
-        <p className="text-sm text-muted-foreground">Hələ masa yoxdur.</p>
+        <p className="text-sm text-muted-foreground">{t('live.noTables')}</p>
       )}
 
       {filter && shown?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Bu statusda masa yoxdur.
+          {t('live.noTablesInStatus')}
         </p>
       )}
 

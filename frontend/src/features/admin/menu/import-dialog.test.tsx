@@ -13,6 +13,7 @@ const sezar = {
   categoryId: 'c1',
   name: 'Sezar',
   description: null,
+  ingredients: null,
   price: 8,
   components: [],
   active: true,
@@ -36,13 +37,15 @@ const draft = {
         {
           name: 'Sezar',
           description: null,
+          ingredients: null,
           price: 9,
           image: null,
           existingId: 'd1',
         },
         {
           name: 'Çoban',
-          description: 'pomidor, xiyar',
+          description: null,
+          ingredients: 'pomidor, xiyar',
           price: 6.5,
           image: 'data:image/jpeg;base64,AAAA',
           existingId: null,
@@ -56,6 +59,7 @@ const draft = {
         {
           name: 'Ayran',
           description: null,
+          ingredients: null,
           price: 2,
           image: null,
           existingId: null,
@@ -115,6 +119,10 @@ describe('menu import from a file', () => {
     const prices = within(dialog).getAllByLabelText('Qiymət (AZN)')
     await user.clear(prices[1])
     await user.type(prices[1], '7,5')
+    const ingredients = within(dialog).getAllByLabelText('Əsas tərkib')
+    expect(ingredients[1]).toHaveValue('pomidor, xiyar')
+    await user.type(ingredients[1], ', soğan')
+    await user.type(within(dialog).getAllByLabelText('Təsvir')[1], 'Ev üsulu')
     await user.click(
       within(dialog).getByRole('button', { name: 'Ayran çıxar' }),
     )
@@ -133,13 +141,15 @@ describe('menu import from a file', () => {
               {
                 name: 'Sezar',
                 description: null,
+                ingredients: null,
                 price: 9,
                 image: null,
                 existingId: null,
               },
               {
                 name: 'Çoban',
-                description: 'pomidor, xiyar',
+                description: 'Ev üsulu',
+                ingredients: 'pomidor, xiyar, soğan',
                 price: 7.5,
                 image: 'data:image/jpeg;base64,AAAA',
                 existingId: null,

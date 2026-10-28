@@ -7,6 +7,7 @@ const dish = (overrides: Partial<MenuDish>): MenuDish => ({
   categoryId: 'c1',
   name: 'Dovğa',
   description: null,
+  ingredients: null,
   price: 3,
   components: [],
   active: true,

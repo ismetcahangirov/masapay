@@ -16,6 +16,8 @@ export interface MenuDish {
   categoryId: string
   name: string
   description: string | null
+  /** The main ingredients customers see, comma separated, or null. */
+  ingredients: string | null
   price: number
   /** A combo's contents, such as a business lunch; empty for an ordinary dish. */
   components: ComboComponent[]
@@ -58,6 +60,7 @@ export interface DishInput {
   categoryId: string
   name: string
   description: string | null
+  ingredients: string | null
   price: number
   /** Replaces a combo's contents; empty for an ordinary dish. */
   components: { itemId: string; quantity: number }[]
@@ -71,6 +74,7 @@ export interface DishInput {
 export interface ImportDish {
   name: string
   description: string | null
+  ingredients: string | null
   price: number
   image: string | null
   existingId: string | null

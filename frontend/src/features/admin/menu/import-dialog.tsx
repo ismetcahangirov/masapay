@@ -44,6 +44,7 @@ interface Row {
   key: string
   name: string
   description: string
+  ingredients: string
   price: string
   image: string | null
 }
@@ -67,6 +68,7 @@ function toGroups(draft: ImportDraft): Group[] {
       key: newKey(),
       name: item.name,
       description: item.description ?? '',
+      ingredients: item.ingredients ?? '',
       price: item.price.toFixed(2),
       image: item.image,
     })),
@@ -202,6 +204,7 @@ export function ImportMenuDialog({
       items: group.rows.map((row) => ({
         name: row.name.trim(),
         description: row.description.trim() || null,
+        ingredients: row.ingredients.trim() || null,
         price: parsePrice(row.price) ?? 0,
         image: row.image,
         existingId: null,
@@ -413,18 +416,30 @@ export function ImportMenuDialog({
                           >
                             <Trash2 aria-hidden />
                           </Button>
-                          <Input
-                            value={row.description}
-                            onChange={(event) =>
-                              changeRow(group.key, row.key, {
-                                description: event.target.value,
-                              })
-                            }
-                            maxLength={500}
-                            placeholder="Təsvir"
-                            aria-label="Təsvir"
-                            className="col-span-2 col-start-2 md:col-span-1 md:col-start-auto"
-                          />
+                          <div className="col-span-2 col-start-2 space-y-2 md:col-span-1 md:col-start-auto">
+                            <Input
+                              value={row.ingredients}
+                              onChange={(event) =>
+                                changeRow(group.key, row.key, {
+                                  ingredients: event.target.value,
+                                })
+                              }
+                              maxLength={300}
+                              placeholder="Əsas tərkib"
+                              aria-label="Əsas tərkib"
+                            />
+                            <Input
+                              value={row.description}
+                              onChange={(event) =>
+                                changeRow(group.key, row.key, {
+                                  description: event.target.value,
+                                })
+                              }
+                              maxLength={500}
+                              placeholder="Təsvir"
+                              aria-label="Təsvir"
+                            />
+                          </div>
                           <Input
                             value={row.price}
                             onChange={(event) =>
@@ -453,6 +468,7 @@ export function ImportMenuDialog({
                             key: newKey(),
                             name: '',
                             description: '',
+                            ingredients: '',
                             price: '',
                             image: null,
                           },

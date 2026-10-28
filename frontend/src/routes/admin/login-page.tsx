@@ -4,6 +4,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Clock, CircleAlert } from 'lucide-react'
 import { useAppDispatch } from '@/app/hooks'
 import { BrandMark } from '@/components/layout/brand-mark'
+import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import {
   type GoogleLoginResponse,
   useLoginWithGoogleMutation,
@@ -72,7 +73,8 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-muted/40 p-4 sm:p-6">
+    <main className="relative flex min-h-svh items-center justify-center bg-muted/40 p-4 sm:p-6">
+      <LanguageSwitcher className="absolute right-4 top-4 bg-background sm:right-6 sm:top-6" />
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <BrandMark className="mb-2 h-12" />

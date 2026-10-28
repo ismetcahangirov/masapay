@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import { BrandMark } from '@/components/layout/brand-mark'
+import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import {
   Sidebar,
   SidebarContent,
@@ -244,7 +245,10 @@ export function AdminSidebar() {
             {user.email}
           </p>
         )}
-        <LogoutButton />
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher className="shrink-0" />
+          <LogoutButton />
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -4,6 +4,7 @@ import { skipToken } from '@reduxjs/toolkit/query'
 import { validateTableToken } from '@/lib/table-session'
 import { InvalidTokenPage } from '@/routes/invalid-token-page'
 import { BrandMark } from '@/components/layout/brand-mark'
+import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import { BillCard } from '@/features/order/bill-card'
 import {
   BillError,
@@ -65,11 +66,14 @@ export function TablePage() {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 p-4 sm:p-6">
-      {/* The brand above the customer's cards (#162 logo, single colour). */}
-      <span className="flex items-center gap-2 text-lg tracking-tight">
-        <BrandMark className="h-7" />
-        masapay
-      </span>
+      {/* The brand above the customer's cards (#162 logo, single colour), the language choice beside it (#215). */}
+      <div className="flex w-full max-w-md items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-lg tracking-tight">
+          <BrandMark className="h-7" />
+          masapay
+        </span>
+        <LanguageSwitcher />
+      </div>
       {content}
     </main>
   )

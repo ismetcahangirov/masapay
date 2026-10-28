@@ -5,6 +5,7 @@ import { store } from '@/app/store'
 import { type UserRole, userLoaded } from '@/features/auth/auth-slice'
 import { parsePrice } from '@/features/admin/menu/menu-price'
 import { MenuPage } from '@/routes/admin/menu-page'
+import i18n from '@/i18n'
 import { mockApi, renderWithProviders } from '@/test/utils'
 
 const MENU_URL = '/api/admin/restaurants/r1/menu'
@@ -125,6 +126,21 @@ describe('MenuPage (#137)', () => {
     expect(
       screen.getByText('Bu kateqoriyada məhsul yoxdur.'),
     ).toBeInTheDocument()
+  })
+
+  it('speaks English when the visitor picks it (#215)', async () => {
+    await i18n.changeLanguage('en')
+    backend()
+    renderWithProviders(<MenuPage />)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Salatlar' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument()
+    expect(
+      screen.getByText('There are no dishes in this category.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Not available today')).toBeInTheDocument()
   })
 
   it('adds a dish to a category, sending the comma price as a number', async () => {

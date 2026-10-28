@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import { OrderItemList } from '@/features/order/order-item-list'
 import type { OrderItem } from '@/features/order/types'
+import i18n from '@/i18n'
 
 function item(overrides: Partial<OrderItem>): OrderItem {
   return {
@@ -41,5 +42,25 @@ describe('OrderItemList kitchen status (#178)', () => {
     // A line added by hand never goes to the kitchen; a paid one is done.
     expect(within(row('Su')).queryByText(/Hazır|Qəbul/)).toBeNull()
     expect(within(row('Kabab')).queryByText('Hazırdır')).toBeNull()
+  })
+})
+
+describe('OrderItemList in English (#215)', () => {
+  it('shows the kitchen status, paid mark and amount in English', async () => {
+    await i18n.changeLanguage('en')
+    render(
+      <OrderItemList
+        currency="AZN"
+        items={[
+          item({ id: 'a', name: 'Sezar', kitchenStatus: 'PREPARING' }),
+          item({ id: 'b', name: 'Kabab', paid: true }),
+        ]}
+      />,
+    )
+
+    const row = (name: string) => screen.getByText(name).closest('li')!
+    expect(within(row('Sezar')).getByText('Preparing')).toBeInTheDocument()
+    expect(within(row('Kabab')).getByText('Paid')).toBeInTheDocument()
+    expect(screen.queryByText('Ödənilib')).toBeNull()
   })
 })

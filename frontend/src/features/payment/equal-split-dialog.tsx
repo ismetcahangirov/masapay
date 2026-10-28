@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ export function EqualSplitDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation('payment')
   const started = order.equalSplit
   const [parts, setParts] = useState(started?.totalParts ?? MIN_PARTS)
   const [partsToPay, setPartsToPay] = useState(1)
@@ -85,17 +87,20 @@ export function EqualSplitDialog({
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Bərabər böl</DialogTitle>
+          <DialogTitle>{t('equal.title')}</DialogTitle>
           <DialogDescription>
             {started
-              ? `Hesab ${started.totalParts} bərabər hissəyə bölünüb, ${started.paidParts} hissə ödənilib.`
-              : 'Hesabı neçə nəfər arasında bölmək istəyirsiniz?'}
+              ? t('equal.started', {
+                  total: started.totalParts,
+                  paid: started.paidParts,
+                })
+              : t('equal.ask')}
           </DialogDescription>
         </DialogHeader>
         {
           <div className="space-y-4">
             <Stepper
-              label="Nəfər sayı"
+              label={t('equal.people')}
               value={parts}
               min={MIN_PARTS}
               max={MAX_PARTS}
@@ -106,7 +111,7 @@ export function EqualSplitDialog({
               disabled={!!started}
             />
             <Stepper
-              label="Neçə nəfər üçün ödəyirsiniz"
+              label={t('equal.partsToPay')}
               value={shares}
               min={1}
               max={Math.max(1, remaining)}
@@ -114,8 +119,8 @@ export function EqualSplitDialog({
             />
             <p className="text-xs text-muted-foreground">
               {started
-                ? `Bölgü başlayıb, ona görə nəfər sayı dəyişmir. ${remaining} hissə qalıb, ən çox ${remaining} nəfər üçün ödəyə bilərsiniz.`
-                : `Başqaları üçün də ödəyirsinizsə, sayı artırın (ən çox ${remaining}).`}
+                ? t('equal.startedHint', { remaining })
+                : t('equal.hint', { remaining })}
             </p>
             <AmountDue
               amount={quote.data?.amount}
@@ -142,10 +147,15 @@ export function EqualSplitDialog({
               onClick={() => void onPay()}
             >
               {payState.isLoading
-                ? 'Payriff-ə yönləndirilir...'
+                ? t('pay.redirecting')
                 : quote.data
-                  ? `${formatCurrency(quote.data.amount + tipMinor, order.currency)} ödə`
-                  : 'Ödə'}
+                  ? t('pay.payAmount', {
+                      amount: formatCurrency(
+                        quote.data.amount + tipMinor,
+                        order.currency,
+                      ),
+                    })
+                  : t('pay.pay')}
             </Button>
           </div>
         }

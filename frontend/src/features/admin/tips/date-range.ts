@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import type { WaiterTips } from '@/features/admin/tips/tips-api'
 
 // Date helpers for the tip report filter. Dates are plain ISO days
@@ -43,6 +44,8 @@ export function matchingPreset(range: DateRange): RangePreset | undefined {
 
 /** Display name of a waiter row; tips without a waiter are grouped as unassigned. */
 export function waiterLabel(waiter: WaiterTips): string {
-  if (!waiter.waiterId) return 'Təyin olunmayıb'
-  return waiter.waiterName || waiter.waiterEmail || 'Adsız ofisiant'
+  if (!waiter.waiterId) return i18n.t('tips:waiter.unassigned')
+  return (
+    waiter.waiterName || waiter.waiterEmail || i18n.t('tips:waiter.unnamed')
+  )
 }

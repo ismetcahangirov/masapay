@@ -1,8 +1,9 @@
 import '@testing-library/jest-dom/vitest'
-import { afterEach } from 'vitest'
+import { afterEach, beforeEach } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import { store } from '@/app/store'
 import { api } from '@/app/api'
+import i18n from '@/i18n'
 
 // jsdom provides its own AbortSignal, which Node's built-in Request rejects
 // ("Expected signal to be an instance of AbortSignal"). RTK Query passes one to
@@ -35,6 +36,12 @@ if (typeof window.localStorage?.clear !== 'function') {
     value: memoryStorage,
   })
 }
+
+// Tests read the Azerbaijani texts, whatever language jsdom's navigator reports
+// or a previous test switched to (#215).
+beforeEach(async () => {
+  await i18n.changeLanguage('az')
+})
 
 // Each test starts with an empty DOM and an empty RTK Query cache.
 afterEach(() => {

@@ -1,6 +1,7 @@
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query'
 import type { SerializedError } from '@reduxjs/toolkit'
 import { problemReason, takesNoOnlinePayments } from '@/lib/api-errors'
+import i18n from '@/i18n'
 
 /** Turns an API error into a short message for the customer. */
 export function paymentErrorMessage(
@@ -8,20 +9,20 @@ export function paymentErrorMessage(
 ): string | null {
   if (!error) return null
   if ('status' in error && error.status === 'FETCH_ERROR') {
-    return 'İnternet bağlantısı yoxdur. Bağlantını yoxlayıb yenidən cəhd edin, pul çəkilməyib.'
+    return i18n.t('payment:errors.offline')
   }
   // Payriff did not open the payment page (down, or an error of its own).
   if (problemReason(error) === 'PAYRIFF_UNAVAILABLE') {
-    return 'Ödəniş sistemi hazırda cavab vermir, pul çəkilməyib. Bir az sonra yenidən cəhd edin.'
+    return i18n.t('payment:errors.payriffUnavailable')
   }
   if (takesNoOnlinePayments(error)) {
-    return 'Restoran hazırda onlayn ödəniş qəbul etmir. Zəhmət olmasa ofisianta müraciət edin.'
+    return i18n.t('payment:errors.noOnlinePayments')
   }
   if ('status' in error && error.status === 409) {
-    return 'Hesab bu arada dəyişdi (kimsə artıq ödəmiş ola bilər). Məbləği yoxlayıb yenidən cəhd edin.'
+    return i18n.t('payment:errors.conflict')
   }
   if ('status' in error && error.status === 400) {
-    return 'Seçim yanlışdır. Zəhmət olmasa yenidən seçin.'
+    return i18n.t('payment:errors.badChoice')
   }
-  return 'Ödəniş alınmadı. İnternet bağlantınızı yoxlayıb yenidən cəhd edin.'
+  return i18n.t('payment:errors.generic')
 }

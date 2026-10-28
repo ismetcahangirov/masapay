@@ -1,4 +1,5 @@
 import { TriangleAlert } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -33,14 +34,13 @@ export function ConfirmOrderDialog({
   onConfirm: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('customer')
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !busy && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Əminsiniz?</DialogTitle>
-          <DialogDescription>
-            Bu məhsullar masanın hesabına əlavə olunacaq.
-          </DialogDescription>
+          <DialogTitle>{t('confirmOrder.title')}</DialogTitle>
+          <DialogDescription>{t('confirmOrder.description')}</DialogDescription>
         </DialogHeader>
         <ul className="divide-y rounded-md border text-sm">
           {entries.map(({ dish, quantity }) => (
@@ -54,7 +54,7 @@ export function ConfirmOrderDialog({
             </li>
           ))}
           <li className="flex justify-between gap-3 px-3 py-2 font-semibold">
-            <span>Cəmi</span>
+            <span>{t('confirmOrder.total')}</span>
             <span className="tabular-nums">
               {formatCurrency(total, currency)}
             </span>
@@ -62,15 +62,15 @@ export function ConfirmOrderDialog({
         </ul>
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-          Təsdiqdən sonra sifarişi silmək olmur.
+          {t('confirmOrder.warning')}
         </p>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} disabled={busy}>
-            Geri qayıt
+            {t('confirmOrder.back')}
           </Button>
           <Button variant="success" onClick={onConfirm} disabled={busy}>
-            {busy ? 'Göndərilir...' : 'Bəli, təsdiqlə'}
+            {busy ? t('confirmOrder.sending') : t('confirmOrder.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -32,6 +33,7 @@ export function CategoryDialog({
   nextSortOrder: number
   onClose: () => void
 }) {
+  const { t } = useTranslation('menu')
   const [name, setName] = useState('')
   const [sortOrder, setSortOrder] = useState('0')
   const [create, createState] = useCreateCategoryMutation()
@@ -77,22 +79,24 @@ export function CategoryDialog({
         <form onSubmit={(event) => void onSubmit(event)} className="space-y-4">
           <DialogHeader>
             <DialogTitle>
-              {category ? 'Kateqoriyanı redaktə et' : 'Yeni kateqoriya'}
+              {category
+                ? t('categoryDialog.editTitle')
+                : t('categoryDialog.newTitle')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="category-name">Ad</Label>
+            <Label htmlFor="category-name">{t('categoryDialog.name')}</Label>
             <Input
               id="category-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Məsələn, Salatlar"
+              placeholder={t('categoryDialog.namePlaceholder')}
               maxLength={100}
               autoFocus
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="category-order">Sıra</Label>
+            <Label htmlFor="category-order">{t('categoryDialog.order')}</Label>
             <Input
               id="category-order"
               type="number"
@@ -102,22 +106,22 @@ export function CategoryDialog({
               onChange={(event) => setSortOrder(event.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Kiçik rəqəm menyuda yuxarıda göstərilir.
+              {t('categoryDialog.orderHint')}
             </p>
           </div>
           {state.isError && (
             <p className="text-sm text-destructive">
               {isConflict(state.error)
-                ? 'Bu adda kateqoriya artıq var.'
-                : 'Yadda saxlamaq alınmadı.'}
+                ? t('categoryDialog.duplicate')
+                : t('actions.saveFailed')}
             </p>
           )}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              İmtina
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={!valid || state.isLoading}>
-              {state.isLoading ? 'Yadda saxlanılır...' : 'Yadda saxla'}
+              {state.isLoading ? t('actions.saving') : t('actions.save')}
             </Button>
           </DialogFooter>
         </form>

@@ -1,4 +1,5 @@
 import { Ban, CircleCheckBig } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   type TableOrder,
   orderTotal,
@@ -65,6 +66,7 @@ function PaymentBreakdown({
   order: NonNullable<TableOrder['order']>
   currency: string
 }) {
+  const { t } = useTranslation('customer')
   const byItems = order.items
     .filter((item) => item.paid)
     .reduce((sum, item) => sum + item.total, 0)
@@ -72,15 +74,17 @@ function PaymentBreakdown({
   if (byItems === 0 || other === 0) {
     return order.equalSplit ? (
       <p className="pl-3 text-xs text-muted-foreground">
-        Bərabər bölgü: {order.equalSplit.paidParts} /{' '}
-        {order.equalSplit.totalParts} hissə ödənilib
+        {t('billCard.equalSplitPaid', {
+          paid: order.equalSplit.paidParts,
+          total: order.equalSplit.totalParts,
+        })}
       </p>
     ) : null
   }
   return (
     <ul className="space-y-1 border-l-2 border-success/40 pl-3 text-xs text-muted-foreground">
       <li className="flex justify-between">
-        <span>Məhsul seçərək (xətt çəkilənlər)</span>
+        <span>{t('billCard.byItems')}</span>
         <span className="tabular-nums">
           {formatCurrency(byItems, currency)}
         </span>
@@ -88,8 +92,11 @@ function PaymentBreakdown({
       <li className="flex justify-between">
         <span>
           {order.equalSplit
-            ? `Bərabər bölgü (${order.equalSplit.paidParts} / ${order.equalSplit.totalParts} hissə)`
-            : 'Digər ödənişlər'}
+            ? t('billCard.equalSplitParts', {
+                paid: order.equalSplit.paidParts,
+                total: order.equalSplit.totalParts,
+              })
+            : t('billCard.otherPayments')}
         </span>
         <span className="tabular-nums">{formatCurrency(other, currency)}</span>
       </li>
@@ -99,12 +106,13 @@ function PaymentBreakdown({
 
 /** Thin bar showing how much of the bill is paid. */
 function PaidProgress({ paid, total }: { paid: number; total: number }) {
+  const { t } = useTranslation('customer')
   const percent = total > 0 ? Math.min(100, (paid / total) * 100) : 0
   return (
     <div
       className="h-2 w-full overflow-hidden rounded-full bg-muted"
       role="progressbar"
-      aria-label="Ödənilmiş hissə"
+      aria-label={t('billCard.paidProgress')}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(percent)}
@@ -127,6 +135,7 @@ export function BillCard({
   table: TableOrder
   order: NonNullable<TableOrder['order']>
 }) {
+  const { t } = useTranslation('customer')
   const total = orderTotal(order)
   const balance = orderBalance(order)
   const cancelled = order.status === 'cancelled'
@@ -145,9 +154,7 @@ export function BillCard({
       {fullyPaid && (
         <div className="mx-6 mb-2 flex items-center gap-3 rounded-lg bg-success/10 px-4 py-3 text-success">
           <CircleCheckBig className="size-5 shrink-0" aria-hidden />
-          <span className="text-sm font-medium">
-            Hesab tam ödənilib. Təşəkkür edirik!
-          </span>
+          <span className="text-sm font-medium">{t('billCard.fullyPaid')}</span>
         </div>
       )}
 
@@ -157,9 +164,7 @@ export function BillCard({
           className="mx-6 mb-2 flex items-center gap-3 rounded-lg bg-destructive/10 px-4 py-3 text-destructive"
         >
           <Ban className="size-5 shrink-0" aria-hidden />
-          <span className="text-sm font-medium">
-            Sifariş restoran tərəfindən ləğv olundu. Ödəniş tələb olunmur.
-          </span>
+          <span className="text-sm font-medium">{t('billCard.cancelled')}</span>
         </div>
       )}
 
@@ -171,15 +176,17 @@ export function BillCard({
         {order.serviceCharge && (
           <>
             <TotalRow
-              label="Məhsullar"
+              label={t('billCard.items')}
               amount={total - order.serviceCharge.amount}
               currency={order.currency}
             />
             <TotalRow
               label={
                 table.serviceChargePercent
-                  ? `Xidmət haqqı (${table.serviceChargePercent}%)`
-                  : 'Xidmət haqqı'
+                  ? t('billCard.serviceChargePercent', {
+                      percent: table.serviceChargePercent,
+                    })
+                  : t('billCard.serviceCharge')
               }
               amount={order.serviceCharge.amount}
               currency={order.currency}
@@ -187,7 +194,7 @@ export function BillCard({
           </>
         )}
         <TotalRow
-          label="Cəmi"
+          label={t('billCard.total')}
           amount={total}
           currency={order.currency}
           tone={order.serviceCharge ? 'emphasis' : 'muted'}
@@ -195,7 +202,7 @@ export function BillCard({
         {order.paidAmount > 0 && (
           <>
             <TotalRow
-              label="Ödənilib"
+              label={t('billCard.paid')}
               amount={order.paidAmount}
               currency={order.currency}
               tone="paid"
@@ -207,7 +214,7 @@ export function BillCard({
           </>
         )}
         <TotalRow
-          label="Qalıq"
+          label={t('billCard.balance')}
           amount={balance}
           currency={order.currency}
           tone="emphasis"

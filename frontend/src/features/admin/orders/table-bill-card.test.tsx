@@ -6,6 +6,7 @@ import {
   TableBillCard,
 } from '@/features/admin/orders/table-bill-card'
 import type { KitchenStatus, Order } from '@/features/order/types'
+import i18n from '@/i18n'
 
 function order(sezar: KitchenStatus, dolma: KitchenStatus): Order {
   const line = (id: string, name: string, kitchenStatus: KitchenStatus) => ({
@@ -89,5 +90,17 @@ describe('TableBillCard waiter (#182)', () => {
     )
     expect(screen.getByText('Ofisiant: Aysel')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /masanı götür/ })).toBeNull()
+  })
+})
+
+describe('TableBillCard in English (#215)', () => {
+  it('shows the bill texts in the chosen language', async () => {
+    await i18n.changeLanguage('en')
+    render(
+      <TableBillCard tableLabel="Masa 4" order={order('READY', 'READY')} />,
+    )
+    expect(screen.getByText('2 dishes ready')).toBeInTheDocument()
+    expect(screen.getByText('No waiter')).toBeInTheDocument()
+    expect(screen.getByText('Left')).toBeInTheDocument()
   })
 })

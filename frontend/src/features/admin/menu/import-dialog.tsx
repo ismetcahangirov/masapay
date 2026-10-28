@@ -8,6 +8,7 @@ import {
   Trash2,
   TriangleAlert,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import i18n from '@/i18n'
 import { problemReason } from '@/lib/api-errors'
 import { cn } from '@/lib/utils'
 import { DishPhotoField } from './dish-photo-field'
@@ -77,29 +79,29 @@ function toGroups(draft: ImportDraft): Group[] {
 
 function previewError(error: Parameters<typeof problemReason>[0]): string {
   if (error && 'status' in error && error.status === 413) {
-    return 'Fayl 10 MB-dan böyükdür.'
+    return i18n.t('menu:importDialog.previewErrors.tooLarge')
   }
   if (error && 'status' in error && error.status === 415) {
-    return 'Bu fayl növü oxunmur. PDF, DOCX, DOC faylı və ya JPG, PNG şəkli seçin.'
+    return i18n.t('menu:importDialog.previewErrors.unsupported')
   }
   if (error && 'status' in error && error.status === 503) {
-    return 'Server indi başqa skanları oxuyur. Bir az sonra yenidən yoxlayın.'
+    return i18n.t('menu:importDialog.previewErrors.busy')
   }
   switch (problemReason(error)) {
     case 'NO_TEXT':
-      return 'Faylda oxunaqlı mətn tapılmadı. Skan və ya şəkildirsə, daha aydın, düz və işıqlı çəkilmiş nüsxə yükləyin.'
+      return i18n.t('menu:importDialog.previewErrors.noText')
     case 'OCR_UNAVAILABLE':
-      return 'Skan edilmiş fayl və şəkilləri oxumaq bu serverdə qurulmayıb. Mətnli PDF və ya Word faylı seçin.'
+      return i18n.t('menu:importDialog.previewErrors.ocrUnavailable')
     case 'OCR_TIMEOUT':
-      return 'Skanı oxumaq çox uzun çəkdi. Daha az səhifəli və ya daha kiçik fayl yükləyin.'
+      return i18n.t('menu:importDialog.previewErrors.ocrTimeout')
     case 'NO_DISHES':
-      return 'Faylda qiyməti olan məhsul tapılmadı. Başqa fayl seçin və ya məhsulları tək-tək əlavə edin.'
+      return i18n.t('menu:importDialog.previewErrors.noDishes')
     case 'PROTECTED_FILE':
-      return 'Fayl parolla qorunur. Parolsuz nüsxəni yükləyin.'
+      return i18n.t('menu:importDialog.previewErrors.protected')
     case 'TOO_MANY_PAGES':
-      return 'Fayl çox uzundur: mətnli PDF ən çox 60, skan ən çox 15 səhifə ola bilər.'
+      return i18n.t('menu:importDialog.previewErrors.tooManyPages')
     default:
-      return 'Faylı oxumaq alınmadı.'
+      return i18n.t('menu:importDialog.previewErrors.failed')
   }
 }
 
@@ -122,6 +124,7 @@ export function ImportMenuDialog({
   menu: MenuCategory[]
   onClose: () => void
 }) {
+  const { t } = useTranslation('menu')
   const fileInput = useRef<HTMLInputElement>(null)
   const [groups, setGroups] = useState<Group[] | null>(null)
   const [skippedImages, setSkippedImages] = useState(0)
@@ -185,9 +188,11 @@ export function ImportMenuDialog({
     counts.set(nameKey(r.name), (counts.get(nameKey(r.name)) ?? 0) + 1),
   )
   const rowProblem = (row: Row): string | null => {
-    if (row.name.trim() === '') return 'Ad yazın'
-    if (parsePrice(row.price) === null) return 'Qiyməti rəqəmlə yazın'
-    if ((counts.get(nameKey(row.name)) ?? 0) > 1) return 'Bu ad iki dəfədir'
+    if (row.name.trim() === '') return t('importDialog.rowProblems.noName')
+    if (parsePrice(row.price) === null)
+      return t('importDialog.rowProblems.badPrice')
+    if ((counts.get(nameKey(row.name)) ?? 0) > 1)
+      return t('importDialog.rowProblems.duplicate')
     return null
   }
   const filledGroups = groups?.filter((g) => g.rows.length > 0) ?? []
@@ -220,10 +225,10 @@ export function ImportMenuDialog({
   const applyError = !applyState.isError
     ? null
     : problemReason(applyState.error) === 'DUPLICATE_DISH'
-      ? 'Eyni adlı iki məhsul var. Adlardan birini dəyişin.'
+      ? t('importDialog.applyErrors.duplicateDish')
       : problemReason(applyState.error) === 'INVALID_IMAGE'
-        ? 'Şəkillərdən biri oxunmadı. Onu silin və ya başqa şəkil seçin.'
-        : 'Yadda saxlamaq alınmadı.'
+        ? t('importDialog.applyErrors.invalidImage')
+        : t('actions.saveFailed')
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
@@ -233,13 +238,13 @@ export function ImportMenuDialog({
         )}
       >
         <DialogHeader>
-          <DialogTitle>Menyunu fayldan yüklə</DialogTitle>
+          <DialogTitle>{t('importDialog.title')}</DialogTitle>
           <DialogDescription>
             {result
-              ? 'Menyu yeniləndi.'
+              ? t('importDialog.done')
               : groups
-                ? 'Tapılanları yoxlayın: adları, qiymətləri və şəkilləri düzəldin, lazım olmayanı silin, sonra təsdiqləyin. Təsdiqə qədər heç nə saxlanmır.'
-                : 'PDF, Word (DOCX, DOC) faylındakı və ya menyunun şəklindəki (JPG, PNG, skan) yazıları oxuyuruq. Sonra hər sətri yoxlayıb düzəldə bilərsiniz.'}
+                ? t('importDialog.reviewHint')
+                : t('importDialog.intro')}
           </DialogDescription>
         </DialogHeader>
 
@@ -248,13 +253,21 @@ export function ImportMenuDialog({
             <p className="flex items-start gap-2 text-sm">
               <CircleCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
               <span>
-                {result.dishesCreated} məhsul əlavə olundu,{' '}
-                {result.dishesUpdated} məhsul yeniləndi,{' '}
-                {result.categoriesCreated} yeni kateqoriya.
+                {t('importDialog.result', {
+                  created: t('importDialog.dishesCreated', {
+                    count: result.dishesCreated,
+                  }),
+                  updated: t('importDialog.dishesUpdated', {
+                    count: result.dishesUpdated,
+                  }),
+                  categories: t('importDialog.categoriesCreated', {
+                    count: result.categoriesCreated,
+                  }),
+                })}
               </span>
             </p>
             <DialogFooter>
-              <Button onClick={onClose}>Bağla</Button>
+              <Button onClick={onClose}>{t('importDialog.close')}</Button>
             </DialogFooter>
           </div>
         )}
@@ -272,8 +285,8 @@ export function ImportMenuDialog({
                 <FileUp aria-hidden />
               )}
               {previewState.isLoading
-                ? 'Fayl oxunur...'
-                : 'Fayl və ya şəkil seçin'}
+                ? t('importDialog.reading')
+                : t('importDialog.chooseFile')}
             </Button>
             <input
               ref={fileInput}
@@ -288,10 +301,7 @@ export function ImportMenuDialog({
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Ən yaxşı nəticə: hər məhsul bir sətirdə, adı və qiyməti ilə
-              (məsələn "Sezar salatı ... 9 AZN"), kateqoriya adları ayrıca
-              sətirdə. Skan və şəkil üçün yazılar aydın və düz görünsün; onların
-              oxunması bir dəqiqəyə qədər çəkə bilər. Ən çox 10 MB.
+              {t('importDialog.tips')}
             </p>
             {previewState.isError && (
               <p className="text-sm text-destructive">
@@ -307,8 +317,7 @@ export function ImportMenuDialog({
               {ocr && (
                 <p className="flex items-start gap-2 rounded-md border p-3 text-sm">
                   <ScanText className="mt-0.5 size-4 shrink-0" aria-hidden />
-                  Yazılar şəkildən tanındı (OCR). Hərf və rəqəmlər səhv oxuna
-                  bilər: xüsusilə qiymətləri faylla tutuşdurun.
+                  {t('importDialog.ocrNotice')}
                 </p>
               )}
               {skippedImages > 0 && (
@@ -317,14 +326,15 @@ export function ImportMenuDialog({
                     className="mt-0.5 size-4 shrink-0"
                     aria-hidden
                   />
-                  Fayldakı {skippedImages} şəkil oxunmadı (JPEG, PNG və ya WebP
-                  deyil). Onları aşağıda özünüz əlavə edə bilərsiniz.
+                  {t('importDialog.skippedImages', { count: skippedImages })}
                 </p>
               )}
               {groups.map((group) => (
                 <section
                   key={group.key}
-                  aria-label={`Kateqoriya ${group.name}`}
+                  aria-label={t('importDialog.categorySection', {
+                    name: group.name,
+                  })}
                   className="space-y-2 rounded-lg border p-3"
                 >
                   <div className="flex flex-wrap items-center gap-2">
@@ -337,12 +347,14 @@ export function ImportMenuDialog({
                         }))
                       }
                       maxLength={100}
-                      aria-label="Kateqoriya adı"
+                      aria-label={t('importDialog.categoryName')}
                       aria-invalid={group.name.trim() === ''}
                       className="max-w-xs font-medium"
                     />
                     {menuCategories.has(nameKey(group.name)) && (
-                      <Badge variant="outline">Mövcud kateqoriya</Badge>
+                      <Badge variant="outline">
+                        {t('importDialog.existingCategory')}
+                      </Badge>
                     )}
                     <Button
                       variant="ghost"
@@ -357,7 +369,7 @@ export function ImportMenuDialog({
                       }
                     >
                       <Trash2 aria-hidden />
-                      Kateqoriyanı çıxar
+                      {t('importDialog.removeCategory')}
                     </Button>
                   </div>
                   <ul className="divide-y">
@@ -371,7 +383,7 @@ export function ImportMenuDialog({
                           <DishPhotoField
                             compact
                             src={row.image}
-                            label={row.name || 'Məhsul'}
+                            label={row.name || t('importDialog.dishFallback')}
                             onPick={(file) =>
                               void pickPhoto(group.key, row.key, file)
                             }
@@ -388,12 +400,12 @@ export function ImportMenuDialog({
                                 })
                               }
                               maxLength={150}
-                              aria-label="Məhsulun adı"
+                              aria-label={t('importDialog.dishName')}
                               aria-invalid={problem !== null}
                             />
                             {menuDishes.has(nameKey(row.name)) && (
                               <Badge variant="secondary">
-                                Menyuda var, yenilənəcək
+                                {t('importDialog.onMenu')}
                               </Badge>
                             )}
                             {problem && (
@@ -412,7 +424,9 @@ export function ImportMenuDialog({
                                 rows: g.rows.filter((r) => r.key !== row.key),
                               }))
                             }
-                            aria-label={`${row.name || 'Məhsul'} çıxar`}
+                            aria-label={t('importDialog.removeDish', {
+                              name: row.name || t('importDialog.dishFallback'),
+                            })}
                           >
                             <Trash2 aria-hidden />
                           </Button>
@@ -425,8 +439,8 @@ export function ImportMenuDialog({
                                 })
                               }
                               maxLength={300}
-                              placeholder="Əsas tərkib"
-                              aria-label="Əsas tərkib"
+                              placeholder={t('importDialog.ingredients')}
+                              aria-label={t('importDialog.ingredients')}
                             />
                             <Input
                               value={row.description}
@@ -436,8 +450,8 @@ export function ImportMenuDialog({
                                 })
                               }
                               maxLength={500}
-                              placeholder="Təsvir"
-                              aria-label="Təsvir"
+                              placeholder={t('importDialog.description')}
+                              aria-label={t('importDialog.description')}
                             />
                           </div>
                           <Input
@@ -448,7 +462,7 @@ export function ImportMenuDialog({
                               })
                             }
                             inputMode="decimal"
-                            aria-label="Qiymət (AZN)"
+                            aria-label={t('importDialog.price')}
                             aria-invalid={parsePrice(row.price) === null}
                             className="col-span-2 col-start-2 tabular-nums md:col-span-1 md:col-start-auto"
                           />
@@ -477,7 +491,7 @@ export function ImportMenuDialog({
                     }
                   >
                     <Plus aria-hidden />
-                    Məhsul əlavə et
+                    {t('importDialog.addDish')}
                   </Button>
                 </section>
               ))}
@@ -486,12 +500,16 @@ export function ImportMenuDialog({
                 onClick={() =>
                   setGroups((current) => [
                     ...(current ?? []),
-                    { key: newKey(), name: 'Yeni kateqoriya', rows: [] },
+                    {
+                      key: newKey(),
+                      name: t('importDialog.newCategory'),
+                      rows: [],
+                    },
                   ])
                 }
               >
                 <Plus aria-hidden />
-                Kateqoriya əlavə et
+                {t('importDialog.addCategory')}
               </Button>
             </div>
             {applyError && (
@@ -499,7 +517,7 @@ export function ImportMenuDialog({
             )}
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setGroups(null)}>
-                Başqa fayl
+                {t('importDialog.otherFile')}
               </Button>
               <Button
                 variant="success"
@@ -507,8 +525,8 @@ export function ImportMenuDialog({
                 onClick={() => void onApply()}
               >
                 {applyState.isLoading
-                  ? 'Yadda saxlanılır...'
-                  : `Təsdiqlə (${rows.length} məhsul)`}
+                  ? t('actions.saving')
+                  : t('importDialog.confirm', { count: rows.length })}
               </Button>
             </DialogFooter>
           </>

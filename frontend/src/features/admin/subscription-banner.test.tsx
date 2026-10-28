@@ -6,6 +6,7 @@ import { type UserRole, userLoaded } from '@/features/auth/auth-slice'
 import { SubscriptionBanner } from '@/features/admin/subscription-banner'
 import { settingsApi } from '@/features/admin/settings/settings-api'
 import { mockApi, renderWithProviders } from '@/test/utils'
+import i18n from '@/i18n'
 
 function signIn(role: UserRole) {
   store.dispatch(userLoaded({ id: 'u1', email: 'm@dolma.local', role }))
@@ -49,6 +50,17 @@ describe('SubscriptionBanner (#148)', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent(
       'Abunəliyin bitməsinə 5 gün qalıb',
+    )
+  })
+
+  it('warns in Russian with the right plural form (#215)', async () => {
+    await i18n.changeLanguage('ru')
+    signIn('RESTO_MANAGER')
+    restaurant('ACTIVE', '2026-10-28')
+    renderWithProviders(<SubscriptionBanner />)
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'До конца подписки осталось 5 дней (последний день 28.10.2026)',
     )
   })
 

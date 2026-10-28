@@ -1,4 +1,5 @@
 import { Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -26,6 +27,7 @@ export function DeleteDialog({
   onConfirm: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('menu')
   return (
     <Dialog open={title !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
@@ -36,11 +38,11 @@ export function DeleteDialog({
         {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>
-            İmtina
+            {t('actions.cancel')}
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={busy}>
             <Trash2 aria-hidden />
-            {busy ? 'Silinir...' : 'Sil'}
+            {busy ? t('deleteDialog.deleting') : t('deleteDialog.delete')}
           </Button>
         </DialogFooter>
       </DialogContent>

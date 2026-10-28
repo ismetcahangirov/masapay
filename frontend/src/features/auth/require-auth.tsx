@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { LoaderCircle, ShieldX } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { UserRole } from '@/features/auth/auth-slice'
 import { useSession } from '@/features/auth/use-session'
 import {
@@ -28,6 +29,7 @@ export function RequireAuth({
   roles: UserRole[]
   children: ReactNode
 }) {
+  const { t } = useTranslation('auth')
   const { status, user } = useSession()
   const location = useLocation()
 
@@ -36,7 +38,7 @@ export function RequireAuth({
       <main className="flex min-h-svh items-center justify-center p-6">
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Sessiya yoxlanılır"
+          aria-label={t('guard.checkingSession')}
         />
       </main>
     )
@@ -60,10 +62,8 @@ export function RequireAuth({
             <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <ShieldX className="size-6" aria-hidden />
             </div>
-            <CardTitle>Giriş icazəniz yoxdur</CardTitle>
-            <CardDescription>
-              Bu bölmə yalnız restoran menecerləri və administratorlar üçündür.
-            </CardDescription>
+            <CardTitle>{t('guard.noAccessTitle')}</CardTitle>
+            <CardDescription>{t('guard.noAccessBody')}</CardDescription>
           </CardHeader>
         </Card>
       </main>

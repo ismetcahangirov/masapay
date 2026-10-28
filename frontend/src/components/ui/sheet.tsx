@@ -2,8 +2,15 @@ import * as React from 'react'
 import * as SheetPrimitive from '@radix-ui/react-dialog'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
+
+// The close button's hidden name, in the visitor's language (#215).
+function CloseLabel() {
+  const { t } = useTranslation()
+  return <span className="sr-only">{t('close')}</span>
+}
 
 const Sheet = SheetPrimitive.Root
 
@@ -66,7 +73,7 @@ const SheetContent = React.forwardRef<
       {children}
       <SheetPrimitive.Close className="absolute right-4 top-2.5 flex size-11 items-center justify-center rounded-full opacity-80 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
         <X className="size-7" />
-        <span className="sr-only">Bağla</span>
+        <CloseLabel />
       </SheetPrimitive.Close>
     </SheetPrimitive.Content>
   </SheetPortal>

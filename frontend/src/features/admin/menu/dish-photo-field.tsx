@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { ImagePlus, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { PHOTO_TYPES } from './photo'
@@ -23,6 +24,7 @@ export function DishPhotoField({
   /** A small square for table rows. */
   compact?: boolean
 }) {
+  const { t } = useTranslation('menu')
   const input = useRef<HTMLInputElement>(null)
   return (
     <div className={cn('flex items-center gap-2', compact && 'relative')}>
@@ -33,7 +35,11 @@ export function DishPhotoField({
           'flex shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted text-muted-foreground',
           compact ? 'size-12' : 'size-20',
         )}
-        aria-label={src ? `${label} şəklini dəyiş` : `${label} üçün şəkil seç`}
+        aria-label={
+          src
+            ? t('photoField.change', { name: label })
+            : t('photoField.choose', { name: label })
+        }
       >
         {src ? (
           <img src={src} alt="" className="size-full object-cover" />
@@ -49,7 +55,7 @@ export function DishPhotoField({
           onClick={() => input.current?.click()}
         >
           <ImagePlus aria-hidden />
-          {src ? 'Şəkli dəyiş' : 'Şəkil seç'}
+          {src ? t('photoField.changeButton') : t('photoField.chooseButton')}
         </Button>
       )}
       {src && (
@@ -65,7 +71,7 @@ export function DishPhotoField({
               : undefined
           }
           onClick={onRemove}
-          aria-label={`${label} şəklini sil`}
+          aria-label={t('photoField.remove', { name: label })}
         >
           <X aria-hidden />
         </Button>

@@ -30,12 +30,13 @@ export function formatDay(day: string): string {
   return `${d}.${m}.${y}`
 }
 
-export const STATUS_LABELS: Record<SubscriptionStatus, string> = {
-  NONE: 'Abunəlik yoxdur',
-  TRIAL: 'Sınaq',
-  ACTIVE: 'Davam edir',
-  EXPIRED: 'Bitib',
-}
+/** Keys of the "platform" namespace, translated where they are shown. */
+export const STATUS_LABELS = {
+  NONE: 'subscriptionStatus.NONE',
+  TRIAL: 'subscriptionStatus.TRIAL',
+  ACTIVE: 'subscriptionStatus.ACTIVE',
+  EXPIRED: 'subscriptionStatus.EXPIRED',
+} as const satisfies Record<SubscriptionStatus, string>
 
 /** A manager is warned this many days before the last day. */
 export const WARN_DAYS = 7

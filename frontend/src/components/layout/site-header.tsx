@@ -6,9 +6,11 @@ import {
   useReducedMotion,
   useSpring,
 } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { useScrollDirection } from '@/hooks/use-scroll-direction'
 import { useUnderHeaderTone } from '@/hooks/use-under-header-tone'
 import { BrandMark } from '@/components/layout/brand-mark'
+import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import { Button } from '@/components/ui/button'
 import { LiquidButton } from '@/components/ui/liquid-glass-button'
 import {
@@ -19,11 +21,12 @@ import {
 } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 
+// Labels are keys of the "landing" texts (nav.*).
 const NAV_LINKS = [
-  { label: 'Məhsul', href: '#product' },
-  { label: 'Necə işləyir', href: '#how' },
-  { label: 'Qiymət', href: '#pricing' },
-]
+  { label: 'product', href: '#product' },
+  { label: 'how', href: '#how' },
+  { label: 'pricing', href: '#pricing' },
+] as const
 
 // Fixed header that hides on scroll-down and reveals on scroll-up (#66). Its
 // background is transparent; text/logo contrast the section beneath (dark over
@@ -33,6 +36,7 @@ export function SiteHeader() {
   const { direction, atTop } = useScrollDirection()
   const reduceMotion = useReducedMotion()
   const tone = useUnderHeaderTone()
+  const { t } = useTranslation('landing')
 
   const hidden = !reduceMotion && direction === 'down' && !atTop
   // Background is always transparent; the text/logo contrast the section
@@ -70,16 +74,25 @@ export function SiteHeader() {
                   : 'text-black/55 hover:text-black',
               )}
             >
-              {link.label}
+              {t(`nav.${link.label}`)}
             </a>
           ))}
         </nav>
 
-        <div className="hidden md:block">
-          <GlassCta onDark={onDark} />
-        </div>
+        {/* The language choice stays visible on phones too, next to the burger. */}
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher
+            className={cn(
+              'rounded-full bg-transparent',
+              onDark ? 'border-white/30' : 'border-black/20',
+            )}
+          />
+          <div className="hidden md:block">
+            <GlassCta onDark={onDark} />
+          </div>
 
-        <MobileMenu />
+          <MobileMenu />
+        </div>
       </div>
     </motion.header>
   )
@@ -95,6 +108,7 @@ function scrollToSection(id: string) {
 function MobileMenu() {
   const [open, setOpen] = useState(false)
   const pending = useRef<string | null>(null)
+  const { t } = useTranslation('landing')
 
   function go(id: string) {
     pending.current = id
@@ -106,7 +120,7 @@ function MobileMenu() {
       <SheetTrigger asChild>
         <button
           type="button"
-          aria-label="Menyunu aç"
+          aria-label={t('header.openMenu')}
           className="-mr-2 flex size-11 items-center justify-center rounded-full md:hidden"
         >
           <Menu className="size-7" aria-hidden />
@@ -123,7 +137,7 @@ function MobileMenu() {
           if (id) window.setTimeout(() => scrollToSection(id), 0)
         }}
       >
-        <SheetTitle className="sr-only">Menyu</SheetTitle>
+        <SheetTitle className="sr-only">{t('header.menu')}</SheetTitle>
         <div className="flex h-16 items-center gap-2 text-xl tracking-tight">
           <BrandMark className="h-8" />
           masapay
@@ -139,7 +153,7 @@ function MobileMenu() {
               }}
               className="text-3xl tracking-tight"
             >
-              {link.label}
+              {t(`nav.${link.label}`)}
             </a>
           ))}
         </nav>
@@ -147,7 +161,7 @@ function MobileMenu() {
           onClick={() => go('demo')}
           className="mt-auto h-14 w-full rounded-full text-lg"
         >
-          Demo istə
+          {t('requestDemo')}
           <ArrowRight className="size-5" aria-hidden />
         </Button>
       </SheetContent>
@@ -168,6 +182,7 @@ function GlassCta({ onDark }: { onDark: boolean }) {
   const x = useSpring(mx, { stiffness: 260, damping: 26, mass: 0.4 })
   const y = useSpring(my, { stiffness: 260, damping: 26, mass: 0.4 })
   const [active, setActive] = useState(false)
+  const { t } = useTranslation('landing')
 
   function handleMove(event: React.MouseEvent<HTMLDivElement>) {
     const el = ref.current
@@ -205,7 +220,7 @@ function GlassCta({ onDark }: { onDark: boolean }) {
           onDark ? 'dark text-white' : 'text-black',
         )}
       >
-        Demo istə
+        {t('requestDemo')}
       </LiquidButton>
     </div>
   )

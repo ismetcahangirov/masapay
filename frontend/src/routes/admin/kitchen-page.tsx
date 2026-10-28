@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ChefHat,
   CircleCheckBig,
@@ -21,16 +22,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 
-const STATUS_LABELS: Record<KitchenStatus, string> = {
-  NEW: 'Yeni',
-  PREPARING: 'Hazırlanır',
-  READY: 'Hazırdır',
-}
+// Keys in the "orders" namespace, translated at render.
+const STATUS_LABELS = {
+  NEW: 'kitchen.status.new',
+  PREPARING: 'kitchen.status.preparing',
+  READY: 'kitchen.status.ready',
+} as const satisfies Record<KitchenStatus, string>
 
 // Kitchen screen (#142): what customers ordered, one ticket per table, live.
 // A new order appears without a reload; the chef moves each dish from new to
 // preparing to ready, and every kitchen screen and the table see it.
 export function KitchenPage() {
+  const { t } = useTranslation('orders')
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
@@ -57,11 +60,9 @@ export function KitchenPage() {
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <ChefHat className="size-6" aria-hidden />
-          Mətbəx
+          {t('kitchen.title')}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Təsdiqlənmiş sifarişlər masalar üzrə, ən çox gözləyən əvvəldə.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('kitchen.subtitle')}</p>
       </header>
 
       {restaurants.data && restaurants.data.length > 1 && (
@@ -82,18 +83,14 @@ export function KitchenPage() {
       {work.isLoading && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('loading')}
         />
       )}
       {work.isError && (
-        <p className="text-sm text-destructive">
-          Sifarişləri yükləmək alınmadı.
-        </p>
+        <p className="text-sm text-destructive">{t('kitchen.loadError')}</p>
       )}
       {work.data?.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Hazırda gözləyən sifariş yoxdur.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('kitchen.empty')}</p>
       )}
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-4">
@@ -110,7 +107,9 @@ export function KitchenPage() {
               </CardTitle>
               <span className="flex items-center gap-1 text-sm tabular-nums text-muted-foreground">
                 <Clock className="size-4" aria-hidden />
-                {minutesSince(ticket.since, now)} dəq
+                {t('kitchen.minutes', {
+                  minutes: minutesSince(ticket.since, now),
+                })}
               </span>
             </CardHeader>
             <CardContent>
@@ -139,7 +138,7 @@ export function KitchenPage() {
                               : 'outline'
                         }
                       >
-                        {STATUS_LABELS[line.status]}
+                        {t(STATUS_LABELS[line.status])}
                       </Badge>
                     </div>
                     {line.status === 'NEW' && (
@@ -147,10 +146,12 @@ export function KitchenPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => setStatus(line, 'PREPARING')}
-                        aria-label={`${line.name} hazırlanır`}
+                        aria-label={t('kitchen.startLabel', {
+                          name: line.name,
+                        })}
                       >
                         <CookingPot aria-hidden />
-                        Hazırlanır
+                        {t('kitchen.start')}
                       </Button>
                     )}
                     {line.status === 'PREPARING' && (
@@ -158,10 +159,12 @@ export function KitchenPage() {
                         size="sm"
                         variant="success"
                         onClick={() => setStatus(line, 'READY')}
-                        aria-label={`${line.name} hazırdır`}
+                        aria-label={t('kitchen.readyLabel', {
+                          name: line.name,
+                        })}
                       >
                         <CircleCheckBig aria-hidden />
-                        Hazırdır
+                        {t('kitchen.ready')}
                       </Button>
                     )}
                     {line.status === 'READY' && (
@@ -169,10 +172,10 @@ export function KitchenPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => setStatus(line, 'PREPARING')}
-                        aria-label={`${line.name} geri al`}
+                        aria-label={t('kitchen.undoLabel', { name: line.name })}
                       >
                         <Undo2 aria-hidden />
-                        Geri al
+                        {t('kitchen.undo')}
                       </Button>
                     )}
                   </li>

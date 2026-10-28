@@ -1,4 +1,5 @@
 import { CalendarClock, CircleAlert } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAppSelector } from '@/app/hooks'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
 import {
@@ -12,6 +13,7 @@ import {
 // within a week (#148). After the last day customers can still order, but
 // cannot pay online.
 export function SubscriptionBanner() {
+  const { t } = useTranslation('admin')
   const role = useAppSelector((state) => state.auth.user?.role)
   const restaurants = useMyRestaurantsQuery(undefined, {
     skip: role !== 'RESTO_MANAGER',
@@ -31,9 +33,10 @@ export function SubscriptionBanner() {
           aria-hidden
         />
         <p>
-          <span className="font-semibold">Abunəlik bitib</span> (son gün{' '}
-          {endsOn}). Müştərilər onlayn ödəyə bilmir, sifariş vermək isə açıqdır.
-          Uzatmaq üçün masapay ilə əlaqə saxlayın.
+          <span className="font-semibold">
+            {t('subscription.expiredTitle')}
+          </span>{' '}
+          {t('subscription.expiredBody', { endsOn })}
         </p>
       </div>
     )
@@ -50,10 +53,10 @@ export function SubscriptionBanner() {
       <p>
         <span className="font-semibold">
           {daysLeft === 0
-            ? 'Abunəliyin bu gün son günüdür'
-            : `Abunəliyin bitməsinə ${daysLeft} gün qalıb`}
+            ? t('subscription.lastDay')
+            : t('subscription.daysLeft', { count: daysLeft })}
         </span>{' '}
-        (son gün {endsOn}). Bitəndən sonra müştərilər onlayn ödəyə bilməyəcək.
+        {t('subscription.endingBody', { endsOn })}
       </p>
     </div>
   )

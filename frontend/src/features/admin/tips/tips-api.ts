@@ -1,5 +1,6 @@
 import { api } from '@/app/api'
 import { toMinor } from '@/features/order/order-api'
+import i18n from '@/i18n'
 import { asDownload, type DownloadedFile } from '@/lib/download'
 
 // Per-waiter tip report of a restaurant (#48). Managers and super admins read
@@ -88,7 +89,9 @@ export const tipsApi = api.injectEndpoints({
       query: ({ restaurantId, from, to }) => ({
         url: `/admin/restaurants/${restaurantId}/tips/export/xlsx`,
         params: { from, to },
-        responseHandler: asDownload(`bexsisler-${from}-${to}.xlsx`),
+        responseHandler: asDownload(
+          `${i18n.t('tips:files.report', { from, to })}.xlsx`,
+        ),
       }),
     }),
   }),

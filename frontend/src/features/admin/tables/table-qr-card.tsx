@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Download, ExternalLink, Percent } from 'lucide-react'
 import {
   type AdminTable,
@@ -20,6 +21,7 @@ export function TableQrCard({
   /** Shown to managers only. */
   onEditServiceCharge?: () => void
 }) {
+  const { t } = useTranslation('tables')
   const qr = useTableQrSvgQuery(table.id)
 
   function download() {
@@ -40,7 +42,7 @@ export function TableQrCard({
           {qr.data ? (
             <img
               src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(qr.data)}`}
-              alt={`${table.label} QR kodu`}
+              alt={t('qrCard.qrAlt', { label: table.label })}
               className="size-full"
             />
           ) : (
@@ -60,23 +62,23 @@ export function TableQrCard({
           <Button variant="outline" size="sm" asChild>
             <a href={table.customerUrl} target="_blank" rel="noreferrer">
               <ExternalLink aria-hidden />
-              Aç
+              {t('qrCard.open')}
             </a>
           </Button>
         </div>
         <div className="flex items-center justify-between gap-2 text-sm">
           <span className="text-muted-foreground">
-            Xidmət haqqı: {serviceChargeLabel(table)}
+            {t('qrCard.serviceCharge', { value: serviceChargeLabel(table) })}
           </span>
           {onEditServiceCharge && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onEditServiceCharge}
-              aria-label={`${table.label} xidmət haqqı`}
+              aria-label={t('qrCard.editLabel', { label: table.label })}
             >
               <Percent aria-hidden />
-              Dəyiş
+              {t('qrCard.edit')}
             </Button>
           )}
         </div>

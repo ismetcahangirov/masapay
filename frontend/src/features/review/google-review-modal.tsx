@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Star } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { PaymentStatus } from '@/features/payment/types'
 import {
   buildGoogleReviewUrl,
@@ -42,6 +43,7 @@ export function GoogleReviewModal({
   placeId,
   restaurantName,
 }: GoogleReviewModalProps) {
+  const { t } = useTranslation('payment')
   const [dismissed, setDismissed] = useState(false)
   const open = shouldShowReviewModal(paymentStatus) && !dismissed
 
@@ -50,13 +52,11 @@ export function GoogleReviewModal({
       <DialogContent>
         <DialogHeader>
           <FiveStars />
-          <DialogTitle className="text-center">
-            Təcrübənizi qiymətləndirin
-          </DialogTitle>
+          <DialogTitle className="text-center">{t('review.title')}</DialogTitle>
           <DialogDescription className="text-center">
             {restaurantName
-              ? `${restaurantName} bəyəndinizsə, Google-da 5 ulduzlu rəy bizə çox kömək edər.`
-              : 'Bəyəndinizsə, Google-da 5 ulduzlu rəy bizə çox kömək edər.'}
+              ? t('review.textNamed', { name: restaurantName })
+              : t('review.text')}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:flex-col">
@@ -68,11 +68,11 @@ export function GoogleReviewModal({
               onClick={() => setDismissed(true)}
             >
               <Star />
-              Google-da qiymətləndir
+              {t('review.rate')}
             </a>
           </Button>
           <Button variant="ghost" onClick={() => setDismissed(true)}>
-            Sonra
+            {t('review.later')}
           </Button>
         </DialogFooter>
       </DialogContent>

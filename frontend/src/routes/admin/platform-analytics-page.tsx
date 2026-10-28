@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   ReceiptText,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { KpiCard } from '@/features/admin/dashboard/kpi-card'
 import {
   type CurrencyTotals,
@@ -45,6 +46,7 @@ function daysBack(day: string, days: number): string {
 // subscription income of every restaurant over a range of days, with totals
 // per currency and a table to compare the restaurants.
 export function PlatformAnalyticsPage() {
+  const { t } = useTranslation('platform')
   const today = bakuToday()
   const [to, setTo] = useState(today)
   const [from, setFrom] = useState(daysBack(today, 30))
@@ -66,11 +68,10 @@ export function PlatformAnalyticsPage() {
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <ChartColumn className="size-6" aria-hidden />
-          Platforma analitikası
+          {t('analytics.title')}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Bütün restoranların uğurlu ödənişləri və abunəlik gəliri, Bakı vaxtı
-          ilə seçilmiş günlər üzrə.
+          {t('analytics.description')}
         </p>
       </header>
 
@@ -79,16 +80,16 @@ export function PlatformAnalyticsPage() {
           type="single"
           value={preset}
           onValueChange={choosePreset}
-          aria-label="Dövr"
+          aria-label={t('analytics.period')}
         >
           {PRESETS.map((days) => (
             <ToggleGroupItem key={days} value={String(days)}>
-              Son {days} gün
+              {t('analytics.lastDays', { count: days })}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
         <div className="space-y-1">
-          <Label htmlFor="analytics-from">Başlanğıc</Label>
+          <Label htmlFor="analytics-from">{t('analytics.from')}</Label>
           <Input
             id="analytics-from"
             type="date"
@@ -101,7 +102,7 @@ export function PlatformAnalyticsPage() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="analytics-to">Son</Label>
+          <Label htmlFor="analytics-to">{t('analytics.to')}</Label>
           <Input
             id="analytics-to"
             type="date"
@@ -115,21 +116,17 @@ export function PlatformAnalyticsPage() {
         </div>
       </div>
       {!valid && (
-        <p className="text-sm text-destructive">
-          Başlanğıc günü son gündən sonra ola bilməz.
-        </p>
+        <p className="text-sm text-destructive">{t('analytics.backwards')}</p>
       )}
 
       {analytics.isFetching && !data && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('analytics.loading')}
         />
       )}
       {analytics.isError && (
-        <p className="text-sm text-destructive">
-          Analitikanı yükləmək alınmadı.
-        </p>
+        <p className="text-sm text-destructive">{t('analytics.loadFailed')}</p>
       )}
 
       {data && (
@@ -145,13 +142,23 @@ export function PlatformAnalyticsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Restoran</TableHead>
-                  <TableHead>Abunəlik</TableHead>
-                  <TableHead className="text-right">Ödəniş</TableHead>
-                  <TableHead className="text-right">Dövriyyə</TableHead>
-                  <TableHead className="text-right">Orta çek</TableHead>
-                  <TableHead className="text-right">Bəxşiş</TableHead>
-                  <TableHead className="text-right">Abunəlik gəliri</TableHead>
+                  <TableHead>{t('analytics.columns.restaurant')}</TableHead>
+                  <TableHead>{t('analytics.columns.subscription')}</TableHead>
+                  <TableHead className="text-right">
+                    {t('analytics.columns.payments')}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t('analytics.columns.revenue')}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t('analytics.columns.averagePayment')}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t('analytics.columns.tips')}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t('analytics.columns.subscriptionRevenue')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -160,7 +167,9 @@ export function PlatformAnalyticsPage() {
                     <TableCell>
                       <p className="font-medium">{row.name}</p>
                       {!row.active && (
-                        <p className="text-xs text-muted-foreground">Deaktiv</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('analytics.inactive')}
+                        </p>
                       )}
                     </TableCell>
                     <TableCell>
@@ -171,7 +180,7 @@ export function PlatformAnalyticsPage() {
                             : 'outline'
                         }
                       >
-                        {STATUS_LABELS[row.subscriptionStatus]}
+                        {t(STATUS_LABELS[row.subscriptionStatus])}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -202,7 +211,7 @@ export function PlatformAnalyticsPage() {
                       colSpan={7}
                       className="py-10 text-center text-muted-foreground"
                     >
-                      Hələ restoran yoxdur.
+                      {t('analytics.empty')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -216,32 +225,38 @@ export function PlatformAnalyticsPage() {
 }
 
 function CurrencyKpis({ totals }: { totals: CurrencyTotals }) {
+  const { t } = useTranslation('platform')
   return (
-    <section aria-label={`Cəmi, ${totals.currency}`} className="space-y-2">
+    <section
+      aria-label={t('analytics.totals', { currency: totals.currency })}
+      className="space-y-2"
+    >
       <div className="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-4">
         <KpiCard
-          label={`Dövriyyə (${totals.currency})`}
+          label={t('analytics.revenue', { currency: totals.currency })}
           value={formatCurrency(totals.revenueMinor, totals.currency)}
-          hint={`Bəxşiş ayrıca: ${formatCurrency(totals.tipsMinor, totals.currency)}`}
+          hint={t('analytics.tipsApart', {
+            amount: formatCurrency(totals.tipsMinor, totals.currency),
+          })}
           icon={Banknote}
         />
         <KpiCard
-          label="Ödəniş sayı"
+          label={t('analytics.paymentCount')}
           value={String(totals.paymentCount)}
           icon={ReceiptText}
         />
         <KpiCard
-          label="Aktiv restoran"
+          label={t('analytics.activeRestaurants')}
           value={`${totals.activeRestaurantCount} / ${totals.restaurantCount}`}
           icon={Building2}
         />
         <KpiCard
-          label="Abunəlik gəliri"
+          label={t('analytics.subscriptionRevenue')}
           value={formatCurrency(
             totals.subscriptionRevenueMinor,
             totals.currency,
           )}
-          hint="Aylıq ödəniş / 30, ödənişli hər gün üçün"
+          hint={t('analytics.subscriptionRevenueHint')}
           icon={CalendarClock}
         />
       </div>

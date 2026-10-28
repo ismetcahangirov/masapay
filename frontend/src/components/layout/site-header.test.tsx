@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SiteHeader } from '@/components/layout/site-header'
+import i18n from '@/i18n'
 
 beforeAll(() => {
   document.elementFromPoint ??= () => null
@@ -32,5 +33,25 @@ describe('SiteHeader mobile menu', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: 'Menyu' })).toBeNull(),
     )
+  })
+})
+
+describe('SiteHeader in English (#215)', () => {
+  it('shows the nav links and the demo CTA in the chosen language', async () => {
+    await i18n.changeLanguage('en')
+    render(<SiteHeader />)
+
+    // The language choice sits in the header itself, next to the burger.
+    expect(
+      screen.getByRole('combobox', { name: 'Language' }),
+    ).toHaveTextContent('EN')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Open the menu' }))
+
+    const menu = await screen.findByRole('dialog', { name: 'Menu' })
+    expect(menu).toHaveTextContent('How it works')
+    expect(
+      within(menu).getByRole('button', { name: /Request a demo/ }),
+    ).toBeInTheDocument()
   })
 })

@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import type { AvailabilityMode, MenuDish } from './menu-api'
 
 // Daily menu (#139) helpers: which mode a dish is in and how to describe it.
@@ -18,14 +19,14 @@ export function currentMode(dish: MenuDish): AvailabilityMode {
 
 /** A short status for the menu row; null when the dish is simply on the menu. */
 export function availabilityLabel(dish: MenuDish): string | null {
-  if (!dish.active) return 'Söndürülüb'
+  if (!dish.active) return i18n.t('menu:availability.off')
   if (dish.availableFrom || dish.availableUntil) {
     const from = dish.availableFrom ? shortDate(dish.availableFrom) : '...'
     const until = dish.availableUntil ? shortDate(dish.availableUntil) : '...'
     return `${from} - ${until}`
   }
   if (dish.availableToday) return null
-  if (dish.offOn) return 'Bu gün yoxdur'
+  if (dish.offOn) return i18n.t('menu:availability.offToday')
   // Only a combo can be off without a setting of its own: a dish inside is off.
-  return 'Tərkibdə bu gün olmayan var'
+  return i18n.t('menu:availability.comboPartOff')
 }

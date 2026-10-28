@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { LucideIcon } from 'lucide-react'
 import {
   CircleAlert,
@@ -33,49 +34,35 @@ const GIVE_UP_MS = 90_000
 
 type Screen = 'checking' | 'success' | 'failed' | 'slow' | 'offline' | 'unknown'
 
-const SCREENS: Record<
-  Screen,
-  { icon: LucideIcon; tone: string; title: string; text: string }
-> = {
+const SCREENS: Record<Screen, { icon: LucideIcon; tone: string }> = {
   checking: {
     icon: Clock,
     tone: 'bg-muted text-muted-foreground',
-    title: 'Ödəniş yoxlanılır',
-    text: 'Payriff-dən təsdiq gözlənilir. Bu bir neçə saniyə çəkə bilər, səhifəni bağlamayın.',
   },
   success: {
     icon: CircleCheckBig,
     tone: 'bg-success/15 text-success',
-    title: 'Ödəniş uğurla tamamlandı',
-    text: 'Təşəkkür edirik! Hesabınız yeniləndi.',
   },
   failed: {
     icon: CircleX,
     tone: 'bg-destructive/10 text-destructive',
-    title: 'Ödəniş baş tutmadı',
-    text: 'Kartınızdan pul çəkilmədi. Masaya qayıdıb yenidən cəhd edə bilərsiniz.',
   },
   slow: {
     icon: Clock,
     tone: 'bg-muted text-muted-foreground',
-    title: 'Təsdiq gecikir',
-    text: 'Payriff hələ cavab verməyib. Ödəniş tamamlanıbsa, hesab bir azdan yenilənəcək. Bir neçə dəqiqədən sonra yenidən yoxlayın.',
   },
   offline: {
     icon: WifiOff,
     tone: 'bg-destructive/10 text-destructive',
-    title: 'İnternet bağlantısı kəsildi',
-    text: 'Ödənişin vəziyyətini yoxlaya bilmədik. Bağlantını bərpa edib yenidən yoxlayın, ödənişiniz itməyib.',
   },
   unknown: {
     icon: CircleAlert,
     tone: 'bg-destructive/10 text-destructive',
-    title: 'Ödəniş tapılmadı',
-    text: 'Bu keçid etibarsızdır. Masadakı QR kodu yenidən skan edin.',
   },
 }
 
 export function PaymentResultPage() {
+  const { t } = useTranslation('payment')
   const [searchParams] = useSearchParams()
   const tx = searchParams.get('tx') ?? ''
   const [startedAt] = useState(() => Date.now())
@@ -132,13 +119,15 @@ export function PaymentResultPage() {
               <Icon className="size-8" aria-hidden />
             )}
           </div>
-          <CardTitle>{view.title}</CardTitle>
-          <CardDescription>{view.text}</CardDescription>
+          <CardTitle>{t(`result.${screen}.title`)}</CardTitle>
+          <CardDescription>{t(`result.${screen}.text`)}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {data && (
             <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-3 text-sm">
-              <span className="text-muted-foreground">Məbləğ</span>
+              <span className="text-muted-foreground">
+                {t('result.amount')}
+              </span>
               <span className="font-semibold tabular-nums">
                 {formatCurrency(data.amount, data.currency)}
               </span>
@@ -153,7 +142,7 @@ export function PaymentResultPage() {
               }}
             >
               <RotateCw aria-hidden />
-              Yenidən yoxla
+              {t('result.retry')}
             </Button>
           )}
           {tableLink && screen !== 'checking' && (
@@ -162,7 +151,7 @@ export function PaymentResultPage() {
               className="w-full"
               asChild
             >
-              <Link to={tableLink}>Hesaba qayıt</Link>
+              <Link to={tableLink}>{t('result.back')}</Link>
             </Button>
           )}
         </CardContent>

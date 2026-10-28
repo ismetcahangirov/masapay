@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -38,6 +39,7 @@ export function TableDetailDialog({
   table: TableOrder | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('orders')
   const order = table?.order ?? null
   const role = useAppSelector((state) => state.auth.user?.role)
   const canCancel =
@@ -85,15 +87,15 @@ export function TableDetailDialog({
       <DialogContent className="max-h-[90svh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{table?.tableLabel}</DialogTitle>
-          <DialogDescription>
-            Məhsullar, kim nə vaxt əlavə edib və ödənişlər.
-          </DialogDescription>
+          <DialogDescription>{t('detail.description')}</DialogDescription>
         </DialogHeader>
 
-        <section aria-label="Məhsullar" className="space-y-2">
-          <h3 className="text-sm font-semibold">Məhsullar</h3>
+        <section aria-label={t('detail.items')} className="space-y-2">
+          <h3 className="text-sm font-semibold">{t('detail.items')}</h3>
           {!order || order.items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Hələ məhsul yoxdur.</p>
+            <p className="text-sm text-muted-foreground">
+              {t('detail.noItems')}
+            </p>
           ) : (
             <ul className="divide-y rounded-md border text-sm">
               {order.items.map((item) => (
@@ -119,16 +121,16 @@ export function TableDetailDialog({
           )}
         </section>
 
-        <section aria-label="Ödənişlər" className="space-y-2">
-          <h3 className="text-sm font-semibold">Ödənişlər</h3>
+        <section aria-label={t('detail.payments')} className="space-y-2">
+          <h3 className="text-sm font-semibold">{t('detail.payments')}</h3>
           {payments.data?.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Hələ ödəniş olmayıb.
+              {t('detail.noPayments')}
             </p>
           )}
           {payments.isError && (
             <p className="text-sm text-destructive">
-              Ödənişləri yükləmək alınmadı.
+              {t('detail.paymentsError')}
             </p>
           )}
           {payments.data && payments.data.length > 0 && table && (
@@ -142,7 +144,12 @@ export function TableDetailDialog({
                     <p className="tabular-nums">
                       {formatAmount(payment.totalAmount, table.currency)}
                       {payment.tipAmount > 0 &&
-                        ` (bəxşiş ${formatAmount(payment.tipAmount, table.currency)})`}
+                        t('detail.tip', {
+                          amount: formatAmount(
+                            payment.tipAmount,
+                            table.currency,
+                          ),
+                        })}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {payment.splitType
@@ -159,14 +166,14 @@ export function TableDetailDialog({
           )}
         </section>
 
-        <section aria-label="Məhsul əlavə et" className="space-y-2">
-          <h3 className="text-sm font-semibold">Məhsul əlavə et</h3>
+        <section aria-label={t('detail.addDish')} className="space-y-2">
+          <h3 className="text-sm font-semibold">{t('detail.addDish')}</h3>
           {/* Today's dishes as one-tap buttons: quicker than a dropdown on a
               waiter's tablet, and a dropdown inside this dialog would fight
               the dialog over keyboard focus. */}
           <ul
             className="grid max-h-48 gap-2 overflow-y-auto sm:grid-cols-2"
-            aria-label="Bu günün menyusu"
+            aria-label={t('detail.todaysMenu')}
           >
             {todaysDishes.map((dish) => {
               const picked = dish.id === dishId
@@ -199,13 +206,13 @@ export function TableDetailDialog({
                 size="icon"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 disabled={quantity <= 1}
-                aria-label="Azalt"
+                aria-label={t('detail.decrease')}
               >
                 <Minus aria-hidden />
               </Button>
               <span
                 className="w-6 text-center text-sm tabular-nums"
-                aria-label="Say"
+                aria-label={t('detail.quantity')}
               >
                 {quantity}
               </span>
@@ -217,7 +224,7 @@ export function TableDetailDialog({
                   setQuantity((q) => Math.min(MAX_QUANTITY, q + 1))
                 }
                 disabled={quantity >= MAX_QUANTITY}
-                aria-label="Artır"
+                aria-label={t('detail.increase')}
               >
                 <Plus aria-hidden />
               </Button>
@@ -228,13 +235,11 @@ export function TableDetailDialog({
               disabled={!dishId || addState.isLoading}
             >
               <Plus aria-hidden />
-              {addState.isLoading ? 'Əlavə olunur...' : 'Əlavə et'}
+              {addState.isLoading ? t('detail.adding') : t('detail.add')}
             </Button>
           </div>
           {addState.isError && (
-            <p className="text-sm text-destructive">
-              Əlavə etmək alınmadı. Məhsul bu gün menyuda olmaya bilər.
-            </p>
+            <p className="text-sm text-destructive">{t('detail.addError')}</p>
           )}
         </section>
         {canCancel && table && (

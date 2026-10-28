@@ -1,4 +1,5 @@
 import { CircleAlert, ReceiptText, RotateCw } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -12,6 +13,7 @@ import {
 // card's width so the page does not jump when the data arrives.
 
 export function BillSkeleton() {
+  const { t } = useTranslation('customer')
   return (
     <Card className="w-full max-w-md" aria-busy="true" aria-live="polite">
       <CardHeader>
@@ -25,7 +27,7 @@ export function BillSkeleton() {
             <div className="h-4 w-16 animate-pulse rounded bg-muted" />
           </div>
         ))}
-        <span className="sr-only">Hesab yüklənir</span>
+        <span className="sr-only">{t('billStates.loading')}</span>
       </CardContent>
     </Card>
   )
@@ -38,6 +40,7 @@ export function BillError({
   notFound: boolean
   onRetry: () => void
 }) {
+  const { t } = useTranslation('customer')
   return (
     <Card className="w-full max-w-md" role="alert">
       <CardHeader>
@@ -45,19 +48,21 @@ export function BillError({
           <CircleAlert className="size-6" aria-hidden />
         </div>
         <CardTitle>
-          {notFound ? 'Masa tapılmadı' : 'Hesabı yükləmək alınmadı'}
+          {notFound
+            ? t('billStates.notFoundTitle')
+            : t('billStates.errorTitle')}
         </CardTitle>
         <CardDescription>
           {notFound
-            ? 'Bu QR kod heç bir masaya aid deyil. Zəhmət olmasa masadakı QR kodu yenidən skan edin.'
-            : 'İnternet bağlantınızı yoxlayıb yenidən cəhd edin.'}
+            ? t('billStates.notFoundDescription')
+            : t('billStates.errorDescription')}
         </CardDescription>
       </CardHeader>
       {!notFound && (
         <CardContent>
           <Button onClick={onRetry} className="w-full gap-2">
             <RotateCw className="size-4" aria-hidden />
-            Yenidən cəhd et
+            {t('billStates.retry')}
           </Button>
         </CardContent>
       )}
@@ -72,6 +77,7 @@ export function NoOpenBill({
   tableLabel: string
   restaurantName: string
 }) {
+  const { t } = useTranslation('customer')
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -82,8 +88,7 @@ export function NoOpenBill({
         <CardDescription>{restaurantName}</CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
-        Bu masada hələ açıq hesab yoxdur. Sifariş verildikdən sonra burada
-        görünəcək.
+        {t('billStates.noOpenBill')}
       </CardContent>
     </Card>
   )

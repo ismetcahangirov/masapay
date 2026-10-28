@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { type OrderItem, orderItemTotal } from '@/features/order/types'
 import { formatCurrency } from '@/features/order/format'
 import { KitchenStatusBadge } from '@/features/order/kitchen-status-badge'
@@ -14,6 +15,7 @@ function OrderItemRow({
   item: OrderItem
   currency: string
 }) {
+  const { t } = useTranslation('customer')
   return (
     <li
       className={cn(
@@ -36,7 +38,7 @@ function OrderItemRow({
         {item.paid && (
           <span className="inline-flex shrink-0 items-center gap-0.5 text-xs text-success">
             <Check className="size-3" aria-hidden />
-            Ödənilib
+            {t('orderItemList.paid')}
           </span>
         )}
         {item.kitchenStatus && !item.paid && (
@@ -62,10 +64,11 @@ export function OrderItemList({
   items: OrderItem[]
   currency: string
 }) {
+  const { t } = useTranslation('customer')
   if (items.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
-        Hələ sifariş əlavə olunmayıb.
+        {t('orderItemList.empty')}
       </p>
     )
   }

@@ -1,4 +1,5 @@
 import { Compass } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import {
 } from '@/components/ui/card'
 
 export function NotFoundPage() {
+  const { t } = useTranslation('customer')
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-md">
@@ -15,11 +17,8 @@ export function NotFoundPage() {
           <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <Compass className="size-6" />
           </div>
-          <CardTitle>Səhifə tapılmadı</CardTitle>
-          <CardDescription>
-            Axtardığınız səhifə mövcud deyil. Masadakı QR kodu skan edərək
-            başlayın.
-          </CardDescription>
+          <CardTitle>{t('notFound.title')}</CardTitle>
+          <CardDescription>{t('notFound.description')}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           masapay

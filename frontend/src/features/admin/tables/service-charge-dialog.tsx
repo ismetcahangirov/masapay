@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -33,6 +34,7 @@ export function ServiceChargeDialog({
   table: AdminTable | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('tables')
   const [mode, setMode] = useState<Mode>('RESTAURANT')
   const [percent, setPercent] = useState('')
   const [save, saveState] = useSetTableServiceChargeMutation()
@@ -67,10 +69,11 @@ export function ServiceChargeDialog({
       <DialogContent className="max-w-md">
         <form onSubmit={(event) => void onSubmit(event)} className="space-y-4">
           <DialogHeader>
-            <DialogTitle>Xidmət haqqı</DialogTitle>
+            <DialogTitle>{t('serviceChargeDialog.title')}</DialogTitle>
             <DialogDescription>
-              {table?.label}: bu masanın hesablarına nə qədər xidmət haqqı
-              gəlsin. Yeni sətir əlavə olunanda tətbiq olunur.
+              {t('serviceChargeDialog.description', {
+                label: table?.label ?? '',
+              })}
             </DialogDescription>
           </DialogHeader>
           <ToggleGroup
@@ -78,21 +81,23 @@ export function ServiceChargeDialog({
             value={mode}
             onValueChange={(value) => value && setMode(value as Mode)}
             className="grid gap-2 sm:grid-cols-3"
-            aria-label="Xidmət haqqı"
+            aria-label={t('serviceChargeDialog.title')}
           >
             <ToggleGroupItem value="RESTAURANT" className="h-auto py-2">
-              Restoranınkı
+              {t('serviceChargeDialog.restaurant')}
             </ToggleGroupItem>
             <ToggleGroupItem value="OWN" className="h-auto py-2">
-              Xüsusi faiz
+              {t('serviceChargeDialog.own')}
             </ToggleGroupItem>
             <ToggleGroupItem value="NONE" className="h-auto py-2">
-              Yoxdur
+              {t('serviceChargeDialog.none')}
             </ToggleGroupItem>
           </ToggleGroup>
           {mode === 'OWN' && (
             <div className="space-y-1">
-              <Label htmlFor="table-service-charge">Faiz (%)</Label>
+              <Label htmlFor="table-service-charge">
+                {t('serviceChargeDialog.percentLabel')}
+              </Label>
               <Input
                 id="table-service-charge"
                 inputMode="decimal"
@@ -103,20 +108,24 @@ export function ServiceChargeDialog({
               />
               {percent !== '' && parsed === null && (
                 <p className="text-xs text-destructive">
-                  0-dan böyük, 100-dən kiçik rəqəm yazın, məsələn 15 və ya 12,5
+                  {t('serviceChargeDialog.percentInvalid')}
                 </p>
               )}
             </div>
           )}
           {saveState.isError && (
-            <p className="text-sm text-destructive">Yadda saxlamaq alınmadı.</p>
+            <p className="text-sm text-destructive">
+              {t('serviceChargeDialog.saveFailed')}
+            </p>
           )}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              İmtina
+              {t('serviceChargeDialog.cancel')}
             </Button>
             <Button type="submit" disabled={!valid || saveState.isLoading}>
-              {saveState.isLoading ? 'Yadda saxlanılır...' : 'Yadda saxla'}
+              {saveState.isLoading
+                ? t('serviceChargeDialog.saving')
+                : t('serviceChargeDialog.save')}
             </Button>
           </DialogFooter>
         </form>

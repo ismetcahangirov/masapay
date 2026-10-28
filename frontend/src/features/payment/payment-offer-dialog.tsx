@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, Plus, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,6 +35,7 @@ export function PaymentOfferDialog({
   onContinue: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('payment')
   const [added, setAdded] = useState<Set<string>>(new Set())
   const [placeOrder, placeState] = usePlaceOrderMutation()
 
@@ -53,10 +55,8 @@ export function PaymentOfferDialog({
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Bu məhsulları da istəyirsiniz?</DialogTitle>
-          <DialogDescription>
-            Ödəməzdən əvvəl: əlavə etsəniz hesaba düşür və ödənişə daxil olur.
-          </DialogDescription>
+          <DialogTitle>{t('offer.title')}</DialogTitle>
+          <DialogDescription>{t('offer.description')}</DialogDescription>
         </DialogHeader>
         <ul className="divide-y rounded-md border">
           {offers.map((dish) => {
@@ -78,20 +78,20 @@ export function PaymentOfferDialog({
                   disabled={done || placeState.isLoading}
                   onClick={() => void add(dish)}
                   aria-label={
-                    done ? `${dish.name} əlavə olundu` : `${dish.name} əlavə et`
+                    done
+                      ? t('offer.addedLabel', { name: dish.name })
+                      : t('offer.addLabel', { name: dish.name })
                   }
                 >
                   {done ? <Check aria-hidden /> : <Plus aria-hidden />}
-                  {done ? 'Əlavə olundu' : 'Əlavə et'}
+                  {done ? t('offer.added') : t('offer.add')}
                 </Button>
               </li>
             )
           })}
         </ul>
         {placeState.isError && (
-          <p className="text-sm text-destructive">
-            Əlavə etmək alınmadı. Məhsul artıq mövcud olmaya bilər.
-          </p>
+          <p className="text-sm text-destructive">{t('offer.addFailed')}</p>
         )}
         <DialogFooter>
           <Button
@@ -101,7 +101,7 @@ export function PaymentOfferDialog({
             onClick={onContinue}
           >
             <Wallet aria-hidden />
-            {added.size > 0 ? 'Ödənişə keç' : 'Xeyr, ödə'}
+            {added.size > 0 ? t('offer.goToPayment') : t('offer.noPay')}
           </Button>
         </DialogFooter>
       </DialogContent>

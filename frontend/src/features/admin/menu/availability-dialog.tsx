@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -24,12 +25,7 @@ import {
   useSetAvailabilityMutation,
 } from './menu-api'
 
-const MODES: Record<AvailabilityMode, string> = {
-  ALWAYS: 'Həmişə menyuda',
-  OFF_TODAY: 'Yalnız bu gün söndür',
-  DATES: 'Yalnız bu tarixlərdə',
-  OFF: 'Söndür (yenidən açana qədər)',
-}
+const MODES: AvailabilityMode[] = ['ALWAYS', 'OFF_TODAY', 'DATES', 'OFF']
 
 // Puts a dish on or off the daily menu (#139): always, off for today only,
 // only between two days, or off until switched back on.
@@ -43,6 +39,7 @@ export function AvailabilityDialog({
   dish: MenuDish | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('menu')
   const [mode, setMode] = useState<AvailabilityMode>('ALWAYS')
   const [from, setFrom] = useState('')
   const [until, setUntil] = useState('')
@@ -86,13 +83,15 @@ export function AvailabilityDialog({
       <DialogContent className="max-w-md">
         <form onSubmit={(event) => void onSubmit(event)} className="space-y-4">
           <DialogHeader>
-            <DialogTitle>Günlük menyu</DialogTitle>
+            <DialogTitle>{t('availabilityDialog.title')}</DialogTitle>
             <DialogDescription>
-              {dish?.name}: müştəri onu nə vaxt görə və sifariş edə bilər.
+              {t('availabilityDialog.description', { name: dish?.name ?? '' })}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="availability-mode">Mövcudluq</Label>
+            <Label htmlFor="availability-mode">
+              {t('availabilityDialog.mode')}
+            </Label>
             <Select
               value={mode}
               onValueChange={(value) => setMode(value as AvailabilityMode)}
@@ -101,23 +100,25 @@ export function AvailabilityDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(MODES) as AvailabilityMode[]).map((value) => (
+                {MODES.map((value) => (
                   <SelectItem key={value} value={value}>
-                    {MODES[value]}
+                    {t(`availabilityDialog.modes.${value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {mode === 'OFF_TODAY' && (
               <p className="text-xs text-muted-foreground">
-                Sabah özü yenidən menyuya qayıdacaq.
+                {t('availabilityDialog.offTodayHint')}
               </p>
             )}
           </div>
           {mode === 'DATES' && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="availability-from">Başlanğıc</Label>
+                <Label htmlFor="availability-from">
+                  {t('availabilityDialog.from')}
+                </Label>
                 <Input
                   id="availability-from"
                   type="date"
@@ -127,7 +128,9 @@ export function AvailabilityDialog({
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="availability-until">Son gün</Label>
+                <Label htmlFor="availability-until">
+                  {t('availabilityDialog.until')}
+                </Label>
                 <Input
                   id="availability-until"
                   type="date"
@@ -137,22 +140,21 @@ export function AvailabilityDialog({
                 />
               </div>
               <p className="col-span-2 text-xs text-muted-foreground">
-                Hər iki gün daxildir. Biri boş qalsa, o tərəfdən məhdudiyyət
-                yoxdur.
+                {t('availabilityDialog.datesHint')}
               </p>
             </div>
           )}
           {saveState.isError && (
             <p className="text-sm text-destructive">
-              Yadda saxlamaq alınmadı. Tarixləri yoxlayın.
+              {t('availabilityDialog.saveFailed')}
             </p>
           )}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              İmtina
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={!valid || saveState.isLoading}>
-              {saveState.isLoading ? 'Yadda saxlanılır...' : 'Yadda saxla'}
+              {saveState.isLoading ? t('actions.saving') : t('actions.save')}
             </Button>
           </DialogFooter>
         </form>

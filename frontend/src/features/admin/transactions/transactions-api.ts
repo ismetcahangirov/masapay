@@ -1,4 +1,5 @@
 import { api } from '@/app/api'
+import i18n from '@/i18n'
 import { asDownload, type DownloadedFile } from '@/lib/download'
 
 // Admin transactions table (#45): every payment of a restaurant, searchable
@@ -93,7 +94,7 @@ export const transactionsApi = api.injectEndpoints({
             ([, value]) => value !== undefined && value !== '',
           ),
         ),
-        responseHandler: asDownload('emeliyyatlar.xlsx'),
+        responseHandler: asDownload(i18n.t('transactions:files.excel')),
       }),
     }),
   }),

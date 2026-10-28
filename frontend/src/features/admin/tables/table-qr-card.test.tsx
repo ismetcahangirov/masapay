@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { screen } from '@testing-library/react'
 import { TableQrCard } from '@/features/admin/tables/table-qr-card'
 import { mockApi, renderWithProviders } from '@/test/utils'
+import i18n from '@/i18n'
 
 const svg =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29"><rect width="1" height="1"/></svg>'
@@ -32,5 +33,32 @@ describe('TableQrCard (QR)', () => {
       'http://localhost:5173/r/r1/t/t7?token=q7',
     )
     expect(screen.getByRole('button', { name: /SVG/ })).toBeEnabled()
+  })
+
+  it('speaks English when the language is switched (#215)', async () => {
+    await i18n.changeLanguage('en')
+    mockApi({ 'GET /api/admin/tables/t7/qr': svg })
+    renderWithProviders(
+      <TableQrCard
+        table={{
+          id: 't7',
+          label: 'Table 7',
+          status: 'AVAILABLE',
+          qrToken: 'q7',
+          customerUrl: 'http://localhost:5173/r/r1/t/t7?token=q7',
+          serviceChargePercent: 15,
+          effectiveServiceChargePercent: 15,
+        }}
+        onEditServiceCharge={() => {}}
+      />,
+    )
+
+    expect(
+      await screen.findByRole('img', { name: 'Table 7 QR code' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Open/ })).toBeInTheDocument()
+    expect(
+      screen.getByText('Service charge: 15% (this table)'),
+    ).toBeInTheDocument()
   })
 })

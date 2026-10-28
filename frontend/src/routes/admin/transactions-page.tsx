@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ChevronLeft,
   ChevronRight,
@@ -61,6 +62,7 @@ const ACTIVE_FILTER = 'border-foreground font-medium'
 // Transactions and refunds (#45): every Payriff payment of a restaurant, with
 // search, filters and paging done on the server, and a refund per payment.
 export function TransactionsPage() {
+  const { t } = useTranslation('transactions')
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
@@ -142,23 +144,20 @@ export function TransactionsPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Əməliyyatlar
+            {t('page.title')}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Bütün Payriff ödənişləri. Uğurlu ödənişi buradan geri qaytara
-            bilərsiniz.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('page.subtitle')}</p>
         </div>
         <Button
           onClick={() => void onExcel()}
           disabled={!restaurantId || total === 0 || excelState.isLoading}
         >
           <FileSpreadsheet aria-hidden />
-          {excelState.isLoading ? 'Hazırlanır...' : 'Excel yüklə'}
+          {excelState.isLoading ? t('page.preparing') : t('page.downloadExcel')}
         </Button>
       </header>
       {excelState.isError && (
-        <p className="text-sm text-destructive">Excel yükləmək alınmadı.</p>
+        <p className="text-sm text-destructive">{t('page.excelFailed')}</p>
       )}
 
       {restaurants.data && restaurants.data.length > 1 && (
@@ -182,11 +181,11 @@ export function TransactionsPage() {
 
       {restaurants.data?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Hesabınıza hələ restoran təyin olunmayıb.
+          {t('page.noRestaurant')}
         </p>
       )}
 
-      <section className="space-y-4" aria-label="Filtrlər">
+      <section className="space-y-4" aria-label={t('page.filters')}>
         <div className="flex flex-wrap items-end gap-4">
           <div className="relative min-w-64 flex-1">
             <Search
@@ -196,13 +195,13 @@ export function TransactionsPage() {
             <Input
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Payriff sifariş ID, əməliyyat ID və ya masa"
-              aria-label="Axtarış"
+              placeholder={t('page.searchPlaceholder')}
+              aria-label={t('page.search')}
               className="pl-9"
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="tx-from">Başlanğıc</Label>
+            <Label htmlFor="tx-from">{t('page.from')}</Label>
             <Input
               id="tx-from"
               type="date"
@@ -215,7 +214,7 @@ export function TransactionsPage() {
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="tx-to">Son</Label>
+            <Label htmlFor="tx-to">{t('page.to')}</Label>
             <Input
               id="tx-to"
               type="date"
@@ -228,7 +227,7 @@ export function TransactionsPage() {
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="tx-status">Status</Label>
+            <Label htmlFor="tx-status">{t('page.status')}</Label>
             <Select
               value={status}
               onValueChange={(value) => {
@@ -243,7 +242,7 @@ export function TransactionsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL}>Bütün statuslar</SelectItem>
+                <SelectItem value={ALL}>{t('page.allStatuses')}</SelectItem>
                 {STATUSES.map((value) => (
                   <SelectItem key={value} value={value}>
                     {STATUS_LABELS[value]}
@@ -253,7 +252,7 @@ export function TransactionsPage() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label htmlFor="tx-split">Ödəniş tipi</Label>
+            <Label htmlFor="tx-split">{t('page.splitType')}</Label>
             <Select
               value={splitType}
               onValueChange={(value) => {
@@ -268,7 +267,7 @@ export function TransactionsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL}>Bütün tiplər</SelectItem>
+                <SelectItem value={ALL}>{t('page.allSplitTypes')}</SelectItem>
                 {SPLIT_TYPES.map((value) => (
                   <SelectItem key={value} value={value}>
                     {SPLIT_LABELS[value]}
@@ -280,31 +279,29 @@ export function TransactionsPage() {
           {filtered && (
             <Button variant="ghost" onClick={clearFilters}>
               <X aria-hidden />
-              Filtrləri sıfırla
+              {t('page.clearFilters')}
             </Button>
           )}
         </div>
       </section>
 
       {transactions.isError && (
-        <p className="text-sm text-destructive">
-          Əməliyyatları yükləmək alınmadı.
-        </p>
+        <p className="text-sm text-destructive">{t('page.loadFailed')}</p>
       )}
 
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Tarix</TableHead>
-              <TableHead>Masa</TableHead>
-              <TableHead>Ödəniş tipi</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Məbləğ</TableHead>
-              <TableHead className="text-right">Bəxşiş</TableHead>
-              <TableHead className="text-right">Cəmi</TableHead>
-              <TableHead>Payriff ID</TableHead>
-              <TableHead className="sr-only">Əməliyyat</TableHead>
+              <TableHead>{t('page.date')}</TableHead>
+              <TableHead>{t('page.table')}</TableHead>
+              <TableHead>{t('page.splitType')}</TableHead>
+              <TableHead>{t('page.status')}</TableHead>
+              <TableHead className="text-right">{t('page.amount')}</TableHead>
+              <TableHead className="text-right">{t('page.tip')}</TableHead>
+              <TableHead className="text-right">{t('page.total')}</TableHead>
+              <TableHead>{t('page.payriffId')}</TableHead>
+              <TableHead className="sr-only">{t('page.action')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -340,7 +337,7 @@ export function TransactionsPage() {
                       onClick={() => setRefunding(row)}
                     >
                       <Undo2 aria-hidden />
-                      Geri qaytar
+                      {t('page.refund')}
                     </Button>
                   )}
                 </TableCell>
@@ -352,7 +349,7 @@ export function TransactionsPage() {
                   colSpan={9}
                   className="py-10 text-center text-muted-foreground"
                 >
-                  Heç bir əməliyyat tapılmadı.
+                  {t('page.empty')}
                 </TableCell>
               </TableRow>
             )}
@@ -362,7 +359,7 @@ export function TransactionsPage() {
           <div className="flex justify-center p-10">
             <LoaderCircle
               className="size-6 animate-spin text-muted-foreground"
-              aria-label="Yüklənir"
+              aria-label={t('page.loading')}
             />
           </div>
         )}
@@ -372,7 +369,7 @@ export function TransactionsPage() {
         {data && transactions.isFetching && (
           <LoaderCircle
             className="size-4 animate-spin text-muted-foreground"
-            aria-label="Yüklənir"
+            aria-label={t('page.loading')}
           />
         )}
         <span className="text-sm tabular-nums text-muted-foreground">
@@ -383,7 +380,7 @@ export function TransactionsPage() {
           size="icon"
           onClick={() => setPage((current) => Math.max(0, current - 1))}
           disabled={page === 0}
-          aria-label="Əvvəlki səhifə"
+          aria-label={t('page.previousPage')}
         >
           <ChevronLeft aria-hidden />
         </Button>
@@ -392,7 +389,7 @@ export function TransactionsPage() {
           size="icon"
           onClick={() => setPage((current) => current + 1)}
           disabled={last >= total}
-          aria-label="Növbəti səhifə"
+          aria-label={t('page.nextPage')}
         >
           <ChevronRight aria-hidden />
         </Button>

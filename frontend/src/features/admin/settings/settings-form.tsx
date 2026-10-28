@@ -7,6 +7,7 @@ import {
   Percent,
   Store,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   type IntegrationSettings,
   type PosType,
@@ -117,6 +118,7 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
+  const { t } = useTranslation('settings')
   const [save, saveState] = useUpdateIntegrationSettingsMutation()
   const [saved, setSaved] = useState(false)
   // Payriff (merchant id, secret key) is set by the platform, not by the restaurant.
@@ -160,16 +162,13 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Percent className="size-5" aria-hidden />
-            Xidmət haqqı
+            {t('serviceCharge.title')}
           </CardTitle>
-          <CardDescription>
-            Aktivdirsə, hər hesaba məhsulların cəminin bu faizi qədər xidmət
-            haqqı əlavə olunur və müştərinin çekində ayrıca sətir kimi görünür.
-          </CardDescription>
+          <CardDescription>{t('serviceCharge.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between gap-4">
-            <Label>Xidmət haqqı tətbiq olunsun</Label>
+            <Label>{t('serviceCharge.enabled')}</Label>
             <Controller
               control={control}
               name="serviceChargeEnabled"
@@ -177,14 +176,16 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
                 <Switch
                   checked={field.value}
                   onChange={field.onChange}
-                  label="Xidmət haqqı tətbiq olunsun"
+                  label={t('serviceCharge.enabled')}
                 />
               )}
             />
           </div>
           {serviceChargeEnabled && (
             <div className="space-y-1">
-              <Label htmlFor="serviceChargePercent">Faiz (%)</Label>
+              <Label htmlFor="serviceChargePercent">
+                {t('serviceCharge.percent')}
+              </Label>
               <Input
                 id="serviceChargePercent"
                 inputMode="decimal"
@@ -196,7 +197,7 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
                       (Number.isFinite(number) &&
                         number > 0 &&
                         number <= 100) ||
-                      '0 ilə 100 arasında bir faiz yazın, məsələn 10'
+                      t('serviceCharge.percentInvalid')
                     )
                   },
                 })}
@@ -211,12 +212,9 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Store className="size-5" aria-hidden />
-            POS sistemi
+            {t('pos.title')}
           </CardTitle>
-          <CardDescription>
-            Restoranın kassa proqramı. iiko seçilərsə, hesablar ondan oxunur və
-            ödənişdən sonra orada avtomatik bağlanır.
-          </CardDescription>
+          <CardDescription>{t('pos.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Controller
@@ -229,30 +227,36 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
                 onValueChange={(value) => value && field.onChange(value)}
                 className="justify-start"
               >
-                <ToggleGroupItem value="IIKO">iiko</ToggleGroupItem>
-                <ToggleGroupItem value="MICROS">Micros</ToggleGroupItem>
-                <ToggleGroupItem value="CUSTOM">Custom</ToggleGroupItem>
+                <ToggleGroupItem value="IIKO">{t('pos.iiko')}</ToggleGroupItem>
+                <ToggleGroupItem value="MICROS">
+                  {t('pos.micros')}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="CUSTOM">
+                  {t('pos.custom')}
+                </ToggleGroupItem>
               </ToggleGroup>
             )}
           />
           {posType === 'IIKO' && (
             <div className="grid gap-4">
               <div className="space-y-1">
-                <Label htmlFor="iikoApiLogin">iiko API login</Label>
+                <Label htmlFor="iikoApiLogin">{t('pos.iikoApiLogin')}</Label>
                 <Input
                   id="iikoApiLogin"
                   type="password"
                   autoComplete="off"
                   placeholder={
                     settings.iikoApiLoginSet
-                      ? `${settings.iikoApiLogin} (dəyişmək üçün yenisini yazın)`
-                      : 'Daxil edilməyib'
+                      ? t('secret.setHint', { masked: settings.iikoApiLogin })
+                      : t('secret.notSet')
                   }
                   {...register('iikoApiLogin')}
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="iikoOrganizationId">Organization ID</Label>
+                <Label htmlFor="iikoOrganizationId">
+                  {t('pos.organizationId')}
+                </Label>
                 <Input
                   id="iikoOrganizationId"
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
@@ -260,14 +264,14 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
                     validate: (value) =>
                       !value.trim() ||
                       UUID_PATTERN.test(value.trim()) ||
-                      'UUID formatında olmalıdır',
+                      t('pos.uuidInvalid'),
                   })}
                 />
                 <FieldError message={errors.iikoOrganizationId?.message} />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="iikoPaymentTypeId">
-                  masapay ödəniş növünün ID-si
+                  {t('pos.paymentTypeId')}
                 </Label>
                 <Input
                   id="iikoPaymentTypeId"
@@ -276,7 +280,7 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
                     validate: (value) =>
                       !value.trim() ||
                       UUID_PATTERN.test(value.trim()) ||
-                      'UUID formatında olmalıdır',
+                      t('pos.uuidInvalid'),
                   })}
                 />
                 <FieldError message={errors.iikoPaymentTypeId?.message} />
@@ -291,30 +295,32 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <KeyRound className="size-5" aria-hidden />
-              Payriff
+              {t('payriff.title')}
             </CardTitle>
-            <CardDescription>
-              Gizli açar heç vaxt tam göstərilmir, yalnız son 4 simvolu görünür.
-            </CardDescription>
+            <CardDescription>{t('payriff.description')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="space-y-1">
-              <Label htmlFor="payriffMerchantId">Merchant ID</Label>
+              <Label htmlFor="payriffMerchantId">
+                {t('payriff.merchantId')}
+              </Label>
               <Input
                 id="payriffMerchantId"
                 {...register('payriffMerchantId')}
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="payriffSecretKey">Secret Key</Label>
+              <Label htmlFor="payriffSecretKey">{t('payriff.secretKey')}</Label>
               <Input
                 id="payriffSecretKey"
                 type="password"
                 autoComplete="off"
                 placeholder={
                   settings.payriffSecretKeySet
-                    ? `${settings.payriffSecretKey} (dəyişmək üçün yenisini yazın)`
-                    : 'Daxil edilməyib'
+                    ? t('secret.setHint', {
+                        masked: settings.payriffSecretKey,
+                      })
+                    : t('secret.notSet')
                 }
                 {...register('payriffSecretKey')}
               />
@@ -324,26 +330,24 @@ export function SettingsForm({ settings }: { settings: IntegrationSettings }) {
       ) : (
         <p className="flex items-start gap-2 rounded-lg border p-4 text-sm text-muted-foreground">
           <KeyRound className="mt-0.5 size-4 shrink-0" aria-hidden />
-          Payriff ödəniş ayarları (Merchant ID, Secret Key) masapay platforması
-          tərəfindən idarə olunur. Dəyişiklik lazımdırsa, bizimlə əlaqə
-          saxlayın.
+          {t('payriff.managedByPlatform')}
         </p>
       )}
 
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" disabled={!isDirty || saveState.isLoading}>
-          {saveState.isLoading ? 'Yadda saxlanılır...' : 'Yadda saxla'}
+          {saveState.isLoading ? t('form.saving') : t('form.save')}
         </Button>
         {saved && !isDirty && (
           <span className="flex items-center gap-2 text-sm text-success">
             <CircleCheckBig className="size-4" aria-hidden />
-            Yadda saxlanıldı
+            {t('form.saved')}
           </span>
         )}
         {saveState.isError && (
           <span className="flex items-center gap-2 text-sm text-destructive">
             <CircleAlert className="size-4" aria-hidden />
-            Yadda saxlamaq alınmadı. Yenidən cəhd edin.
+            {t('form.saveFailed')}
           </span>
         )}
       </div>

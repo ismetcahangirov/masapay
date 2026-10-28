@@ -1,4 +1,6 @@
 import { Check, Minus, Plus } from 'lucide-react'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -12,10 +14,15 @@ import { formatCurrency } from '@/features/order/format'
 import type { CustomerDish } from './customer-menu-api'
 
 /** "Ketçup və ya Su istəyirsiniz?" from the names of the extras asked about. */
-function askQuestion(asked: CustomerDish[]): string {
+function askQuestion(t: TFunction<'customer'>, asked: CustomerDish[]): string {
   const names = asked.map((dish) => dish.name)
-  if (names.length <= 1) return `${names[0] ?? 'Əlavə'} istəyirsiniz?`
-  return `${names.slice(0, -1).join(', ')} və ya ${names.at(-1)} istəyirsiniz?`
+  if (names.length <= 1) {
+    return t('upsell.askOne', { name: names[0] ?? t('upsell.askDefault') })
+  }
+  return t('upsell.askMany', {
+    names: names.slice(0, -1).join(', '),
+    last: names.at(-1),
+  })
 }
 
 // Shown right before "Əminsiniz?". Two kinds of extras in one dialog:
@@ -51,6 +58,7 @@ export function UpsellDialog({
   onContinue: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('customer')
   const tookSomething =
     added.size > 0 || asked.some((dish) => quantityOf(dish.id) > 0)
   const onlyAsked = extras.length === 0 && asked.length > 0
@@ -60,12 +68,10 @@ export function UpsellDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {onlyAsked ? askQuestion(asked) : 'Bunu da istərdiniz?'}
+            {onlyAsked ? askQuestion(t, asked) : t('upsell.title')}
           </DialogTitle>
           <DialogDescription>
-            {onlyAsked
-              ? 'İstəsəniz sayını seçin, sifarişə əlavə olunacaq.'
-              : 'Seçdiyiniz məhsullarla yaxşı gedir.'}
+            {onlyAsked ? t('upsell.askedDescription') : t('upsell.description')}
           </DialogDescription>
         </DialogHeader>
         {extras.length > 0 && (
@@ -92,12 +98,12 @@ export function UpsellDialog({
                     onClick={() => onAdd(dish)}
                     aria-label={
                       done
-                        ? `${dish.name} əlavə olundu`
-                        : `${dish.name} əlavə et`
+                        ? t('upsell.addedAria', { name: dish.name })
+                        : t('upsell.addAria', { name: dish.name })
                     }
                   >
                     {done ? <Check aria-hidden /> : <Plus aria-hidden />}
-                    {done ? 'Əlavə olundu' : 'Əlavə et'}
+                    {done ? t('upsell.added') : t('upsell.add')}
                   </Button>
                 </li>
               )
@@ -105,9 +111,9 @@ export function UpsellDialog({
           </ul>
         )}
         {asked.length > 0 && (
-          <section aria-label={askQuestion(asked)} className="space-y-2">
+          <section aria-label={askQuestion(t, asked)} className="space-y-2">
             {!onlyAsked && (
-              <p className="text-sm font-medium">{askQuestion(asked)}</p>
+              <p className="text-sm font-medium">{askQuestion(t, asked)}</p>
             )}
             <ul className="divide-y rounded-md border">
               {asked.map((dish) => {
@@ -123,7 +129,7 @@ export function UpsellDialog({
                       </span>
                       <span className="text-xs tabular-nums text-muted-foreground">
                         {dish.price === 0
-                          ? 'Pulsuz'
+                          ? t('upsell.free')
                           : formatCurrency(dish.price, currency)}
                       </span>
                     </span>
@@ -134,13 +140,17 @@ export function UpsellDialog({
                         className="size-10"
                         disabled={quantity === 0}
                         onClick={() => onChangeAsked(dish, -1)}
-                        aria-label={`${dish.name} azalt`}
+                        aria-label={t('upsell.decreaseAria', {
+                          name: dish.name,
+                        })}
                       >
                         <Minus aria-hidden />
                       </Button>
                       <span
                         className="w-5 text-center tabular-nums"
-                        aria-label={`${dish.name} sayı`}
+                        aria-label={t('upsell.quantityAria', {
+                          name: dish.name,
+                        })}
                       >
                         {quantity}
                       </span>
@@ -149,7 +159,9 @@ export function UpsellDialog({
                         size="icon"
                         className="size-10"
                         onClick={() => onChangeAsked(dish, 1)}
-                        aria-label={`${dish.name} artır`}
+                        aria-label={t('upsell.increaseAria', {
+                          name: dish.name,
+                        })}
                       >
                         <Plus aria-hidden />
                       </Button>
@@ -162,7 +174,7 @@ export function UpsellDialog({
         )}
         <DialogFooter>
           <Button variant="success" className="w-full" onClick={onContinue}>
-            {tookSomething ? 'Davam et' : 'Xeyr, təşəkkürlər'}
+            {tookSomething ? t('upsell.continue') : t('upsell.noThanks')}
           </Button>
         </DialogFooter>
       </DialogContent>

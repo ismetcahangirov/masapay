@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { validateTableToken } from '@/lib/table-session'
 import { InvalidTokenPage } from '@/routes/invalid-token-page'
 import { BrandMark } from '@/components/layout/brand-mark'
+import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import { BillCard } from '@/features/order/bill-card'
 import {
   BillError,
@@ -20,6 +22,7 @@ import { PaymentActions } from '@/features/payment/payment-actions'
 // The token gate (4.1) runs first; the live bill then comes from RTK Query
 // (4.2) with explicit loading, error and empty states.
 export function TablePage() {
+  const { t } = useTranslation('customer')
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   const validation = useMemo(() => validateTableToken(token), [token])
@@ -44,7 +47,7 @@ export function TablePage() {
       <div className="flex w-full flex-col items-center gap-6">
         <MenuOrderCard qrToken={validation.qrToken} currency={data.currency} />
         <section
-          aria-label="Ödəniş"
+          aria-label={t('tablePage.payment')}
           className="flex w-full flex-col items-center gap-4"
         >
           {data.order ? (
@@ -65,11 +68,14 @@ export function TablePage() {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 p-4 sm:p-6">
-      {/* The brand above the customer's cards (#162 logo, single colour). */}
-      <span className="flex items-center gap-2 text-lg tracking-tight">
-        <BrandMark className="h-7" />
-        masapay
-      </span>
+      {/* The brand above the customer's cards (#162 logo, single colour), the language choice beside it (#215). */}
+      <div className="flex w-full max-w-md items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-lg tracking-tight">
+          <BrandMark className="h-7" />
+          masapay
+        </span>
+        <LanguageSwitcher />
+      </div>
       {content}
     </main>
   )

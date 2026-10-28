@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import {
   Dialog,
@@ -38,6 +39,7 @@ export function ItemPaymentDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation('payment')
   const [selected, setSelected] = useState<string[]>([])
   const [guests, setGuests] = useState(2)
 
@@ -95,10 +97,8 @@ export function ItemPaymentDialog({
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Öz yediyini ödə</DialogTitle>
-          <DialogDescription>
-            Yalnız sizin sifariş etdiyiniz məhsulları seçin.
-          </DialogDescription>
+          <DialogTitle>{t('items.title')}</DialogTitle>
+          <DialogDescription>{t('items.description')}</DialogDescription>
         </DialogHeader>
         {
           <div className="space-y-4">
@@ -135,7 +135,7 @@ export function ItemPaymentDialog({
                       </span>
                       <span className="shrink-0 tabular-nums">
                         {item.paid
-                          ? 'Ödənilib'
+                          ? t('items.paid')
                           : formatCurrency(item.total, order.currency)}
                       </span>
                     </button>
@@ -146,7 +146,7 @@ export function ItemPaymentDialog({
 
             {needsGuests && (
               <Stepper
-                label="Masada neçə nəfərsiniz"
+                label={t('items.guests')}
                 value={guests}
                 min={1}
                 max={MAX_GUESTS}
@@ -162,7 +162,7 @@ export function ItemPaymentDialog({
               />
             ) : (
               <p className="text-center text-sm text-muted-foreground">
-                Ödəmək üçün ən azı bir məhsul seçin.
+                {t('items.pickOne')}
               </p>
             )}
             {chosen.length > 0 && quote.data && (
@@ -186,10 +186,15 @@ export function ItemPaymentDialog({
               onClick={() => void onPay()}
             >
               {payState.isLoading
-                ? 'Payriff-ə yönləndirilir...'
+                ? t('pay.redirecting')
                 : quote.data && chosen.length > 0
-                  ? `${formatCurrency(quote.data.amount + tipMinor, order.currency)} ödə`
-                  : 'Ödə'}
+                  ? t('pay.payAmount', {
+                      amount: formatCurrency(
+                        quote.data.amount + tipMinor,
+                        order.currency,
+                      ),
+                    })
+                  : t('pay.pay')}
             </Button>
           </div>
         }

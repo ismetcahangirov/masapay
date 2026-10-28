@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { CircleAlert, Minus, Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '@/features/order/format'
 import { Button } from '@/components/ui/button'
 
@@ -21,6 +22,7 @@ export function Stepper({
   onChange: (value: number) => void
   disabled?: boolean
 }) {
+  const { t } = useTranslation('payment')
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-sm">{label}</span>
@@ -29,7 +31,7 @@ export function Stepper({
           type="button"
           variant="outline"
           size="icon"
-          aria-label={`${label}: azalt`}
+          aria-label={t('parts.decrease', { label })}
           disabled={disabled || value <= min}
           onClick={() => onChange(value - 1)}
         >
@@ -45,7 +47,7 @@ export function Stepper({
           type="button"
           variant="outline"
           size="icon"
-          aria-label={`${label}: artır`}
+          aria-label={t('parts.increase', { label })}
           disabled={disabled || value >= max}
           onClick={() => onChange(value + 1)}
         >
@@ -66,9 +68,12 @@ export function AmountDue({
   currency: string
   loading: boolean
 }) {
+  const { t } = useTranslation('payment')
   return (
     <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-3">
-      <span className="text-sm text-muted-foreground">Ödəniləcək</span>
+      <span className="text-sm text-muted-foreground">
+        {t('parts.amountDue')}
+      </span>
       {loading || amount === undefined ? (
         <span className="h-6 w-20 animate-pulse rounded bg-background" />
       ) : (

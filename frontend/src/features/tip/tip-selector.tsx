@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { TriangleAlert } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   TIP_PERCENT_PRESETS,
   parseTipInput,
@@ -31,6 +32,7 @@ export function TipSelector({
   currency,
   onChange,
 }: TipSelectorProps) {
+  const { t } = useTranslation('payment')
   const [mode, setMode] = useState<string>('0')
   const [customText, setCustomText] = useState('')
   const inputId = useId()
@@ -79,12 +81,12 @@ export function TipSelector({
             {percent}%
           </ToggleGroupItem>
         ))}
-        <ToggleGroupItem value={CUSTOM_MODE}>Başqa məbləğ</ToggleGroupItem>
+        <ToggleGroupItem value={CUSTOM_MODE}>{t('tip.custom')}</ToggleGroupItem>
       </ToggleGroup>
 
       {isCustom && (
         <div className="space-y-1.5">
-          <Label htmlFor={inputId}>Bəxşiş məbləği (AZN)</Label>
+          <Label htmlFor={inputId}>{t('tip.customLabel')}</Label>
           <Input
             id={inputId}
             inputMode="decimal"
@@ -100,14 +102,14 @@ export function TipSelector({
               className="flex items-center gap-1 text-sm text-destructive"
             >
               <TriangleAlert className="size-3.5" aria-hidden />
-              Düzgün məbləğ daxil edin.
+              {t('tip.invalid')}
             </p>
           )}
         </div>
       )}
 
       <p className="text-sm text-muted-foreground">
-        Bəxşiş:{' '}
+        {t('tip.tip')}{' '}
         <span className="font-medium text-foreground">
           {formatCurrency(tipMinor, currency)}
         </span>

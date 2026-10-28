@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export function FullPaymentDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation('payment')
   const quote = useQuoteFullQuery(qrToken, { skip: !open })
   const [pay, payState] = useCheckoutFullMutation()
   const [tipMinor, setTipMinor] = useState(0)
@@ -58,10 +60,8 @@ export function FullPaymentDialog({
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Tam ödə</DialogTitle>
-          <DialogDescription>
-            Hesabın qalan hissəsinin hamısını siz ödəyirsiniz.
-          </DialogDescription>
+          <DialogTitle>{t('full.title')}</DialogTitle>
+          <DialogDescription>{t('full.description')}</DialogDescription>
         </DialogHeader>
         {
           <div className="space-y-4">
@@ -90,10 +90,15 @@ export function FullPaymentDialog({
               onClick={() => void onPay()}
             >
               {payState.isLoading
-                ? 'Payriff-ə yönləndirilir...'
+                ? t('pay.redirecting')
                 : quote.data
-                  ? `${formatCurrency(quote.data.amount + tipMinor, currency)} ödə`
-                  : 'Ödə'}
+                  ? t('pay.payAmount', {
+                      amount: formatCurrency(
+                        quote.data.amount + tipMinor,
+                        currency,
+                      ),
+                    })
+                  : t('pay.pay')}
             </Button>
           </div>
         }

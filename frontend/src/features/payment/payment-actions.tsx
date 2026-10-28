@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ListChecks, Users, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { orderBalance, type Order } from '@/features/order/types'
@@ -25,6 +26,7 @@ export function PaymentActions({
   qrToken: string
   order: Order
 }) {
+  const { t } = useTranslation('payment')
   const [mode, setMode] = useState<Mode>(null)
   const [offering, setOffering] = useState<Mode>(null)
   const [offeredFor, setOfferedFor] = useState<string | null>(null)
@@ -62,12 +64,12 @@ export function PaymentActions({
     <div className="w-full max-w-md space-y-3">
       <Button className="h-12 w-full" onClick={() => choose('full')}>
         <Wallet aria-hidden />
-        Tam ödə
+        {t('actions.full')}
       </Button>
       <div className="grid grid-cols-2 gap-3">
         <Button className="h-12" onClick={() => choose('equal')}>
           <Users aria-hidden />
-          Bərabər böl
+          {t('actions.equal')}
         </Button>
         <Button
           className="h-12"
@@ -75,18 +77,17 @@ export function PaymentActions({
           disabled={splitStarted}
           title={
             splitStarted
-              ? 'Hesab artıq bərabər bölünür'
-              : 'Yalnız öz məhsullarınızı ödəyin'
+              ? t('actions.itemsLockedTitle')
+              : t('actions.itemsTitle')
           }
         >
           <ListChecks aria-hidden />
-          Öz yediyim
+          {t('actions.items')}
         </Button>
       </div>
       {splitStarted && (
         <p className="text-center text-xs text-muted-foreground">
-          Hesab bərabər bölünür, ona görə "Öz yediyim" bağlıdır. Qalan hissəni
-          "Bərabər böl" və ya "Tam ödə" ilə ödəyin.
+          {t('actions.splitStartedNote')}
         </p>
       )}
 

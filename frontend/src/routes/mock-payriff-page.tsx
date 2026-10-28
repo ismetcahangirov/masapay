@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CreditCard, FlaskConical } from 'lucide-react'
 import { formatCurrency } from '@/features/order/format'
 import { toMinor } from '@/features/order/order-api'
@@ -17,6 +18,7 @@ import {
 // same signed callback Payriff would send to our webhook, then continues to the
 // normal result page. Rendered only in `npm run dev`.
 export function MockPayriffPage() {
+  const { t } = useTranslation('payment')
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const [sending, setSending] = useState(false)
@@ -54,15 +56,13 @@ export function MockPayriffPage() {
         <CardHeader className="text-center">
           <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <FlaskConical className="size-3.5" aria-hidden />
-            Test ödəniş səhifəsi (Payriff əvəzi)
+            {t('mock.badge')}
           </p>
           <CardTitle className="flex items-center justify-center gap-2">
             <CreditCard className="size-5" aria-hidden />
             {formatCurrency(toMinor(amount), currency)}
           </CardTitle>
-          <CardDescription>
-            Real kart tələb olunmur. Nəticəni seçin.
-          </CardDescription>
+          <CardDescription>{t('mock.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Button
@@ -70,7 +70,7 @@ export function MockPayriffPage() {
             disabled={sending}
             onClick={() => void answer('APPROVED')}
           >
-            Ödə (uğurlu)
+            {t('mock.approve')}
           </Button>
           <Button
             variant="outline"
@@ -78,12 +78,11 @@ export function MockPayriffPage() {
             disabled={sending}
             onClick={() => void answer('DECLINED')}
           >
-            İmtina et (uğursuz)
+            {t('mock.decline')}
           </Button>
           {failed && (
             <p className="text-center text-xs text-destructive">
-              Cavab göndərilmədi. Backend MASAPAY_PAYRIFF_MOCK=true ilə işə
-              salınmalıdır.
+              {t('mock.failed')}
             </p>
           )}
         </CardContent>

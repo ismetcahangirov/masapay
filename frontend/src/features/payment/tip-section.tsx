@@ -1,4 +1,5 @@
 import { HandCoins } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '@/features/order/format'
 import { TipSelector } from '@/features/tip/tip-selector'
 
@@ -17,25 +18,25 @@ export function TipSection({
   tipMinor: number
   onTipChange: (tipMinor: number) => void
 }) {
+  const { t } = useTranslation('payment')
   const tooBig = tipMinor > amountMinor
   return (
-    <section aria-label="Bəxşiş" className="space-y-2 rounded-lg border p-3">
+    <section
+      aria-label={t('tip.title')}
+      className="space-y-2 rounded-lg border p-3"
+    >
       <h3 className="flex items-center gap-2 text-sm font-semibold">
         <HandCoins className="size-4" aria-hidden />
-        Bəxşiş
+        {t('tip.title')}
       </h3>
       <TipSelector
         baseMinor={amountMinor}
         currency={currency}
         onChange={onTipChange}
       />
-      {tooBig && (
-        <p className="text-sm text-destructive">
-          Bəxşiş ödənilən hissədən çox ola bilməz.
-        </p>
-      )}
+      {tooBig && <p className="text-sm text-destructive">{t('tip.tooBig')}</p>}
       <p className="flex justify-between border-t pt-2 text-sm font-medium">
-        <span>Cəmi ödəniş</span>
+        <span>{t('tip.total')}</span>
         <span className="tabular-nums">
           {formatCurrency(amountMinor + tipMinor, currency)}
         </span>

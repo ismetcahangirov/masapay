@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Check, Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -31,6 +32,7 @@ export function SuggestionsDialog({
   categories: MenuCategory[]
   onClose: () => void
 }) {
+  const { t } = useTranslation('menu')
   const [picked, setPicked] = useState<string[]>([])
   const [save, saveState] = useSetSuggestionsMutation()
 
@@ -70,16 +72,18 @@ export function SuggestionsDialog({
     <Dialog open={dish !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Əlavə təkliflər</DialogTitle>
+          <DialogTitle>{t('suggestionsDialog.title')}</DialogTitle>
           <DialogDescription>
-            {dish?.name} seçən müştəriyə təsdiqdən əvvəl bunlar təklif olunur.
-            Ən çox {MAX_SUGGESTIONS}, seçdiyiniz sıra ilə.
+            {t('suggestionsDialog.description', {
+              name: dish?.name ?? '',
+              max: MAX_SUGGESTIONS,
+            })}
           </DialogDescription>
         </DialogHeader>
         {picked.length > 0 && (
           <ol
             className="list-inside list-decimal text-sm"
-            aria-label="Seçilmiş təkliflər"
+            aria-label={t('suggestionsDialog.picked')}
           >
             {picked.map((id) => (
               <li key={id}>{nameOf.get(id) ?? id}</li>
@@ -106,25 +110,27 @@ export function SuggestionsDialog({
                   onClick={() => toggle(item.id)}
                 >
                   {on ? <Check aria-hidden /> : <Plus aria-hidden />}
-                  {on ? 'Seçilib' : 'Təklif et'}
+                  {on
+                    ? t('suggestionsDialog.selected')
+                    : t('suggestionsDialog.offer')}
                 </Button>
               </li>
             )
           })}
         </ul>
         {saveState.isError && (
-          <p className="text-sm text-destructive">Yadda saxlamaq alınmadı.</p>
+          <p className="text-sm text-destructive">{t('actions.saveFailed')}</p>
         )}
         <DialogFooter className="gap-2">
           <Button type="button" variant="outline" onClick={onClose}>
-            İmtina
+            {t('actions.cancel')}
           </Button>
           <Button
             type="button"
             onClick={() => void onSave()}
             disabled={saveState.isLoading}
           >
-            {saveState.isLoading ? 'Yadda saxlanılır...' : 'Yadda saxla'}
+            {saveState.isLoading ? t('actions.saving') : t('actions.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

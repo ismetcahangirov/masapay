@@ -10,6 +10,7 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAppSelector } from '@/app/hooks'
 import { availabilityLabel } from '@/features/admin/menu/availability'
 import { AvailabilityDialog } from '@/features/admin/menu/availability-dialog'
@@ -44,6 +45,7 @@ type Removing =
 // this data later (#140). Dishes are added one by one, or a whole menu at once
 // from a PDF or Word file, reviewed before it is saved.
 export function MenuPage() {
+  const { t } = useTranslation('menu')
   const role = useAppSelector((state) => state.auth.user?.role)
   const canEdit = role === 'SUPER_ADMIN' || role === 'RESTO_MANAGER'
 
@@ -107,29 +109,29 @@ export function MenuPage() {
   const deleteError = !deleteState.isError
     ? null
     : !isConflict(deleteState.error)
-      ? 'Silmək alınmadı.'
+      ? t('page.deleteFailed')
       : removing?.kind === 'category'
-        ? 'Bu kateqoriyada məhsul var. Əvvəlcə məhsulları silin və ya başqa kateqoriyaya köçürün.'
-        : 'Bu məhsul kombonun tərkibindədir. Əvvəlcə onu kombodan çıxarın.'
+        ? t('page.categoryHasDishes')
+        : t('page.dishInCombo')
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Menyu</h1>
-          <p className="text-sm text-muted-foreground">
-            Kateqoriyalar və məhsullar. Müştəri menyusu bu siyahıdan gəlir.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('page.title')}
+          </h1>
+          <p className="text-sm text-muted-foreground">{t('page.subtitle')}</p>
         </div>
         {canEdit && restaurantId && (
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setImporting(true)}>
               <FileUp aria-hidden />
-              Menyunu fayldan yüklə
+              {t('page.importMenu')}
             </Button>
             <Button onClick={() => setCategoryDialog({ category: null })}>
               <Plus aria-hidden />
-              Kateqoriya əlavə et
+              {t('page.addCategory')}
             </Button>
           </div>
         )}
@@ -153,17 +155,16 @@ export function MenuPage() {
       {menu.isLoading && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('page.loading')}
         />
       )}
       {menu.isError && (
-        <p className="text-sm text-destructive">Menyunu yükləmək alınmadı.</p>
+        <p className="text-sm text-destructive">{t('page.loadFailed')}</p>
       )}
       {menu.data?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Menyu hələ boşdur.
-          {canEdit &&
-            ' İlk kateqoriyanı əlavə edin, sonra ona məhsullar, və ya bütün menyunu PDF/Word faylından yükləyin.'}
+          {t('page.empty')}
+          {canEdit && t('page.emptyHint')}
         </p>
       )}
 
@@ -192,7 +193,7 @@ export function MenuPage() {
                     }
                   >
                     <Plus aria-hidden />
-                    Məhsul
+                    {t('page.addDish')}
                   </Button>
                   <Button
                     variant="outline"
@@ -206,13 +207,13 @@ export function MenuPage() {
                     }
                   >
                     <Layers aria-hidden />
-                    Kombo
+                    {t('page.addCombo')}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setCategoryDialog({ category })}
-                    aria-label={`${category.name} kateqoriyasını redaktə et`}
+                    aria-label={t('page.editCategory', { name: category.name })}
                   >
                     <Pencil aria-hidden />
                   </Button>
@@ -220,7 +221,9 @@ export function MenuPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setRemoving({ kind: 'category', category })}
-                    aria-label={`${category.name} kateqoriyasını sil`}
+                    aria-label={t('page.deleteCategory', {
+                      name: category.name,
+                    })}
                   >
                     <Trash2 aria-hidden />
                   </Button>
@@ -230,7 +233,7 @@ export function MenuPage() {
             <CardContent>
               {category.items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Bu kateqoriyada məhsul yoxdur.
+                  {t('page.noDishes')}
                 </p>
               ) : (
                 <ul className="divide-y">
@@ -261,7 +264,9 @@ export function MenuPage() {
                           <p className="flex flex-wrap items-center gap-2 font-medium">
                             {dish.name}
                             {dish.components.length > 0 && (
-                              <Badge variant="secondary">Kombo</Badge>
+                              <Badge variant="secondary">
+                                {t('page.comboBadge')}
+                              </Badge>
                             )}
                             {dish.askBeforeConfirm && (
                               <Badge variant="outline">
@@ -269,7 +274,7 @@ export function MenuPage() {
                                   className="mr-1 size-3"
                                   aria-hidden
                                 />
-                                Təsdiqdən əvvəl soruşulur
+                                {t('page.askBadge')}
                               </Badge>
                             )}
                             {status && (
@@ -292,7 +297,7 @@ export function MenuPage() {
                           {dish.ingredients && (
                             <p className="text-sm">
                               <span className="text-muted-foreground">
-                                Tərkib:{' '}
+                                {t('page.ingredients')}{' '}
                               </span>
                               {dish.ingredients}
                             </p>
@@ -305,7 +310,7 @@ export function MenuPage() {
                           {dish.suggestionIds.length > 0 && (
                             <p className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Sparkles className="size-3" aria-hidden />
-                              Təklif:{' '}
+                              {t('page.suggestions')}{' '}
                               {dish.suggestionIds
                                 .map((id) => dishNames.get(id))
                                 .filter(Boolean)
@@ -323,7 +328,9 @@ export function MenuPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setScheduling(dish)}
-                                aria-label={`${dish.name} mövcudluğu`}
+                                aria-label={t('page.availability', {
+                                  name: dish.name,
+                                })}
                               >
                                 <CalendarClock aria-hidden />
                               </Button>
@@ -331,7 +338,9 @@ export function MenuPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setSuggesting(dish)}
-                                aria-label={`${dish.name} əlavə təklifləri`}
+                                aria-label={t('page.extras', {
+                                  name: dish.name,
+                                })}
                               >
                                 <Sparkles aria-hidden />
                               </Button>
@@ -349,8 +358,8 @@ export function MenuPage() {
                                     askBeforeConfirm: !dish.askBeforeConfirm,
                                   })
                                 }
-                                aria-label={`${dish.name} təsdiqdən əvvəl soruşulsun`}
-                                title="Təsdiqdən əvvəl hər müştəridən soruşulsun (sous, su)"
+                                aria-label={t('page.ask', { name: dish.name })}
+                                title={t('page.askTitle')}
                               >
                                 <MessageCircleQuestion aria-hidden />
                               </Button>
@@ -364,7 +373,9 @@ export function MenuPage() {
                                     combo: dish.components.length > 0,
                                   })
                                 }
-                                aria-label={`${dish.name} redaktə et`}
+                                aria-label={t('page.editDish', {
+                                  name: dish.name,
+                                })}
                               >
                                 <Pencil aria-hidden />
                               </Button>
@@ -374,7 +385,9 @@ export function MenuPage() {
                                 onClick={() =>
                                   setRemoving({ kind: 'dish', dish })
                                 }
-                                aria-label={`${dish.name} sil`}
+                                aria-label={t('page.deleteDish', {
+                                  name: dish.name,
+                                })}
                               >
                                 <Trash2 aria-hidden />
                               </Button>
@@ -433,15 +446,15 @@ export function MenuPage() {
           removing === null
             ? null
             : removing.kind === 'category'
-              ? 'Kateqoriyanı sil'
-              : 'Məhsulu sil'
+              ? t('page.deleteCategoryTitle')
+              : t('page.deleteDishTitle')
         }
         description={
           removing === null
             ? ''
             : removing.kind === 'category'
-              ? `"${removing.category.name}" kateqoriyası silinəcək. Əminsiniz?`
-              : `"${removing.dish.name}" menyudan silinəcək. Əminsiniz?`
+              ? t('page.deleteCategoryText', { name: removing.category.name })
+              : t('page.deleteDishText', { name: removing.dish.name })
         }
         error={deleteError}
         busy={deleteState.isLoading}

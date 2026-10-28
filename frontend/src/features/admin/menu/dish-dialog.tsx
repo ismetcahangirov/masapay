@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { Minus, Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -55,6 +56,7 @@ export function DishDialog({
   defaultCategoryId: string | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('menu')
   const [categoryId, setCategoryId] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -165,18 +167,20 @@ export function DishDialog({
             <DialogTitle>
               {combo
                 ? dish
-                  ? 'Kombonu redaktə et'
-                  : 'Yeni kombo'
+                  ? t('dishDialog.editCombo')
+                  : t('dishDialog.newCombo')
                 : dish
-                  ? 'Məhsulu redaktə et'
-                  : 'Yeni məhsul'}
+                  ? t('dishDialog.editDish')
+                  : t('dishDialog.newDish')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="dish-category">Kateqoriya</Label>
+            <Label htmlFor="dish-category">{t('dishDialog.category')}</Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
               <SelectTrigger id="dish-category">
-                <SelectValue placeholder="Kateqoriya seçin" />
+                <SelectValue
+                  placeholder={t('dishDialog.categoryPlaceholder')}
+                />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
@@ -188,13 +192,13 @@ export function DishDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <span className="text-sm font-medium">Şəkil (istəyə bağlı)</span>
+            <span className="text-sm font-medium">{t('dishDialog.photo')}</span>
             <DishPhotoField
               src={
                 photo?.preview ??
                 (removePhoto ? null : (dish?.imageUrl ?? null))
               }
-              label={name.trim() || 'Məhsul'}
+              label={name.trim() || t('dishDialog.photoFallbackLabel')}
               onPick={(file) => {
                 setPhoto({ file, preview: URL.createObjectURL(file) })
                 setRemovePhoto(false)
@@ -206,23 +210,27 @@ export function DishDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dish-name">Ad</Label>
+            <Label htmlFor="dish-name">{t('dishDialog.name')}</Label>
             <Input
               id="dish-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder={
-                combo ? 'Məsələn, Biznes lanç' : 'Məsələn, Sezar salatı'
+                combo
+                  ? t('dishDialog.comboPlaceholder')
+                  : t('dishDialog.dishPlaceholder')
               }
               maxLength={150}
             />
           </div>
           {combo && (
             <fieldset className="space-y-2">
-              <legend className="text-sm font-medium">Tərkib</legend>
+              <legend className="text-sm font-medium">
+                {t('dishDialog.contents')}
+              </legend>
               {choices.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Əvvəlcə menyuya adi məhsullar əlavə edin.
+                  {t('dishDialog.noChoices')}
                 </p>
               ) : (
                 <ul className="max-h-56 divide-y overflow-y-auto rounded-md border">
@@ -250,13 +258,17 @@ export function DishDialog({
                             className="size-8"
                             onClick={() => changeQuantity(item.id, -1)}
                             disabled={count === 0}
-                            aria-label={`${item.name} azalt`}
+                            aria-label={t('dishDialog.decrease', {
+                              name: item.name,
+                            })}
                           >
                             <Minus aria-hidden />
                           </Button>
                           <span
                             className="w-6 text-center text-sm tabular-nums"
-                            aria-label={`${item.name} sayı`}
+                            aria-label={t('dishDialog.count', {
+                              name: item.name,
+                            })}
                           >
                             {count}
                           </span>
@@ -267,7 +279,9 @@ export function DishDialog({
                             className="size-8"
                             onClick={() => changeQuantity(item.id, 1)}
                             disabled={count === MAX_QUANTITY}
-                            aria-label={`${item.name} artır`}
+                            aria-label={t('dishDialog.increase', {
+                              name: item.name,
+                            })}
                           >
                             <Plus aria-hidden />
                           </Button>
@@ -278,18 +292,19 @@ export function DishDialog({
                 </ul>
               )}
               <p className="text-xs text-muted-foreground">
-                Komboya ən azı bir məhsul seçin. Qiyməti aşağıda özünüz təyin
-                edirsiniz.
+                {t('dishDialog.comboHint')}
               </p>
             </fieldset>
           )}
           <div className="space-y-2">
-            <Label htmlFor="dish-ingredients">Əsas tərkib (istəyə bağlı)</Label>
+            <Label htmlFor="dish-ingredients">
+              {t('dishDialog.ingredients')}
+            </Label>
             <Input
               id="dish-ingredients"
               value={ingredients}
               onChange={(event) => setIngredients(event.target.value)}
-              placeholder="toyuq, düyü, zəfəran"
+              placeholder={t('dishDialog.ingredientsPlaceholder')}
               maxLength={300}
               aria-describedby="dish-ingredients-hint"
             />
@@ -297,21 +312,23 @@ export function DishDialog({
               id="dish-ingredients-hint"
               className="text-xs text-muted-foreground"
             >
-              Vergüllə ayırın. Müştəri menyuda yeməyin altında görür.
+              {t('dishDialog.ingredientsHint')}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dish-description">Təsvir (istəyə bağlı)</Label>
+            <Label htmlFor="dish-description">
+              {t('dishDialog.description')}
+            </Label>
             <Textarea
               id="dish-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Porsiya, bişirilmə üsulu və s."
+              placeholder={t('dishDialog.descriptionPlaceholder')}
               maxLength={500}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dish-price">Qiymət (AZN)</Label>
+            <Label htmlFor="dish-price">{t('dishDialog.price')}</Label>
             <Input
               id="dish-price"
               inputMode="decimal"
@@ -322,25 +339,26 @@ export function DishDialog({
             />
             {price !== '' && parsedPrice === null && (
               <p className="text-xs text-destructive">
-                Qiyməti rəqəmlə yazın, ən çox 2 onluq: məsələn 8.50
+                {t('dishDialog.priceInvalid')}
               </p>
             )}
           </div>
           {state.isError && (
-            <p className="text-sm text-destructive">Yadda saxlamaq alınmadı.</p>
+            <p className="text-sm text-destructive">
+              {t('actions.saveFailed')}
+            </p>
           )}
           {photoFailed && (
             <p className="text-sm text-destructive">
-              Məhsul yadda saxlandı, amma şəkil alınmadı. JPEG, PNG və ya WebP
-              şəkil seçib yenidən yoxlayın.
+              {t('dishDialog.photoFailed')}
             </p>
           )}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              İmtina
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={!valid || busy}>
-              {busy ? 'Yadda saxlanılır...' : 'Yadda saxla'}
+              {busy ? t('actions.saving') : t('actions.save')}
             </Button>
           </DialogFooter>
         </form>

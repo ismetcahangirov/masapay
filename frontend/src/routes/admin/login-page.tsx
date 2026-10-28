@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Clock, CircleAlert } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAppDispatch } from '@/app/hooks'
 import { BrandMark } from '@/components/layout/brand-mark'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
@@ -27,6 +28,7 @@ type LoginProblem = 'pending' | 'failed' | null
 // backend verifies it and answers with an access token (kept in memory) and
 // the refresh cookie. New accounts wait for a SUPER_ADMIN to enable them.
 export function LoginPage() {
+  const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
@@ -78,8 +80,8 @@ export function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <BrandMark className="mb-2 h-12" />
-          <CardTitle>masapay admin</CardTitle>
-          <CardDescription>Google hesabınızla daxil olun</CardDescription>
+          <CardTitle>{t('login.title')}</CardTitle>
+          <CardDescription>{t('login.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
           {googleClientId ? (
@@ -89,26 +91,26 @@ export function LoginPage() {
             />
           ) : (
             <p className="text-center text-sm text-muted-foreground">
-              Google girişi konfiqurasiya olunmayıb: frontend/.env.local
-              faylında VITE_GOOGLE_CLIENT_ID təyin edin.
+              {t('login.notConfigured')}
             </p>
           )}
 
           {isLoading && (
-            <p className="text-sm text-muted-foreground">Yoxlanılır...</p>
+            <p className="text-sm text-muted-foreground">
+              {t('login.checking')}
+            </p>
           )}
 
           {problem === 'pending' && (
             <p className="flex items-start gap-2 text-sm text-muted-foreground">
               <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
-              Hesabınız yaradıldı və restoran menecerinin və ya administratorun
-              təsdiqini gözləyir. Təsdiqdən sonra yenidən daxil olun.
+              {t('login.pending')}
             </p>
           )}
           {problem === 'failed' && (
             <p className="flex items-start gap-2 text-sm text-destructive">
               <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-              Giriş alınmadı. Yenidən cəhd edin.
+              {t('login.failed')}
             </p>
           )}
           {import.meta.env.DEV && <DevLoginButtons onResponse={finish} />}

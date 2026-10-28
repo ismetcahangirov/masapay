@@ -1,4 +1,5 @@
 import { LogOut } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '@/app/hooks'
 import { api } from '@/app/api'
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button'
 
 /** Clears the refresh cookie on the server and forgets the in-memory session. */
 export function LogoutButton() {
+  const { t } = useTranslation('auth')
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const [logout, { isLoading }] = useLogoutMutation()
@@ -31,7 +33,7 @@ export function LogoutButton() {
       className="gap-2"
     >
       <LogOut className="size-4" aria-hidden />
-      Çıxış
+      {t('logout')}
     </Button>
   )
 }

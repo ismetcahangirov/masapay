@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BrandMark } from '@/components/layout/brand-mark'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -14,12 +15,13 @@ import { SubscriptionBanner } from '@/features/admin/subscription-banner'
 // left, a slim top bar with the toggle, the manager's subscription warning
 // (#148), then the page itself.
 export function AdminLayout({ children }: { children: ReactNode }) {
+  const { t } = useTranslation('admin')
   return (
     <SidebarProvider defaultOpen={sidebarWasOpen()}>
       <AdminSidebar />
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background px-4">
-          <SidebarTrigger aria-label="Menyunu aç / bağla" />
+          <SidebarTrigger aria-label={t('layout.toggleMenu')} />
           <Separator orientation="vertical" className="h-5" />
           <span className="flex items-center gap-2 tracking-tight md:hidden">
             <BrandMark className="h-6" />

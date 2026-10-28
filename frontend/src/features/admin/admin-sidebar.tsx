@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   BookOpen,
   Building2,
@@ -32,6 +33,7 @@ import {
 } from '@/components/ui/sidebar'
 import type { UserRole } from '@/features/auth/auth-slice'
 import { LogoutButton } from '@/features/auth/logout-button'
+import type az from '@/i18n/locales/az/admin'
 
 const MANAGERS: UserRole[] = ['SUPER_ADMIN', 'RESTO_MANAGER']
 const STAFF: UserRole[] = [...MANAGERS, 'WAITER']
@@ -40,7 +42,8 @@ const PLATFORM: UserRole[] = ['SUPER_ADMIN']
 
 export interface AdminLink {
   to: string
-  label: string
+  /** The page name's key in the "admin" texts (nav.*). */
+  label: keyof typeof az.nav
   icon: LucideIcon
   /** Active only on this exact path (the dashboard is the parent of all). */
   end: boolean
@@ -51,14 +54,14 @@ export interface AdminLink {
 const PLATFORM_LINKS: AdminLink[] = [
   {
     to: '/admin/restaurants',
-    label: 'Restoranlar',
+    label: 'restaurants',
     icon: Building2,
     end: false,
     roles: PLATFORM,
   },
   {
     to: '/admin/analytics',
-    label: 'Analitika',
+    label: 'analytics',
     icon: ChartColumn,
     end: false,
     roles: PLATFORM,
@@ -69,77 +72,77 @@ const PLATFORM_LINKS: AdminLink[] = [
 const RESTAURANT_LINKS: AdminLink[] = [
   {
     to: '/admin',
-    label: 'Dashboard',
+    label: 'dashboard',
     icon: LayoutDashboard,
     end: true,
     roles: MANAGERS,
   },
   {
     to: '/admin/live',
-    label: 'Canlı masalar',
+    label: 'live',
     icon: MonitorDot,
     end: false,
     roles: STAFF,
   },
   {
     to: '/admin/tables',
-    label: 'Masalar',
+    label: 'tables',
     icon: QrCode,
     end: false,
     roles: STAFF,
   },
   {
     to: '/admin/orders',
-    label: 'Sifarişlər',
+    label: 'orders',
     icon: ClipboardList,
     end: false,
     roles: STAFF,
   },
   {
     to: '/admin/kitchen',
-    label: 'Mətbəx',
+    label: 'kitchen',
     icon: ChefHat,
     end: false,
     roles: KITCHEN,
   },
   {
     to: '/admin/menu',
-    label: 'Menyu',
+    label: 'menu',
     icon: BookOpen,
     end: false,
     roles: STAFF,
   },
   {
     to: '/admin/transactions',
-    label: 'Əməliyyatlar',
+    label: 'transactions',
     icon: ReceiptText,
     end: false,
     roles: MANAGERS,
   },
   {
     to: '/admin/staff',
-    label: 'İşçilər',
+    label: 'staff',
     icon: Users,
     end: false,
     roles: MANAGERS,
   },
   {
     to: '/admin/tips',
-    label: 'Bəxşişlər',
+    label: 'tips',
     icon: HandCoins,
     end: false,
     roles: MANAGERS,
   },
   {
     to: '/admin/my-tips',
-    label: 'Bəxşişlərim',
+    label: 'myTips',
     icon: HandCoins,
     end: false,
     roles: ['WAITER'],
   },
   {
     to: '/admin/settings',
-    label: 'Tənzimləmələr',
+    label: 'settings',
     icon: Settings,
     end: false,
     roles: MANAGERS,
@@ -161,6 +164,7 @@ function LinkGroup({
   links: AdminLink[]
   pathname: string
 }) {
+  const { t } = useTranslation('admin')
   if (links.length === 0) return null
   return (
     <SidebarGroup>
@@ -172,11 +176,11 @@ function LinkGroup({
               <SidebarMenuButton
                 asChild
                 isActive={isActive(pathname, link)}
-                tooltip={link.label}
+                tooltip={t(`nav.${link.label}`)}
               >
                 <NavLink to={link.to} end={link.end}>
                   <link.icon aria-hidden />
-                  <span>{link.label}</span>
+                  <span>{t(`nav.${link.label}`)}</span>
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -195,6 +199,7 @@ function LinkGroup({
 export function AdminSidebar() {
   const user = useAppSelector((state) => state.auth.user)
   const { pathname } = useLocation()
+  const { t } = useTranslation('admin')
   const role = user?.role
   const allowed = (links: AdminLink[]) =>
     links.filter((link) => role && link.roles.includes(role))
@@ -203,7 +208,7 @@ export function AdminSidebar() {
     <Sidebar
       collapsible="icon"
       role="navigation"
-      aria-label="Admin naviqasiyası"
+      aria-label={t('sidebar.navigation')}
     >
       <SidebarHeader>
         <SidebarMenu>
@@ -229,12 +234,12 @@ export function AdminSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <LinkGroup
-          label="Platforma"
+          label={t('sidebar.platform')}
           links={allowed(PLATFORM_LINKS)}
           pathname={pathname}
         />
         <LinkGroup
-          label="Restoran"
+          label={t('sidebar.restaurant')}
           links={allowed(RESTAURANT_LINKS)}
           pathname={pathname}
         />

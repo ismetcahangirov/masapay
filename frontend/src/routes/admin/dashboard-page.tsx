@@ -6,7 +6,9 @@ import {
   CircleCheckBig,
   LoaderCircle,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '@/features/order/format'
+import i18n from '@/i18n'
 import { KpiCard } from '@/features/admin/dashboard/kpi-card'
 import { RevenueChart } from '@/features/admin/dashboard/revenue-chart'
 import { useDashboardMetricsQuery } from '@/features/admin/dashboard/dashboard-api'
@@ -28,7 +30,9 @@ function formatMinutes(minutes: number | null): string {
   if (minutes === null) return '-'
   const hours = Math.floor(minutes / 60)
   const rest = Math.round(minutes % 60)
-  return hours > 0 ? `${hours} sa ${rest} dəq` : `${rest} dəq`
+  return hours > 0
+    ? i18n.t('dashboard:duration.hoursMinutes', { hours, minutes: rest })
+    : i18n.t('dashboard:duration.minutes', { minutes: rest })
 }
 
 function formatPercent(ratio: number | null): string {
@@ -39,6 +43,7 @@ function formatPercent(ratio: number | null): string {
 // restaurant, from the backend. A manager sees their own restaurant; a super
 // admin picks one.
 export function DashboardPage() {
+  const { t } = useTranslation('dashboard')
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
@@ -52,8 +57,8 @@ export function DashboardPage() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Bugünkü göstəricilər</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('subtitle')}</p>
       </header>
 
       {restaurants.data && restaurants.data.length > 1 && (
@@ -72,37 +77,33 @@ export function DashboardPage() {
       )}
 
       {restaurants.data?.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Hesabınıza hələ restoran təyin olunmayıb.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('noRestaurant')}</p>
       )}
 
       {(restaurants.isLoading || dashboard.isFetching) && !metrics && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('loading')}
         />
       )}
       {(restaurants.isError || dashboard.isError) && (
-        <p className="text-sm text-destructive">
-          Göstəriciləri yükləmək alınmadı.
-        </p>
+        <p className="text-sm text-destructive">{t('loadFailed')}</p>
       )}
 
       {metrics && (
         <>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-4">
             <KpiCard
-              label="Günlük dövriyyə"
+              label={t('kpi.dailyRevenue')}
               value={formatCurrency(
                 metrics.dailyRevenueMinor,
                 metrics.currency,
               )}
-              hint="Bəxşiş daxil deyil"
+              hint={t('kpi.tipsExcluded')}
               icon={Banknote}
             />
             <KpiCard
-              label="Toplanan bəxşiş"
+              label={t('kpi.tipsCollected')}
               value={formatCurrency(
                 metrics.tipsCollectedMinor,
                 metrics.currency,
@@ -110,21 +111,21 @@ export function DashboardPage() {
               icon={HandCoins}
             />
             <KpiCard
-              label="Orta masa vaxtı"
+              label={t('kpi.averageTableTime')}
               value={formatMinutes(metrics.averageTableMinutes)}
               hint={
                 metrics.averageTableMinutes === null
-                  ? 'Bu gün ödənmiş hesab yoxdur'
+                  ? t('kpi.noPaidBills')
                   : undefined
               }
               icon={Timer}
             />
             <KpiCard
-              label="Payriff uğur faizi"
+              label={t('kpi.payriffSuccessRate')}
               value={formatPercent(metrics.payriffSuccessRate)}
               hint={
                 metrics.payriffSuccessRate === null
-                  ? 'Bu gün Payriff ödənişi yoxdur'
+                  ? t('kpi.noPayriffPayments')
                   : undefined
               }
               icon={CircleCheckBig}
@@ -133,9 +134,9 @@ export function DashboardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Dövriyyə (günlük)</CardTitle>
+              <CardTitle>{t('chart.title')}</CardTitle>
               <CardDescription>
-                Son {SERIES_DAYS} gün, gün üzrə dövriyyə
+                {t('chart.description', { count: SERIES_DAYS })}
               </CardDescription>
             </CardHeader>
             <CardContent>

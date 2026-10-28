@@ -7,8 +7,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import type { RevenuePoint } from '@/features/admin/dashboard/types'
 import { formatCurrency } from '@/features/order/format'
+import { currentLocale } from '@/i18n'
 
 // Solid palette colours only (no gradients), pulled from the design tokens so
 // the chart follows the theme.
@@ -16,17 +18,15 @@ const BAR_COLOR = 'hsl(var(--success))'
 const GRID_COLOR = 'hsl(var(--border))'
 const AXIS_COLOR = 'hsl(var(--muted-foreground))'
 
-const DAY_FORMAT = new Intl.DateTimeFormat('az-AZ', {
-  day: 'numeric',
-  month: 'long',
-  weekday: 'short',
-  timeZone: 'UTC',
-})
-
 /** "2026-10-21" to a readable day with weekday and month name. */
 function formatDay(isoDate: string | undefined): string | undefined {
   return isoDate
-    ? DAY_FORMAT.format(new Date(`${isoDate}T00:00:00Z`))
+    ? new Intl.DateTimeFormat(currentLocale(), {
+        day: 'numeric',
+        month: 'long',
+        weekday: 'short',
+        timeZone: 'UTC',
+      }).format(new Date(`${isoDate}T00:00:00Z`))
     : undefined
 }
 
@@ -37,6 +37,7 @@ export function RevenueChart({
   data: RevenuePoint[]
   currency: string
 }) {
+  const { t } = useTranslation('dashboard')
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
@@ -60,7 +61,7 @@ export function RevenueChart({
           cursor={{ fill: 'hsl(var(--muted))' }}
           formatter={(value: number) => [
             formatCurrency(value, currency),
-            'Dövriyyə',
+            t('chart.revenue'),
           ]}
           labelFormatter={(label: string, payload) =>
             formatDay(

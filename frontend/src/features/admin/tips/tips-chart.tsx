@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Bar,
   BarChart,
@@ -25,6 +26,7 @@ export function TipsChart({
   waiters: WaiterTips[]
   currency: string
 }) {
+  const { t } = useTranslation('tips')
   const data = waiters.map((waiter) => ({
     name: waiterLabel(waiter),
     tipTotal: waiter.tipTotal,
@@ -53,7 +55,7 @@ export function TipsChart({
           cursor={{ fill: 'hsl(var(--muted))' }}
           formatter={(value: number) => [
             formatCurrency(value, currency),
-            'Bəxşiş',
+            t('chart.tip'),
           ]}
           contentStyle={{
             borderRadius: 8,

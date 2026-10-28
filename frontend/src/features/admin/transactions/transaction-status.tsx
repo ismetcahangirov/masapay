@@ -1,6 +1,6 @@
+import { useTranslation } from 'react-i18next'
 import { CircleCheck, CircleX, Clock, Undo2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { STATUS_LABELS } from './format'
 import type { TransactionStatus } from './transactions-api'
 
 const STATUS_STYLES: Record<
@@ -22,12 +22,13 @@ const STATUS_STYLES: Record<
   },
 }
 
-/** A payment's state as a small pill: icon, colour token and Azerbaijani label. */
+/** A payment's state as a small pill: icon, colour token and translated label. */
 export function TransactionStatusBadge({
   status,
 }: {
   status: TransactionStatus
 }) {
+  const { t } = useTranslation('transactions')
   const { icon: Icon, className } = STATUS_STYLES[status]
   return (
     <span
@@ -37,7 +38,7 @@ export function TransactionStatusBadge({
       )}
     >
       <Icon className="size-3.5" aria-hidden />
-      {STATUS_LABELS[status]}
+      {t(`status.${status}`)}
     </span>
   )
 }

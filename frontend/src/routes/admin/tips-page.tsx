@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   FileDown,
   FileSpreadsheet,
@@ -35,11 +36,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
-const PRESETS: { value: RangePreset; label: string }[] = [
-  { value: 'today', label: 'Bu gün' },
-  { value: 'week', label: 'Bu həftə' },
-  { value: 'month', label: 'Bu ay' },
-]
+const PRESETS: RangePreset[] = ['today', 'week', 'month']
 
 function isBadRequest(error: unknown): boolean {
   return (
@@ -54,6 +51,7 @@ function isBadRequest(error: unknown): boolean {
 // (#170) and a CSV download. A manager sees their own restaurant; a super
 // admin picks one.
 export function TipsPage() {
+  const { t } = useTranslation('tips')
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
@@ -82,7 +80,10 @@ export function TipsPage() {
     if (!restaurantId) return
     try {
       const csv = await downloadCsv({ restaurantId, ...range }).unwrap()
-      saveFile(csv, `bexsisler-${range.from}-${range.to}.csv`)
+      saveFile(
+        csv,
+        `${t('files.report', { from: range.from, to: range.to })}.csv`,
+      )
     } catch {
       // csvState.error is shown below.
     }
@@ -95,9 +96,11 @@ export function TipsPage() {
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Bəxşişlər</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('report.title')}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Seçilmiş tarix aralığında ofisiantlar üzrə toplanan bəxşişlər
+            {t('report.subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -106,7 +109,9 @@ export function TipsPage() {
             disabled={!data || excelState.isLoading}
           >
             <FileSpreadsheet aria-hidden />
-            {excelState.isLoading ? 'Hazırlanır...' : 'Excel yüklə'}
+            {excelState.isLoading
+              ? t('report.preparing')
+              : t('report.downloadExcel')}
           </Button>
           <Button
             variant="outline"
@@ -114,7 +119,9 @@ export function TipsPage() {
             disabled={!data || csvState.isLoading}
           >
             <FileDown aria-hidden />
-            {csvState.isLoading ? 'Hazırlanır...' : 'CSV yüklə'}
+            {csvState.isLoading
+              ? t('report.preparing')
+              : t('report.downloadCsv')}
           </Button>
         </div>
       </header>
@@ -136,13 +143,13 @@ export function TipsPage() {
 
       {restaurants.data?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Hesabınıza hələ restoran təyin olunmayıb.
+          {t('report.noRestaurant')}
         </p>
       )}
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="tips-from">Başlanğıc</Label>
+          <Label htmlFor="tips-from">{t('report.from')}</Label>
           <Input
             id="tips-from"
             type="date"
@@ -154,7 +161,7 @@ export function TipsPage() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="tips-to">Son</Label>
+          <Label htmlFor="tips-to">{t('report.to')}</Label>
           <Input
             id="tips-to"
             type="date"
@@ -172,75 +179,71 @@ export function TipsPage() {
             value && setRange(presetRange(value as RangePreset))
           }
           className="justify-start"
-          aria-label="Tez seçim"
+          aria-label={t('report.presets')}
         >
           {PRESETS.map((preset) => (
-            <ToggleGroupItem key={preset.value} value={preset.value}>
-              {preset.label}
+            <ToggleGroupItem key={preset} value={preset}>
+              {t(`report.${preset}`)}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
       </div>
 
       {!complete && (
-        <p className="text-sm text-muted-foreground">
-          Hesabat üçün hər iki tarixi seçin.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('report.pickBoth')}</p>
       )}
       {(restaurants.isLoading || report.isFetching) && !data && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('report.loading')}
         />
       )}
       {restaurants.isError && (
         <p className="text-sm text-destructive">
-          Restoranları yükləmək alınmadı.
+          {t('report.restaurantsFailed')}
         </p>
       )}
       {report.isError && (
         <p className="text-sm text-destructive">
           {isBadRequest(report.error)
-            ? 'Başlanğıc tarixi son tarixdən sonra ola bilməz.'
-            : 'Bəxşiş hesabatını yükləmək alınmadı.'}
+            ? t('report.badRange')
+            : t('report.loadFailed')}
         </p>
       )}
       {csvState.isError && (
-        <p className="text-sm text-destructive">CSV yükləmək alınmadı.</p>
+        <p className="text-sm text-destructive">{t('report.csvFailed')}</p>
       )}
       {excelState.isError && (
-        <p className="text-sm text-destructive">Excel yükləmək alınmadı.</p>
+        <p className="text-sm text-destructive">{t('report.excelFailed')}</p>
       )}
 
       {data && !report.isError && (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
             <KpiCard
-              label="Ümumi bəxşiş"
+              label={t('report.totalTips')}
               value={formatCurrency(data.totalTipAmount, currency)}
               icon={HandCoins}
               hint={`${data.from} - ${data.to}`}
             />
             <KpiCard
-              label="Bəxşiş sayı"
+              label={t('report.tipCount')}
               value={String(data.totalTipCount)}
               icon={Receipt}
-              hint="Bəxşişli ödənişlər"
+              hint={t('report.tipCountHint')}
             />
           </div>
 
           {data.waiters.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Bu tarix aralığında bəxşiş yoxdur.
-            </p>
+            <p className="text-sm text-muted-foreground">{t('report.empty')}</p>
           ) : (
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Ofisiantlar üzrə</CardTitle>
-                  <CardDescription>
-                    Hər ofisiantın topladığı bəxşiş
-                  </CardDescription>
+                  <CardTitle className="text-base">
+                    {t('report.byWaiter')}
+                  </CardTitle>
+                  <CardDescription>{t('report.byWaiterHint')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <TipsChart waiters={data.waiters} currency={currency} />
@@ -252,13 +255,17 @@ export function TipsPage() {
                   <table className="w-full text-sm">
                     <thead className="border-b text-left text-muted-foreground">
                       <tr>
-                        <th className="px-4 py-3 font-medium">Ofisiant</th>
-                        <th className="px-4 py-3 font-medium">E-poçt</th>
-                        <th className="px-4 py-3 text-right font-medium">
-                          Say
+                        <th className="px-4 py-3 font-medium">
+                          {t('report.waiter')}
+                        </th>
+                        <th className="px-4 py-3 font-medium">
+                          {t('report.email')}
                         </th>
                         <th className="px-4 py-3 text-right font-medium">
-                          Cəm
+                          {t('report.count')}
+                        </th>
+                        <th className="px-4 py-3 text-right font-medium">
+                          {t('report.sum')}
                         </th>
                       </tr>
                     </thead>

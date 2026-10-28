@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import type { AdminTable } from './tables-api'
 
 // Per-table service charge (#146) helpers.
@@ -12,9 +13,10 @@ export function parsePercent(text: string): number | null {
 
 /** What the table card says: "15% (bu masa)", "10% (restoran)" or "Yoxdur". */
 export function serviceChargeLabel(table: AdminTable): string {
-  if (table.effectiveServiceChargePercent === null) return 'Yoxdur'
+  if (table.effectiveServiceChargePercent === null)
+    return i18n.t('tables:serviceCharge.none')
   const percent = `${table.effectiveServiceChargePercent}%`
   return table.serviceChargePercent === null
-    ? `${percent} (restoran)`
-    : `${percent} (bu masa)`
+    ? i18n.t('tables:serviceCharge.restaurant', { percent })
+    : i18n.t('tables:serviceCharge.thisTable', { percent })
 }

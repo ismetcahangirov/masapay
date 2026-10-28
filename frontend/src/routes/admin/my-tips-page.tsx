@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { HandCoins, LoaderCircle, ReceiptText } from 'lucide-react'
 import { KpiCard } from '@/features/admin/dashboard/kpi-card'
 import { bakuToday, formatDay } from '@/features/admin/platform/subscription'
 import { useMyTipsQuery } from '@/features/admin/tips/my-tips-api'
 import { formatCurrency } from '@/features/order/format'
+import { currentLocale } from '@/i18n'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -17,18 +19,21 @@ import {
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
-const TIME = new Intl.DateTimeFormat('az-AZ', {
-  timeZone: 'Asia/Baku',
-  day: '2-digit',
-  month: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-})
+function formatTime(date: Date): string {
+  return new Intl.DateTimeFormat(currentLocale(), {
+    timeZone: 'Asia/Baku',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
 
 // "Bəxşişlərim" (#182): the signed-in waiter's own tips, this month by
 // default, each with the table it came from. Only their own: the backend takes
 // the waiter from the session.
 export function MyTipsPage() {
+  const { t } = useTranslation('tips')
   const today = bakuToday()
   const [from, setFrom] = useState(`${today.slice(0, 8)}01`)
   const [to, setTo] = useState(today)
@@ -41,17 +46,14 @@ export function MyTipsPage() {
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <HandCoins className="size-6" aria-hidden />
-          Bəxşişlərim
+          {t('mine.title')}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Xidmət etdiyiniz masalardan gələn bəxşişlər. Götürdüyünüz və ya ilk
-          sifarişini siz əlavə etdiyiniz masalar sizindir.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('mine.subtitle')}</p>
       </header>
 
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1">
-          <Label htmlFor="my-tips-from">Başlanğıc</Label>
+          <Label htmlFor="my-tips-from">{t('mine.from')}</Label>
           <Input
             id="my-tips-from"
             type="date"
@@ -61,7 +63,7 @@ export function MyTipsPage() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="my-tips-to">Son</Label>
+          <Label htmlFor="my-tips-to">{t('mine.to')}</Label>
           <Input
             id="my-tips-to"
             type="date"
@@ -72,34 +74,30 @@ export function MyTipsPage() {
         </div>
       </div>
       {!valid && (
-        <p className="text-sm text-destructive">
-          Başlanğıc günü son gündən sonra ola bilməz.
-        </p>
+        <p className="text-sm text-destructive">{t('mine.badRange')}</p>
       )}
 
       {tips.isFetching && !data && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('mine.loading')}
         />
       )}
       {tips.isError && (
-        <p className="text-sm text-destructive">
-          Bəxşişləri yükləmək alınmadı.
-        </p>
+        <p className="text-sm text-destructive">{t('mine.loadFailed')}</p>
       )}
 
       {data && (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
             <KpiCard
-              label="Cəmi bəxşiş"
+              label={t('mine.total')}
               value={formatCurrency(data.tipTotalMinor, data.currency)}
               hint={`${formatDay(data.from)} - ${formatDay(data.to)}`}
               icon={HandCoins}
             />
             <KpiCard
-              label="Bəxşişli ödəniş"
+              label={t('mine.count')}
               value={String(data.tipCount)}
               icon={ReceiptText}
             />
@@ -109,17 +107,17 @@ export function MyTipsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Vaxt</TableHead>
-                  <TableHead>Masa</TableHead>
-                  <TableHead className="text-right">Hesab</TableHead>
-                  <TableHead className="text-right">Bəxşiş</TableHead>
+                  <TableHead>{t('mine.time')}</TableHead>
+                  <TableHead>{t('mine.table')}</TableHead>
+                  <TableHead className="text-right">{t('mine.bill')}</TableHead>
+                  <TableHead className="text-right">{t('mine.tip')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.tips.map((tip) => (
                   <TableRow key={tip.id}>
                     <TableCell className="whitespace-nowrap tabular-nums">
-                      {TIME.format(new Date(tip.paidAt))}
+                      {formatTime(new Date(tip.paidAt))}
                     </TableCell>
                     <TableCell className="font-medium">
                       {tip.tableLabel}
@@ -138,7 +136,7 @@ export function MyTipsPage() {
                       colSpan={4}
                       className="py-10 text-center text-muted-foreground"
                     >
-                      Bu dövrdə bəxşiş yoxdur.
+                      {t('mine.empty')}
                     </TableCell>
                   </TableRow>
                 )}

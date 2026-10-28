@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FolderDown, LoaderCircle, Plus } from 'lucide-react'
 import { useAppSelector } from '@/app/hooks'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
@@ -17,6 +18,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 // Tables and their QR codes (#47). Managers add tables and print the codes;
 // waiters see the same codes (e.g. to reprint one) but cannot add tables.
 export function TablesPage() {
+  const { t } = useTranslation('tables')
   const role = useAppSelector((state) => state.auth.user?.role)
   const canCreate = role === 'SUPER_ADMIN' || role === 'RESTO_MANAGER'
 
@@ -50,7 +52,12 @@ export function TablesPage() {
     if (!restaurantId) return
     try {
       const zip = await downloadZip(restaurantId).unwrap()
-      saveFile(zip, `${restaurantName ?? 'masalar'}-qr-kodlar.zip`)
+      saveFile(
+        zip,
+        t('page.zipFileName', {
+          name: restaurantName ?? t('page.zipFallbackName'),
+        }),
+      )
     } catch {
       // zipState.isError is shown below.
     }
@@ -65,18 +72,17 @@ export function TablesPage() {
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Masalar</h1>
-          <p className="text-sm text-muted-foreground">
-            Hər masanın öz QR kodu var. Müştəri onu skan edib hesabı görür və
-            ödəyir.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('page.title')}
+          </h1>
+          <p className="text-sm text-muted-foreground">{t('page.subtitle')}</p>
         </div>
         <Button
           onClick={() => void onDownloadAll()}
           disabled={!tables.data?.length || zipState.isLoading}
         >
           <FolderDown aria-hidden />
-          {zipState.isLoading ? 'Hazırlanır...' : 'Hamısını yüklə (ZIP)'}
+          {zipState.isLoading ? t('page.preparing') : t('page.downloadAll')}
         </Button>
       </header>
 
@@ -103,43 +109,41 @@ export function TablesPage() {
           <Input
             value={label}
             onChange={(event) => setLabel(event.target.value)}
-            placeholder="Yeni masanın adı, məsələn Masa 7"
+            placeholder={t('page.newTablePlaceholder')}
             maxLength={50}
-            aria-label="Yeni masanın adı"
+            aria-label={t('page.newTableLabel')}
           />
           <Button
             type="submit"
             disabled={!label.trim() || createState.isLoading}
           >
             <Plus aria-hidden />
-            Əlavə et
+            {t('page.add')}
           </Button>
         </form>
       )}
       {createState.isError && (
         <p className="text-sm text-destructive">
-          {duplicate
-            ? 'Bu adda masa artıq var.'
-            : 'Masanı əlavə etmək alınmadı.'}
+          {duplicate ? t('page.duplicate') : t('page.createFailed')}
         </p>
       )}
       {zipState.isError && (
-        <p className="text-sm text-destructive">ZIP yükləmək alınmadı.</p>
+        <p className="text-sm text-destructive">{t('page.zipFailed')}</p>
       )}
 
       {tables.isLoading && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('page.loading')}
         />
       )}
       {tables.isError && (
-        <p className="text-sm text-destructive">Masaları yükləmək alınmadı.</p>
+        <p className="text-sm text-destructive">{t('page.loadFailed')}</p>
       )}
       {tables.data?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Hələ masa yoxdur.
-          {canCreate && ' Yuxarıdan ilk masanı əlavə edin.'}
+          {t('page.empty')}
+          {canCreate && t('page.emptyHint')}
         </p>
       )}
 

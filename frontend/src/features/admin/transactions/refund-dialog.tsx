@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Undo2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import i18n from '@/i18n'
 import { problemReason } from '@/lib/api-errors'
 import { formatAmount } from './format'
 import {
@@ -24,13 +26,13 @@ import {
 function refundErrorMessage(reason: string | null): string {
   switch (reason) {
     case 'REFUND_WINDOW_EXPIRED':
-      return 'Ödənişdən 30 gündən çox keçib: Payriff pulu geri qaytarmağa icazə vermir. Ödəniş olduğu kimi qalır.'
+      return i18n.t('transactions:refund.errors.windowExpired')
     case 'PAYRIFF_REFUSED':
-      return 'Payriff geri qaytarmanı rədd etdi. Ödəniş olduğu kimi qalır.'
+      return i18n.t('transactions:refund.errors.refused')
     case 'PAYRIFF_UNAVAILABLE':
-      return 'Payriff hazırda cavab vermir. Bir az sonra yenidən cəhd edin.'
+      return i18n.t('transactions:refund.errors.unavailable')
     default:
-      return 'Geri qaytarmaq alınmadı. Yenidən cəhd edin.'
+      return i18n.t('transactions:refund.errors.generic')
   }
 }
 
@@ -44,6 +46,7 @@ export function RefundDialog({
   transaction: TransactionRow | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('transactions')
   const [reason, setReason] = useState('')
   const [refund, refundState] = useRefundTransactionMutation()
 
@@ -74,19 +77,25 @@ export function RefundDialog({
     >
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Ödənişi geri qaytar</DialogTitle>
+          <DialogTitle>{t('refund.title')}</DialogTitle>
           <DialogDescription>
             {transaction &&
-              `${transaction.tableLabel}: ${formatAmount(transaction.totalAmount, transaction.currency)} müştərinin kartına tam qaytarılacaq. Bu addımı geri almaq olmur.`}
+              t('refund.description', {
+                table: transaction.tableLabel,
+                amount: formatAmount(
+                  transaction.totalAmount,
+                  transaction.currency,
+                ),
+              })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="refund-reason">Səbəb (istəyə bağlı)</Label>
+          <Label htmlFor="refund-reason">{t('refund.reason')}</Label>
           <Input
             id="refund-reason"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            placeholder="Məsələn, səhv məbləğ ödənilib"
+            placeholder={t('refund.reasonPlaceholder')}
             maxLength={200}
           />
         </div>
@@ -97,7 +106,7 @@ export function RefundDialog({
         )}
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={close}>
-            İmtina
+            {t('refund.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -105,7 +114,7 @@ export function RefundDialog({
             disabled={refundState.isLoading}
           >
             <Undo2 aria-hidden />
-            {refundState.isLoading ? 'Qaytarılır...' : 'Geri qaytar'}
+            {refundState.isLoading ? t('refund.refunding') : t('refund.refund')}
           </Button>
         </DialogFooter>
       </DialogContent>

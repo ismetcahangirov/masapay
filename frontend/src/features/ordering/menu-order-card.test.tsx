@@ -17,7 +17,14 @@ const menu = [
     id: 'c1',
     name: 'Əsas',
     items: [
-      { id: 'd1', name: 'Dolma', description: null, price: 9, components: [] },
+      {
+        id: 'd1',
+        name: 'Dolma',
+        description: 'Üzüm yarpağında',
+        ingredients: 'quzu əti, düyü, göyərti',
+        price: 9,
+        components: [],
+      },
       {
         id: 'd2',
         name: 'Ayran',
@@ -451,5 +458,31 @@ describe('MenuOrderCard (#140)', () => {
     expect(
       within(picked).getByRole('button', { name: /Sifarişi təsdiqlə/ }),
     ).toHaveTextContent('22')
+  })
+
+  it('shows the ingredients and opens a dish card to add from', async () => {
+    mockApi({ [`GET ${BASE}/menu`]: menu })
+    renderWithProviders(<MenuOrderCard qrToken={QR} currency="AZN" />)
+    await openMenu()
+
+    expect(
+      await screen.findByText('quzu əti, düyü, göyərti'),
+    ).toBeInTheDocument()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Dolma haqqında' }),
+    )
+
+    const card = await screen.findByRole('dialog', { name: 'Dolma' })
+    expect(within(card).getByText('Əsas tərkib')).toBeInTheDocument()
+    expect(
+      within(card)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual(['quzu əti', 'düyü', 'göyərti'])
+    expect(within(card).getByText('Üzüm yarpağında')).toBeInTheDocument()
+    await userEvent.click(
+      within(card).getByRole('button', { name: 'Dolma əlavə et' }),
+    )
+    expect(within(card).getByLabelText('Dolma sayı')).toHaveTextContent('1')
   })
 })

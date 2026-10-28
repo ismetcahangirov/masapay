@@ -10,8 +10,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/features/order/format'
-import { cn } from '@/lib/utils'
 import type { CustomerCategory, CustomerDish } from './customer-menu-api'
+import { DishDetail, DishRow } from './dish-card'
 import { MAX_QUANTITY, type BasketEntry } from './use-basket'
 
 // The customer's menu (#180), opened from the "Menyu" button: categories on
@@ -19,6 +19,7 @@ import { MAX_QUANTITY, type BasketEntry } from './use-basket'
 // the right with its subtotal. On a phone the categories become a row of tabs
 // at the top and the picked dishes a panel at the bottom. Confirming closes
 // the menu and goes on with the usual steps (extras, then "Əminsiniz?").
+// Tapping a dish opens its card with a large photo and its ingredients.
 export function MenuBrowser({
   open,
   categories,
@@ -48,6 +49,11 @@ export function MenuBrowser({
   onClose: () => void
 }) {
   const [chosenId, setChosenId] = useState<string | null>(null)
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const detail =
+    categories
+      .flatMap((category) => category.items)
+      .find((dish) => dish.id === detailId) ?? null
   const active =
     categories.find((category) => category.id === chosenId) ?? categories[0]
   const count = entries.reduce((sum, entry) => sum + entry.quantity, 0)
@@ -116,6 +122,7 @@ export function MenuBrowser({
                     currency={currency}
                     quantity={quantityOf(dish.id)}
                     onChange={(delta) => onChange(dish, delta)}
+                    onOpen={() => setDetailId(dish.id)}
                   />
                 ))}
               </ul>
@@ -200,96 +207,14 @@ export function MenuBrowser({
             </aside>
           </div>
         )}
+        <DishDetail
+          dish={detail}
+          currency={currency}
+          quantity={detail ? quantityOf(detail.id) : 0}
+          onChange={(delta) => detail && onChange(detail, delta)}
+          onClose={() => setDetailId(null)}
+        />
       </DialogContent>
     </Dialog>
-  )
-}
-
-function DishRow({
-  dish,
-  currency,
-  quantity,
-  onChange,
-}: {
-  dish: CustomerDish
-  currency: string
-  quantity: number
-  onChange: (delta: number) => void
-}) {
-  return (
-    <li
-      className={cn(
-        'flex items-start justify-between gap-3 p-3',
-        quantity > 0 && 'bg-success/5',
-      )}
-    >
-      {dish.imageUrl && (
-        <img
-          src={dish.imageUrl}
-          alt=""
-          loading="lazy"
-          className="size-20 shrink-0 rounded-md object-cover sm:size-24"
-        />
-      )}
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <p className="flex flex-wrap items-center gap-2 font-medium">
-          {dish.name}
-          {dish.components.length > 0 && (
-            <Badge variant="secondary">Kombo</Badge>
-          )}
-        </p>
-        {dish.components.length > 0 && (
-          <p className="text-xs">
-            {dish.components.map((c) => `${c.quantity} x ${c.name}`).join(', ')}
-          </p>
-        )}
-        {dish.description && (
-          <p className="text-xs text-muted-foreground">{dish.description}</p>
-        )}
-        <p className="text-sm tabular-nums">
-          {formatCurrency(dish.price, currency)}
-        </p>
-      </div>
-      {quantity === 0 ? (
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0"
-          onClick={() => onChange(1)}
-          aria-label={`${dish.name} əlavə et`}
-        >
-          <Plus aria-hidden />
-          Əlavə et
-        </Button>
-      ) : (
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-10"
-            onClick={() => onChange(-1)}
-            aria-label={`${dish.name} azalt`}
-          >
-            <Minus aria-hidden />
-          </Button>
-          <span
-            className="w-6 text-center text-sm tabular-nums"
-            aria-label={`${dish.name} sayı`}
-          >
-            {quantity}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-10"
-            onClick={() => onChange(1)}
-            disabled={quantity >= MAX_QUANTITY}
-            aria-label={`${dish.name} artır`}
-          >
-            <Plus aria-hidden />
-          </Button>
-        </div>
-      )}
-    </li>
   )
 }

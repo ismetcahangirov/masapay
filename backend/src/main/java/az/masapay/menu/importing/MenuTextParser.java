@@ -13,13 +13,14 @@ import java.util.regex.Pattern;
 /**
  * Guesses a menu from its lines, the way a person skims one: a line that ends with a price is a
  * dish ("Plov ........ 12,50 AZN"), a short line without a price is a category ("SALATLAR"),
- * and a longer line right under a dish is its description ("toyuq, düyü, zəfəran"). It is a
+ * and a longer line right under a dish is its description. A short comma list ("toyuq, düyü,
+ * zəfəran") under a dish or in brackets after its name is its main ingredients. It is a
  * guess: the manager reviews and corrects the result before anything is saved.
  */
 public final class MenuTextParser {
 
 	/** A dish as guessed; the picture is the raw bytes found next to it, if any. */
-	public record Dish(String name, String description, BigDecimal price, byte[] picture) {
+	public record Dish(String name, String description, String ingredients, BigDecimal price, byte[] picture) {
 	}
 
 	public record Category(String name, List<Dish> dishes) {
@@ -80,7 +81,7 @@ public final class MenuTextParser {
 				continue;
 			}
 			if (last != null && looksLikeDescription(text)) {
-				last.description = last.description == null ? text : last.description + " " + text;
+				last.addDetail(text);
 			} else if (text.length() <= 60) {
 				current = headingName(text);
 				last = null;
@@ -170,9 +171,25 @@ public final class MenuTextParser {
 		}
 		MutableDish dish = new MutableDish();
 		dish.name = name;
-		dish.description = description == null || description.isBlank() ? null : description;
+		if (description != null && !description.isBlank()) {
+			dish.addDetail(description.trim());
+		}
 		dish.price = amount.setScale(2);
 		return dish;
+	}
+
+	/** "pomidor, xiyar, quzu əti": at least two items, each one or two words; a sentence has longer parts. */
+	static boolean looksLikeIngredients(String text) {
+		if (!text.contains(",") || text.length() > 300) {
+			return false;
+		}
+		for (String part : text.split(",| və | and | и ")) {
+			String item = part.trim();
+			if (item.isEmpty() || item.split("\\s+").length > 2) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** Lower-case start, commas, or more than four words: a description, not a heading. */
@@ -213,11 +230,21 @@ public final class MenuTextParser {
 	private static final class MutableDish {
 		String name;
 		String description;
+		String ingredients;
 		BigDecimal price;
 		byte[] picture;
 
 		Dish toDish() {
-			return new Dish(name, description, price, picture);
+			return new Dish(name, description, ingredients, price, picture);
+		}
+
+		/** A comma list of short items is the ingredients (once); anything else adds to the description. */
+		void addDetail(String text) {
+			if (ingredients == null && looksLikeIngredients(text)) {
+				ingredients = text;
+			} else {
+				description = description == null ? text : description + " " + text;
+			}
 		}
 	}
 }

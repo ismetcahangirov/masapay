@@ -14,16 +14,24 @@ import java.util.UUID;
  * Create or edit a dish. The price is in manat with at most two decimals, like the DB column.
  * A non-empty {@code components} list makes it a combo such as "Biznes lanç" (#138); null or
  * empty is an ordinary dish. The list replaces the combo's contents on every save.
+ * {@code ingredients} are the main ones, comma separated, shown to customers.
  */
 public record MenuItemRequest(
 		@NotNull UUID categoryId,
 		@NotBlank @Size(max = 150) String name,
 		@Size(max = 500) String description,
 		@NotNull @DecimalMin("0.00") @Digits(integer = 8, fraction = 2) BigDecimal price,
-		@Valid @Size(max = 20) List<@NotNull ComboComponentRequest> components) {
+		@Valid @Size(max = 20) List<@NotNull ComboComponentRequest> components,
+		@Size(max = 300) String ingredients) {
 
 	/** An ordinary dish, without combo contents. */
 	public MenuItemRequest(UUID categoryId, String name, String description, BigDecimal price) {
-		this(categoryId, name, description, price, null);
+		this(categoryId, name, description, price, null, null);
+	}
+
+	/** Without ingredients. */
+	public MenuItemRequest(UUID categoryId, String name, String description, BigDecimal price,
+			List<ComboComponentRequest> components) {
+		this(categoryId, name, description, price, components, null);
 	}
 }

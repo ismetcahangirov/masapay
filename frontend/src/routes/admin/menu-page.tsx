@@ -289,6 +289,14 @@ export function MenuPage() {
                                 .join(', ')}
                             </p>
                           )}
+                          {dish.ingredients && (
+                            <p className="text-sm">
+                              <span className="text-muted-foreground">
+                                Tərkib:{' '}
+                              </span>
+                              {dish.ingredients}
+                            </p>
+                          )}
                           {dish.description && (
                             <p className="text-sm text-muted-foreground">
                               {dish.description}

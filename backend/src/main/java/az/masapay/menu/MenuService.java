@@ -258,11 +258,16 @@ public class MenuService {
 	}
 
 	private static void apply(MenuItem item, MenuCategory category, MenuItemRequest request) {
-		String description = request.description() == null ? null : request.description().trim();
 		item.setCategory(category);
 		item.setName(request.name().trim());
-		item.setDescription(description == null || description.isEmpty() ? null : description);
+		item.setDescription(blankToNull(request.description()));
+		item.setIngredients(blankToNull(request.ingredients()));
 		item.setPrice(request.price());
+	}
+
+	static String blankToNull(String text) {
+		String trimmed = text == null ? null : text.trim();
+		return trimmed == null || trimmed.isEmpty() ? null : trimmed;
 	}
 
 	/**

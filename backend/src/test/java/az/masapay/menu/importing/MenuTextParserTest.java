@@ -30,12 +30,33 @@ class MenuTextParserTest {
 			"• Dolma 10.5");
 
 		assertThat(menu).extracting(Category::name).containsExactly("Salatlar", "İsti yeməklər");
-		assertThat(menu.get(0).dishes()).extracting(Dish::name, Dish::description, Dish::price).containsExactly(
+		assertThat(menu.get(0).dishes()).extracting(Dish::name, Dish::ingredients, Dish::price).containsExactly(
 			tuple("Çoban salatı", "pomidor, xiyar, soğan", new BigDecimal("6.50")),
 			tuple("Sezar", "toyuq, parmezan", new BigDecimal("9.00")));
-		assertThat(menu.get(1).dishes()).extracting(Dish::name, Dish::description, Dish::price).containsExactly(
+		assertThat(menu.get(1).dishes()).extracting(Dish::name, Dish::ingredients, Dish::price).containsExactly(
 			tuple("Plov", "zəfəranlı düyü, toyuq", new BigDecimal("12.00")),
 			tuple("Dolma", null, new BigDecimal("10.50")));
+		assertThat(menu.get(0).dishes()).extracting(Dish::description).containsOnlyNulls();
+	}
+
+	@Test
+	void aSentenceIsTheDescriptionAndAShortListTheIngredients() {
+		List<Category> menu = parse(
+			"Lülə kabab 14",
+			"Kömür üstündə bişirilmiş, lavaş ilə verilir",
+			"quzu əti, soğan, sumaq");
+
+		assertThat(menu.get(0).dishes()).singleElement().satisfies(dish -> {
+			assertThat(dish.description()).isEqualTo("Kömür üstündə bişirilmiş, lavaş ilə verilir");
+			assertThat(dish.ingredients()).isEqualTo("quzu əti, soğan, sumaq");
+		});
+	}
+
+	@Test
+	void ingredientsNeedAtLeastTwoShortItems() {
+		assertThat(MenuTextParser.looksLikeIngredients("pomidor, xiyar və soğan")).isTrue();
+		assertThat(MenuTextParser.looksLikeIngredients("toyuq")).isFalse();
+		assertThat(MenuTextParser.looksLikeIngredients("ən təzə yerli tərəvəzlərdən, ev üsulu ilə")).isFalse();
 	}
 
 	@Test
@@ -81,7 +102,7 @@ class MenuTextParserTest {
 			assertThat(category.name()).isEqualTo("Şorbalar");
 			assertThat(category.dishes()).singleElement().satisfies(dish -> {
 				assertThat(dish.name()).isEqualTo("Mərci");
-				assertThat(dish.description()).isEqualTo("qırmızı mərci, limon");
+				assertThat(dish.ingredients()).isEqualTo("qırmızı mərci, limon");
 				assertThat(dish.price()).isEqualByComparingTo("4");
 				assertThat(dish.picture()).isEqualTo(photo);
 			});

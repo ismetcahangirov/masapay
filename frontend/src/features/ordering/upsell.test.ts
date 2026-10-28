@@ -10,6 +10,7 @@ const dish = (
   id,
   name: id,
   description: null,
+  ingredients: null,
   price: 100,
   components: [],
   suggestionIds,

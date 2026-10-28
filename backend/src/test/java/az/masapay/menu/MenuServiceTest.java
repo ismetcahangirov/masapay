@@ -210,6 +210,7 @@ class MenuServiceTest {
 
 		assertThat(created.name()).isEqualTo("Sezar");
 		assertThat(created.description()).isNull();
+		assertThat(created.ingredients()).isNull();
 		assertThat(created.categoryId()).isEqualTo(salads.getId());
 		assertThat(created.price()).isEqualByComparingTo("8.50");
 	}
@@ -232,11 +233,13 @@ class MenuServiceTest {
 		MenuItem dish = item(salads, "Sezar");
 
 		MenuItemView updated = service.updateItem(restaurant.getId(), dish.getId(),
-				new MenuItemRequest(mains.getId(), "Toyuqlu Sezar", "Toyuq, kahı", new BigDecimal("9.90")), manager);
+				new MenuItemRequest(mains.getId(), "Toyuqlu Sezar", "Toyuq, kahı", new BigDecimal("9.90"), null,
+					" toyuq, kahı, parmezan "), manager);
 		service.deleteItem(restaurant.getId(), dish.getId(), manager);
 
 		assertThat(updated.categoryId()).isEqualTo(mains.getId());
 		assertThat(updated.description()).isEqualTo("Toyuq, kahı");
+		assertThat(updated.ingredients()).isEqualTo("toyuq, kahı, parmezan");
 		assertThat(updated.price()).isEqualByComparingTo("9.90");
 		verify(itemRepository).delete(dish);
 	}

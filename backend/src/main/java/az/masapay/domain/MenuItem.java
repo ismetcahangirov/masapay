@@ -49,6 +49,10 @@ public class MenuItem extends BaseEntity {
 	@Column(length = 500)
 	private String description;
 
+	/** The main ingredients, comma separated, e.g. "toyuq, düyü, zəfəran"; null if not given. */
+	@Column(length = 300)
+	private String ingredients;
+
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal price;
 

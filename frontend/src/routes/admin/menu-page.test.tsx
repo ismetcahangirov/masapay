@@ -143,6 +143,10 @@ describe('MenuPage (#137)', () => {
     )
     await userEvent.type(screen.getByLabelText('Ad'), 'Ayran')
     await userEvent.type(screen.getByLabelText('Qiymət (AZN)'), '2,5')
+    await userEvent.type(
+      screen.getByLabelText('Əsas tərkib (istəyə bağlı)'),
+      'qatıq, su, duz ',
+    )
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }))
 
     await screen.findByRole('heading', { name: 'İçkilər' })
@@ -150,6 +154,7 @@ describe('MenuPage (#137)', () => {
       categoryId: 'c2',
       name: 'Ayran',
       description: null,
+      ingredients: 'qatıq, su, duz',
       price: 2.5,
       components: [],
     })
@@ -194,6 +199,7 @@ describe('MenuPage (#137)', () => {
       categoryId: 'c3',
       name: 'Lanç 2',
       description: null,
+      ingredients: null,
       price: 15,
       components: [{ itemId: 'd1', quantity: 2 }],
     })

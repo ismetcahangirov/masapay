@@ -58,6 +58,7 @@ export function DishDialog({
   const [categoryId, setCategoryId] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [ingredients, setIngredients] = useState('')
   const [price, setPrice] = useState('')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(
@@ -80,6 +81,7 @@ export function DishDialog({
     setCategoryId(dish?.categoryId ?? defaultCategoryId ?? '')
     setName(dish?.name ?? '')
     setDescription(dish?.description ?? '')
+    setIngredients(dish?.ingredients ?? '')
     setPrice(dish ? dish.price.toFixed(2) : '')
     setQuantities(
       Object.fromEntries(
@@ -130,6 +132,7 @@ export function DishDialog({
       categoryId,
       name: name.trim(),
       description: description.trim() || null,
+      ingredients: ingredients.trim() || null,
       price: parsedPrice,
       components: combo ? components : [],
     }
@@ -281,12 +284,29 @@ export function DishDialog({
             </fieldset>
           )}
           <div className="space-y-2">
+            <Label htmlFor="dish-ingredients">Əsas tərkib (istəyə bağlı)</Label>
+            <Input
+              id="dish-ingredients"
+              value={ingredients}
+              onChange={(event) => setIngredients(event.target.value)}
+              placeholder="toyuq, düyü, zəfəran"
+              maxLength={300}
+              aria-describedby="dish-ingredients-hint"
+            />
+            <p
+              id="dish-ingredients-hint"
+              className="text-xs text-muted-foreground"
+            >
+              Vergüllə ayırın. Müştəri menyuda yeməyin altında görür.
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="dish-description">Təsvir (istəyə bağlı)</Label>
             <Textarea
               id="dish-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Tərkibi, porsiya və s."
+              placeholder="Porsiya, bişirilmə üsulu və s."
               maxLength={500}
             />
           </div>

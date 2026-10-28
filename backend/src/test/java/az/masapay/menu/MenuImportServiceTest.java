@@ -111,7 +111,7 @@ class MenuImportServiceTest {
 	@Test
 	void thePreviewSavesNothingAndMarksWhatIsAlreadyOnTheMenu() throws IOException {
 		MenuImportDraft draft = service.preview(restaurant.getId(),
-			docx("SALATLAR", "SEZAR 9", "Çoban 6", "İçkilər", "Ayran 2"), manager);
+			docx("SALATLAR", "SEZAR 9", "Çoban 6", "pomidor, xiyar, soğan", "İçkilər", "Ayran 2"), manager);
 
 		assertThat(draft.categories()).extracting(MenuImportCategory::name, MenuImportCategory::existing)
 			.containsExactly(org.assertj.core.groups.Tuple.tuple("Salatlar", true),
@@ -119,6 +119,8 @@ class MenuImportServiceTest {
 		assertThat(draft.categories().get(0).items()).extracting(MenuImportItem::name, MenuImportItem::existingId)
 			.containsExactly(org.assertj.core.groups.Tuple.tuple("SEZAR", caesar.getId()),
 				org.assertj.core.groups.Tuple.tuple("Çoban", null));
+		assertThat(draft.categories().get(0).items()).extracting(MenuImportItem::ingredients)
+			.containsExactly(null, "pomidor, xiyar, soğan");
 		assertThat(draft.ocr()).isFalse();
 		verify(itemRepository, never()).save(any());
 		verify(categoryRepository, never()).save(any());
@@ -147,7 +149,7 @@ class MenuImportServiceTest {
 		String photo = "data:image/png;base64," + Base64.getEncoder().encodeToString(MenuImagesTest.png(40, 40));
 		MenuImportRequest request = new MenuImportRequest(List.of(
 			new MenuImportCategory("salatlar", List.of(
-				new MenuImportItem("sezar", "toyuq ilə", new BigDecimal("9.00"), null, null)), true),
+				new MenuImportItem("sezar", "toyuq ilə", new BigDecimal("9.00"), null, null, "toyuq, kahı ")), true),
 			new MenuImportCategory("İçkilər", List.of(
 				new MenuImportItem("Ayran", null, new BigDecimal("2.00"), photo, null)), false)));
 
@@ -156,6 +158,7 @@ class MenuImportServiceTest {
 		assertThat(result).isEqualTo(new MenuImportResult(1, 1, 1));
 		assertThat(caesar.getPrice()).isEqualByComparingTo("9");
 		assertThat(caesar.getDescription()).isEqualTo("toyuq ilə");
+		assertThat(caesar.getIngredients()).isEqualTo("toyuq, kahı");
 		assertThat(caesar.getCategory()).isSameAs(salads);
 		MenuItem ayran = saved.get(1);
 		assertThat(ayran.getName()).isEqualTo("Ayran");

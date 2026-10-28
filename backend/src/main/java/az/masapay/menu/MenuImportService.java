@@ -94,7 +94,7 @@ public class MenuImportService {
 				String name = cut(dish.name(), 150);
 				MenuItem existing = dishes.get(key(name));
 				items.add(new MenuImportItem(name, cut(dish.description(), 500), dish.price(), image,
-					existing == null ? null : existing.getId()));
+					existing == null ? null : existing.getId(), cut(dish.ingredients(), 300)));
 			}
 			String name = cut(category.name(), 100);
 			categories.add(new MenuImportCategory(name, items, categoryNames.contains(key(name))));
@@ -155,10 +155,10 @@ public class MenuImportService {
 				} else {
 					updated++;
 				}
-				String description = wantedDish.description() == null ? null : wantedDish.description().trim();
 				dish.setCategory(category);
 				dish.setName(name);
-				dish.setDescription(description == null || description.isEmpty() ? null : description);
+				dish.setDescription(MenuService.blankToNull(wantedDish.description()));
+				dish.setIngredients(MenuService.blankToNull(wantedDish.ingredients()));
 				dish.setPrice(wantedDish.price());
 				dish = itemRepository.save(dish);
 				if (photo != null) {

@@ -137,3 +137,4 @@ iyerarxiyası ilə). Repo: [ismetcahangirov/masapay](https://github.com/ismetcah
 |---|---|---|---|
 | #209 | Menyunu PDF/Word faylından idxal etmək və məhsul şəkilləri | codelady-ship | frontend, backend, admin-panel, database |
 | #211 | Menyu idxalı: skan edilmiş PDF və menyu şəkillərini OCR ilə oxumaq | codelady-ship | frontend, backend, admin-panel, devops |
+| #213 | Menyu: əsas tərkib və müştəri üçün böyük şəkilli yemək kartı | codelady-ship | frontend, backend, admin-panel, database |

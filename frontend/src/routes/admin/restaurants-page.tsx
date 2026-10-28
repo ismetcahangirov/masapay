@@ -7,6 +7,7 @@ import {
   Power,
   UserPlus,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   type PlatformRestaurant,
   type PosType,
@@ -49,11 +50,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-const POS_LABELS: Record<PosType, string> = {
-  IIKO: 'iiko',
-  MICROS: 'Micros',
-  CUSTOM: 'POS-suz / digər',
-}
+// Keys of the "platform" namespace, translated at render.
+const POS_LABELS = {
+  IIKO: 'restaurants.pos.IIKO',
+  MICROS: 'restaurants.pos.MICROS',
+  CUSTOM: 'restaurants.pos.CUSTOM',
+} as const satisfies Record<PosType, string>
 
 const STATUS_VARIANTS: Record<
   SubscriptionStatus,
@@ -79,6 +81,7 @@ function isConflict(error: unknown): boolean {
 // managers, switch a restaurant off so its customers can neither order nor pay,
 // and set or extend its subscription (#148).
 export function RestaurantsPage() {
+  const { t } = useTranslation('platform')
   const restaurants = usePlatformRestaurantsQuery()
   const [create, createState] = useCreateRestaurantMutation()
   const [update, updateState] = useUpdateRestaurantMutation()
@@ -118,31 +121,32 @@ export function RestaurantsPage() {
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
           <Building2 className="size-6" aria-hidden />
-          Restoranlar
+          {t('restaurants.title')}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Platformadakı restoranlar. Yeni restoranı ilk menecerinin Google
-          emaili ilə açın: o, Google ilə daxil olan kimi restorana bağlanır.
+          {t('restaurants.description')}
         </p>
       </header>
 
       <form
         onSubmit={(event) => void onCreate(event)}
-        aria-label="Yeni restoran"
+        aria-label={t('restaurants.newRestaurant')}
         className="grid gap-3 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-5 lg:items-end"
       >
         <div className="space-y-1 lg:col-span-2">
-          <Label htmlFor="restaurant-name">Restoranın adı</Label>
+          <Label htmlFor="restaurant-name">{t('restaurants.name')}</Label>
           <Input
             id="restaurant-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Məsələn, Nərgiz Kafe"
+            placeholder={t('restaurants.namePlaceholder')}
             maxLength={255}
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="restaurant-currency">Valyuta</Label>
+          <Label htmlFor="restaurant-currency">
+            {t('restaurants.currency')}
+          </Label>
           <Input
             id="restaurant-currency"
             value={currency}
@@ -153,7 +157,7 @@ export function RestaurantsPage() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="restaurant-pos">POS</Label>
+          <Label htmlFor="restaurant-pos">{t('restaurants.posLabel')}</Label>
           <Select
             value={posType}
             onValueChange={(value) => setPosType(value as PosType)}
@@ -164,7 +168,7 @@ export function RestaurantsPage() {
             <SelectContent>
               {(Object.keys(POS_LABELS) as PosType[]).map((value) => (
                 <SelectItem key={value} value={value}>
-                  {POS_LABELS[value]}
+                  {t(POS_LABELS[value])}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -172,42 +176,46 @@ export function RestaurantsPage() {
         </div>
         <div className="space-y-1 sm:col-span-2 lg:col-span-4">
           <Label htmlFor="restaurant-manager">
-            İlk menecerin Google emaili
+            {t('restaurants.managerEmail')}
           </Label>
           <Input
             id="restaurant-manager"
             type="email"
             value={managerEmail}
             onChange={(event) => setManagerEmail(event.target.value)}
-            placeholder="menecer@gmail.com"
+            placeholder={t('restaurants.managerEmailPlaceholder')}
             maxLength={320}
           />
         </div>
         <Button type="submit" disabled={!valid || createState.isLoading}>
           <Plus aria-hidden />
-          {createState.isLoading ? 'Yaradılır...' : 'Restoran aç'}
+          {createState.isLoading
+            ? t('restaurants.creating')
+            : t('restaurants.create')}
         </Button>
       </form>
       {createState.isError && (
         <p className="text-sm text-destructive">
           {isConflict(createState.error)
-            ? 'Bu email artıq başqa restorana və ya rola aiddir.'
-            : 'Restoranı açmaq alınmadı.'}
+            ? t('restaurants.emailTaken')
+            : t('restaurants.createFailed')}
         </p>
       )}
       {updateState.isError && (
-        <p className="text-sm text-destructive">Dəyişiklik alınmadı.</p>
+        <p className="text-sm text-destructive">
+          {t('restaurants.updateFailed')}
+        </p>
       )}
 
       {restaurants.isLoading && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('restaurants.loading')}
         />
       )}
       {restaurants.isError && (
         <p className="text-sm text-destructive">
-          Restoranları yükləmək alınmadı.
+          {t('restaurants.loadFailed')}
         </p>
       )}
 
@@ -215,12 +223,14 @@ export function RestaurantsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Restoran</TableHead>
-              <TableHead>POS</TableHead>
-              <TableHead>Menecerlər</TableHead>
-              <TableHead>Abunəlik</TableHead>
-              <TableHead>Vəziyyət</TableHead>
-              <TableHead className="sr-only">Əməliyyat</TableHead>
+              <TableHead>{t('restaurants.columns.restaurant')}</TableHead>
+              <TableHead>{t('restaurants.columns.pos')}</TableHead>
+              <TableHead>{t('restaurants.columns.managers')}</TableHead>
+              <TableHead>{t('restaurants.columns.subscription')}</TableHead>
+              <TableHead>{t('restaurants.columns.status')}</TableHead>
+              <TableHead className="sr-only">
+                {t('restaurants.columns.actions')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -232,19 +242,21 @@ export function RestaurantsPage() {
                     {restaurant.currency}
                   </p>
                 </TableCell>
-                <TableCell>{POS_LABELS[restaurant.posType]}</TableCell>
+                <TableCell>{t(POS_LABELS[restaurant.posType])}</TableCell>
                 <TableCell>
                   <ul className="space-y-1 text-sm">
                     {restaurant.managers.map((m) => (
                       <li key={m.id}>
                         {m.name ?? m.email}{' '}
                         <span className="text-xs text-muted-foreground">
-                          {m.signedIn ? '' : '(hələ daxil olmayıb)'}
+                          {m.signedIn ? '' : t('restaurants.notSignedIn')}
                         </span>
                       </li>
                     ))}
                     {restaurant.managers.length === 0 && (
-                      <li className="text-muted-foreground">Menecer yoxdur</li>
+                      <li className="text-muted-foreground">
+                        {t('restaurants.noManagers')}
+                      </li>
                     )}
                   </ul>
                 </TableCell>
@@ -252,11 +264,13 @@ export function RestaurantsPage() {
                   <Badge
                     variant={STATUS_VARIANTS[restaurant.subscription.status]}
                   >
-                    {STATUS_LABELS[restaurant.subscription.status]}
+                    {t(STATUS_LABELS[restaurant.subscription.status])}
                   </Badge>
                   {restaurant.subscription.endsOn && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Son gün {formatDay(restaurant.subscription.endsOn)}
+                      {t('restaurants.endsOn', {
+                        day: formatDay(restaurant.subscription.endsOn),
+                      })}
                     </p>
                   )}
                 </TableCell>
@@ -264,7 +278,9 @@ export function RestaurantsPage() {
                   <Badge
                     variant={restaurant.active ? 'success' : 'destructive'}
                   >
-                    {restaurant.active ? 'Aktiv' : 'Deaktiv'}
+                    {restaurant.active
+                      ? t('restaurants.active')
+                      : t('restaurants.inactive')}
                   </Badge>
                 </TableCell>
                 <TableCell className="space-x-1 whitespace-nowrap text-right">
@@ -272,19 +288,23 @@ export function RestaurantsPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => setSubscribing(restaurant)}
-                    aria-label={`${restaurant.name} abunəlik`}
+                    aria-label={t('restaurants.subscriptionAria', {
+                      name: restaurant.name,
+                    })}
                   >
                     <CalendarClock aria-hidden />
-                    Abunəlik
+                    {t('restaurants.subscription')}
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => setAddingTo(restaurant)}
-                    aria-label={`${restaurant.name} menecer əlavə et`}
+                    aria-label={t('restaurants.addManagerAria', {
+                      name: restaurant.name,
+                    })}
                   >
                     <UserPlus aria-hidden />
-                    Menecer
+                    {t('restaurants.manager')}
                   </Button>
                   <Button
                     size="sm"
@@ -295,10 +315,20 @@ export function RestaurantsPage() {
                         active: !restaurant.active,
                       })
                     }
-                    aria-label={`${restaurant.name} ${restaurant.active ? 'deaktiv et' : 'aktiv et'}`}
+                    aria-label={
+                      restaurant.active
+                        ? t('restaurants.deactivateAria', {
+                            name: restaurant.name,
+                          })
+                        : t('restaurants.activateAria', {
+                            name: restaurant.name,
+                          })
+                    }
                   >
                     <Power aria-hidden />
-                    {restaurant.active ? 'Deaktiv et' : 'Aktiv et'}
+                    {restaurant.active
+                      ? t('restaurants.deactivate')
+                      : t('restaurants.activate')}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -309,7 +339,7 @@ export function RestaurantsPage() {
                   colSpan={6}
                   className="py-10 text-center text-muted-foreground"
                 >
-                  Hələ restoran yoxdur.
+                  {t('restaurants.empty')}
                 </TableCell>
               </TableRow>
             )}
@@ -336,6 +366,7 @@ function AddManagerDialog({
   restaurant: PlatformRestaurant | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('platform')
   const [email, setEmail] = useState('')
   const [add, addState] = useAddManagerMutation()
 
@@ -364,14 +395,13 @@ function AddManagerDialog({
       <DialogContent className="max-w-md">
         <form onSubmit={(event) => void onSubmit(event)} className="space-y-4">
           <DialogHeader>
-            <DialogTitle>Menecer əlavə et</DialogTitle>
+            <DialogTitle>{t('addManager.title')}</DialogTitle>
             <DialogDescription>
-              {restaurant?.name}: menecer Google ilə daxil olan kimi bu
-              restorana bağlanır.
+              {t('addManager.description', { name: restaurant?.name })}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1">
-            <Label htmlFor="manager-email">Google emaili</Label>
+            <Label htmlFor="manager-email">{t('addManager.email')}</Label>
             <Input
               id="manager-email"
               type="email"
@@ -383,19 +413,19 @@ function AddManagerDialog({
           {addState.isError && (
             <p className="text-sm text-destructive">
               {isConflict(addState.error)
-                ? 'Bu email artıq başqa restorana və ya rola aiddir.'
-                : 'Əlavə etmək alınmadı.'}
+                ? t('addManager.emailTaken')
+                : t('addManager.addFailed')}
             </p>
           )}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={close}>
-              İmtina
+              {t('addManager.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={!email.trim() || addState.isLoading}
             >
-              Əlavə et
+              {t('addManager.add')}
             </Button>
           </DialogFooter>
         </form>

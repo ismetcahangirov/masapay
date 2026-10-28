@@ -5,6 +5,7 @@ import { store } from '@/app/store'
 import { api } from '@/app/api'
 import { userLoaded } from '@/features/auth/auth-slice'
 import { PlatformAnalyticsPage } from '@/routes/admin/platform-analytics-page'
+import i18n from '@/i18n'
 import { mockApi, renderWithProviders, requestsOf } from '@/test/utils'
 
 const URL = '/api/admin/platform/analytics'
@@ -100,5 +101,21 @@ describe('PlatformAnalyticsPage (#149)', () => {
         `GET ${URL}?from=2026-10-17&to=2026-10-23`,
       ),
     )
+  })
+
+  it('speaks English when the language is switched (#215)', async () => {
+    await i18n.changeLanguage('en')
+    mockApi({ [`GET ${URL}`]: analytics })
+    renderWithProviders(<PlatformAnalyticsPage />)
+
+    await screen.findByRole('region', { name: 'Totals, AZN' })
+    expect(
+      screen.getByRole('heading', { name: 'Platform analytics' }),
+    ).toBeInTheDocument()
+    const kafe = screen.getByText('Nərgiz Kafe').closest('tr') as HTMLElement
+    expect(within(kafe).getByText('Expired')).toBeInTheDocument()
+    expect(
+      screen.getByRole('radio', { name: 'Last 7 days' }),
+    ).toBeInTheDocument()
   })
 })

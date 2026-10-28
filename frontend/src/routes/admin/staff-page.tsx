@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { LoaderCircle, Power, UserCheck, UserPlus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useMyRestaurantsQuery } from '@/features/admin/settings/settings-api'
 import {
   type StaffMember,
@@ -30,28 +31,30 @@ import {
 } from '@/components/ui/table'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
-const ROLE_LABELS: Record<StaffRole, string> = {
-  WAITER: 'Ofisiant',
-  CHEF: 'Aşpaz',
-}
+// Labels are keys of the "staff" namespace, translated at render.
+const ROLE_LABELS = {
+  WAITER: 'roles.WAITER',
+  CHEF: 'roles.CHEF',
+} as const satisfies Record<StaffRole, string>
 
-const STATUS: Record<
+const STATUS = {
+  INVITED: { label: 'status.INVITED', variant: 'outline' },
+  PENDING: { label: 'status.PENDING', variant: 'secondary' },
+  ACTIVE: { label: 'status.ACTIVE', variant: 'success' },
+  DEACTIVATED: { label: 'status.DEACTIVATED', variant: 'destructive' },
+} as const satisfies Record<
   StaffStatus,
   {
     label: string
     variant: 'success' | 'outline' | 'secondary' | 'destructive'
   }
-> = {
-  INVITED: { label: 'Dəvət olunub, hələ daxil olmayıb', variant: 'outline' },
-  PENDING: { label: 'Təsdiq gözləyir', variant: 'secondary' },
-  ACTIVE: { label: 'Aktiv', variant: 'success' },
-  DEACTIVATED: { label: 'Deaktiv', variant: 'destructive' },
-}
+>
 
 // Staff of a restaurant (#145): the manager invites a waiter or chef by the
 // email of their Google account; after they sign in with Google the manager
 // approves them, changes the role or switches the account off.
 export function StaffPage() {
+  const { t } = useTranslation('staff')
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
@@ -91,11 +94,10 @@ export function StaffPage() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">İşçilər</h1>
-        <p className="text-sm text-muted-foreground">
-          Ofisiant və aşpazları Google hesablarının emaili ilə dəvət edin. Onlar
-          Google ilə daxil olandan sonra burada təsdiqləyin.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t('page.title')}
+        </h1>
+        <p className="text-sm text-muted-foreground">{t('page.description')}</p>
       </header>
 
       {restaurants.data && restaurants.data.length > 1 && (
@@ -117,21 +119,21 @@ export function StaffPage() {
         <form
           onSubmit={(event) => void onInvite(event)}
           className="flex flex-wrap items-end gap-3"
-          aria-label="İşçi dəvət et"
+          aria-label={t('page.inviteForm')}
         >
           <div className="min-w-64 flex-1 space-y-1">
-            <Label htmlFor="staff-email">Google emaili</Label>
+            <Label htmlFor="staff-email">{t('page.email')}</Label>
             <Input
               id="staff-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="ad.soyad@gmail.com"
+              placeholder={t('page.emailPlaceholder')}
               maxLength={320}
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="staff-role">Rol</Label>
+            <Label htmlFor="staff-role">{t('page.role')}</Label>
             <Select
               value={role}
               onValueChange={(value) => setRole(value as StaffRole)}
@@ -142,7 +144,7 @@ export function StaffPage() {
               <SelectContent>
                 {(Object.keys(ROLE_LABELS) as StaffRole[]).map((value) => (
                   <SelectItem key={value} value={value}>
-                    {ROLE_LABELS[value]}
+                    {t(ROLE_LABELS[value])}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -153,39 +155,39 @@ export function StaffPage() {
             disabled={!email.trim() || inviteState.isLoading}
           >
             <UserPlus aria-hidden />
-            Dəvət et
+            {t('page.invite')}
           </Button>
         </form>
       )}
       {inviteState.isError && (
         <p className="text-sm text-destructive">
-          {inviteConflict
-            ? 'Bu email artıq bir işçiyə və ya başqa restorana aiddir.'
-            : 'Dəvət etmək alınmadı. Emaili yoxlayın.'}
+          {inviteConflict ? t('page.emailTaken') : t('page.inviteFailed')}
         </p>
       )}
       {updateState.isError && (
-        <p className="text-sm text-destructive">Dəyişiklik alınmadı.</p>
+        <p className="text-sm text-destructive">{t('page.updateFailed')}</p>
       )}
 
       {staff.isLoading && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('page.loading')}
         />
       )}
       {staff.isError && (
-        <p className="text-sm text-destructive">İşçiləri yükləmək alınmadı.</p>
+        <p className="text-sm text-destructive">{t('page.loadFailed')}</p>
       )}
 
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>İşçi</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Vəziyyət</TableHead>
-              <TableHead className="sr-only">Əməliyyat</TableHead>
+              <TableHead>{t('page.columns.member')}</TableHead>
+              <TableHead>{t('page.columns.role')}</TableHead>
+              <TableHead>{t('page.columns.status')}</TableHead>
+              <TableHead className="sr-only">
+                {t('page.columns.actions')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -208,7 +210,7 @@ export function StaffPage() {
                   >
                     <SelectTrigger
                       className="w-32"
-                      aria-label={`${member.email} rolu`}
+                      aria-label={t('page.roleAria', { email: member.email })}
                     >
                       <SelectValue />
                     </SelectTrigger>
@@ -216,7 +218,7 @@ export function StaffPage() {
                       {(Object.keys(ROLE_LABELS) as StaffRole[]).map(
                         (value) => (
                           <SelectItem key={value} value={value}>
-                            {ROLE_LABELS[value]}
+                            {t(ROLE_LABELS[value])}
                           </SelectItem>
                         ),
                       )}
@@ -225,7 +227,7 @@ export function StaffPage() {
                 </TableCell>
                 <TableCell>
                   <Badge variant={STATUS[member.status].variant}>
-                    {STATUS[member.status].label}
+                    {t(STATUS[member.status].label)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
@@ -235,10 +237,14 @@ export function StaffPage() {
                       size="sm"
                       variant="success"
                       onClick={() => change(member, { active: true })}
-                      aria-label={`${member.email} təsdiqlə`}
+                      aria-label={t('page.approveAria', {
+                        email: member.email,
+                      })}
                     >
                       <UserCheck aria-hidden />
-                      {member.status === 'PENDING' ? 'Təsdiqlə' : 'Aktiv et'}
+                      {member.status === 'PENDING'
+                        ? t('page.approve')
+                        : t('page.activate')}
                     </Button>
                   )}
                   {member.status === 'ACTIVE' && (
@@ -246,10 +252,12 @@ export function StaffPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => change(member, { active: false })}
-                      aria-label={`${member.email} deaktiv et`}
+                      aria-label={t('page.deactivateAria', {
+                        email: member.email,
+                      })}
                     >
                       <Power aria-hidden />
-                      Deaktiv et
+                      {t('page.deactivate')}
                     </Button>
                   )}
                 </TableCell>
@@ -261,8 +269,7 @@ export function StaffPage() {
                   colSpan={4}
                   className="py-10 text-center text-muted-foreground"
                 >
-                  Hələ işçi yoxdur. Yuxarıdan ilk ofisiant və ya aşpazı dəvət
-                  edin.
+                  {t('page.empty')}
                 </TableCell>
               </TableRow>
             )}

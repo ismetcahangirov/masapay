@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   useIntegrationSettingsQuery,
   useMyRestaurantsQuery,
@@ -10,6 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 // Admin settings (#46): service charge, POS provider and Payriff keys of a
 // restaurant. A manager sees their own restaurant; a super admin picks one.
 export function SettingsPage() {
+  const { t } = useTranslation('settings')
   const restaurants = useMyRestaurantsQuery()
   const [chosen, setChosen] = useState<string | null>(null)
   const restaurantId = chosen ?? restaurants.data?.[0]?.id ?? null
@@ -21,10 +23,10 @@ export function SettingsPage() {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Tənzimləmələr</h1>
-        <p className="text-sm text-muted-foreground">
-          Restoranın xidmət haqqı, POS və ödəniş ayarları
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t('page.title')}
+        </h1>
+        <p className="text-sm text-muted-foreground">{t('page.description')}</p>
       </header>
 
       {restaurants.data && restaurants.data.length > 1 && (
@@ -44,20 +46,18 @@ export function SettingsPage() {
 
       {restaurants.data?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Hesabınıza hələ restoran təyin olunmayıb.
+          {t('page.noRestaurant')}
         </p>
       )}
 
       {(restaurants.isLoading || settings.isFetching) && !settings.data && (
         <LoaderCircle
           className="size-6 animate-spin text-muted-foreground"
-          aria-label="Yüklənir"
+          aria-label={t('page.loading')}
         />
       )}
       {(restaurants.isError || settings.isError) && (
-        <p className="text-sm text-destructive">
-          Tənzimləmələri yükləmək alınmadı.
-        </p>
+        <p className="text-sm text-destructive">{t('page.loadFailed')}</p>
       )}
       {settings.data && <SettingsForm settings={settings.data} />}
     </div>

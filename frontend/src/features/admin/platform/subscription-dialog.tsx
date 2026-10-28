@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { CalendarPlus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -37,6 +38,7 @@ export function SubscriptionDialog({
   restaurant: PlatformRestaurant | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('platform')
   const [plan, setPlan] = useState<SubscriptionPlan>('BASIC')
   const [trial, setTrial] = useState(false)
   const [startsOn, setStartsOn] = useState('')
@@ -94,14 +96,13 @@ export function SubscriptionDialog({
       <DialogContent className="max-w-md">
         <form onSubmit={(event) => void onSubmit(event)} className="space-y-4">
           <DialogHeader>
-            <DialogTitle>Abunəlik</DialogTitle>
+            <DialogTitle>{t('subscriptionDialog.title')}</DialogTitle>
             <DialogDescription>
-              {restaurant?.name}: son gündən sonra müştərilər onlayn ödəyə
-              bilmir, sifariş vermək isə açıq qalır.
+              {t('subscriptionDialog.description', { name: restaurant?.name })}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1">
-            <Label id="subscription-plan">Plan</Label>
+            <Label id="subscription-plan">{t('subscriptionDialog.plan')}</Label>
             <ToggleGroup
               type="single"
               value={plan}
@@ -116,7 +117,7 @@ export function SubscriptionDialog({
             </ToggleGroup>
           </div>
           <div className="space-y-1">
-            <Label id="subscription-kind">Növ</Label>
+            <Label id="subscription-kind">{t('subscriptionDialog.kind')}</Label>
             <ToggleGroup
               type="single"
               value={trial ? 'TRIAL' : 'PAID'}
@@ -124,13 +125,19 @@ export function SubscriptionDialog({
               className="grid grid-cols-2 gap-2"
               aria-labelledby="subscription-kind"
             >
-              <ToggleGroupItem value="PAID">Ödənişli</ToggleGroupItem>
-              <ToggleGroupItem value="TRIAL">Sınaq</ToggleGroupItem>
+              <ToggleGroupItem value="PAID">
+                {t('subscriptionDialog.paid')}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="TRIAL">
+                {t('subscriptionDialog.trial')}
+              </ToggleGroupItem>
             </ToggleGroup>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label htmlFor="subscription-starts">Başlama günü</Label>
+              <Label htmlFor="subscription-starts">
+                {t('subscriptionDialog.startsOn')}
+              </Label>
               <Input
                 id="subscription-starts"
                 type="date"
@@ -139,7 +146,9 @@ export function SubscriptionDialog({
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="subscription-ends">Son gün</Label>
+              <Label htmlFor="subscription-ends">
+                {t('subscriptionDialog.endsOn')}
+              </Label>
               <Input
                 id="subscription-ends"
                 type="date"
@@ -151,7 +160,7 @@ export function SubscriptionDialog({
           </div>
           {backwards && (
             <p className="text-xs text-destructive">
-              Son gün başlama günündən əvvəl ola bilməz.
+              {t('subscriptionDialog.backwards')}
             </p>
           )}
           <Button
@@ -161,11 +170,13 @@ export function SubscriptionDialog({
             onClick={extendByMonth}
           >
             <CalendarPlus aria-hidden />
-            +1 ay
+            {t('subscriptionDialog.extendByMonth')}
           </Button>
           <div className="space-y-1">
             <Label htmlFor="subscription-fee">
-              Aylıq ödəniş ({restaurant?.currency})
+              {t('subscriptionDialog.monthlyFee', {
+                currency: restaurant?.currency,
+              })}
             </Label>
             <Input
               id="subscription-fee"
@@ -177,14 +188,18 @@ export function SubscriptionDialog({
             />
           </div>
           {saveState.isError && (
-            <p className="text-sm text-destructive">Yadda saxlamaq alınmadı.</p>
+            <p className="text-sm text-destructive">
+              {t('subscriptionDialog.saveFailed')}
+            </p>
           )}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              İmtina
+              {t('subscriptionDialog.cancel')}
             </Button>
             <Button type="submit" disabled={!valid || saveState.isLoading}>
-              {saveState.isLoading ? 'Yadda saxlanılır...' : 'Yadda saxla'}
+              {saveState.isLoading
+                ? t('subscriptionDialog.saving')
+                : t('subscriptionDialog.save')}
             </Button>
           </DialogFooter>
         </form>

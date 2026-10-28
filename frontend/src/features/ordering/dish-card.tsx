@@ -1,4 +1,5 @@
 import { Minus, Plus, UtensilsCrossed } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -66,6 +67,7 @@ function QuantityControls({
   onChange: (delta: number) => void
   size?: 'sm' | 'lg'
 }) {
+  const { t } = useTranslation('customer')
   if (quantity === 0) {
     return (
       <Button
@@ -73,10 +75,10 @@ function QuantityControls({
         size={size === 'lg' ? 'default' : 'sm'}
         className={cn('shrink-0', size === 'lg' && 'h-12 flex-1')}
         onClick={() => onChange(1)}
-        aria-label={`${dish.name} əlavə et`}
+        aria-label={t('dish.addAria', { name: dish.name })}
       >
         <Plus aria-hidden />
-        Əlavə et
+        {t('dish.add')}
       </Button>
     )
   }
@@ -87,13 +89,13 @@ function QuantityControls({
         size="icon"
         className="size-10"
         onClick={() => onChange(-1)}
-        aria-label={`${dish.name} azalt`}
+        aria-label={t('dish.decreaseAria', { name: dish.name })}
       >
         <Minus aria-hidden />
       </Button>
       <span
         className="w-6 text-center text-sm tabular-nums"
-        aria-label={`${dish.name} sayı`}
+        aria-label={t('dish.quantityAria', { name: dish.name })}
       >
         {quantity}
       </span>
@@ -103,7 +105,7 @@ function QuantityControls({
         className="size-10"
         onClick={() => onChange(1)}
         disabled={quantity >= MAX_QUANTITY}
-        aria-label={`${dish.name} artır`}
+        aria-label={t('dish.increaseAria', { name: dish.name })}
       >
         <Plus aria-hidden />
       </Button>
@@ -133,6 +135,7 @@ export function DishRow({
   onChange: (delta: number) => void
   onOpen: () => void
 }) {
+  const { t } = useTranslation('customer')
   return (
     <li
       className={cn(
@@ -143,7 +146,7 @@ export function DishRow({
       <button
         type="button"
         onClick={onOpen}
-        aria-label={`${dish.name} haqqında`}
+        aria-label={t('dish.aboutAria', { name: dish.name })}
         className="flex min-w-0 flex-1 items-start gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <DishPicture dish={dish} className="size-20 rounded-md sm:size-24" />
@@ -151,7 +154,7 @@ export function DishRow({
           <span className="flex flex-wrap items-center gap-2 font-medium">
             {dish.name}
             {dish.components.length > 0 && (
-              <Badge variant="secondary">Kombo</Badge>
+              <Badge variant="secondary">{t('dish.combo')}</Badge>
             )}
           </span>
           <ComboLine dish={dish} />
@@ -188,6 +191,7 @@ export function DishDetail({
   onChange: (delta: number) => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('customer')
   const ingredients = dish ? ingredientList(dish.ingredients) : []
   return (
     <Dialog open={dish !== null} onOpenChange={(next) => !next && onClose()}>
@@ -200,7 +204,7 @@ export function DishDetail({
                 <DialogTitle className="flex flex-wrap items-center gap-2 pr-6">
                   {dish.name}
                   {dish.components.length > 0 && (
-                    <Badge variant="secondary">Kombo</Badge>
+                    <Badge variant="secondary">{t('dish.combo')}</Badge>
                   )}
                 </DialogTitle>
                 <DialogDescription className="text-base font-medium tabular-nums text-foreground">
@@ -210,7 +214,9 @@ export function DishDetail({
               <ComboLine dish={dish} />
               {ingredients.length > 0 && (
                 <section className="space-y-2">
-                  <h4 className="text-sm font-semibold">Əsas tərkib</h4>
+                  <h4 className="text-sm font-semibold">
+                    {t('dish.ingredients')}
+                  </h4>
                   <ul className="flex flex-wrap gap-1.5">
                     {ingredients.map((item, index) => (
                       <li key={`${index}-${item}`}>

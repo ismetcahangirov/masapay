@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { validateTableToken } from '@/lib/table-session'
 import { InvalidTokenPage } from '@/routes/invalid-token-page'
@@ -21,6 +22,7 @@ import { PaymentActions } from '@/features/payment/payment-actions'
 // The token gate (4.1) runs first; the live bill then comes from RTK Query
 // (4.2) with explicit loading, error and empty states.
 export function TablePage() {
+  const { t } = useTranslation('customer')
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   const validation = useMemo(() => validateTableToken(token), [token])
@@ -45,7 +47,7 @@ export function TablePage() {
       <div className="flex w-full flex-col items-center gap-6">
         <MenuOrderCard qrToken={validation.qrToken} currency={data.currency} />
         <section
-          aria-label="Ödəniş"
+          aria-label={t('tablePage.payment')}
           className="flex w-full flex-col items-center gap-4"
         >
           {data.order ? (

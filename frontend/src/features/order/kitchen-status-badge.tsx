@@ -1,13 +1,8 @@
 import { ChefHat, CircleCheck, Clock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import type { KitchenStatus } from '@/features/order/types'
 import { cn } from '@/lib/utils'
-
-const LABELS: Record<KitchenStatus, string> = {
-  NEW: 'Qəbul olundu',
-  PREPARING: 'Hazırlanır',
-  READY: 'Hazırdır',
-}
 
 const ICONS = { NEW: Clock, PREPARING: ChefHat, READY: CircleCheck }
 
@@ -22,6 +17,7 @@ export function KitchenStatusBadge({
   status: KitchenStatus
   className?: string
 }) {
+  const { t } = useTranslation('customer')
   const Icon = ICONS[status]
   return (
     <Badge
@@ -29,7 +25,7 @@ export function KitchenStatusBadge({
       className={cn('shrink-0 gap-1 font-medium', className)}
     >
       <Icon className="size-3" aria-hidden />
-      {LABELS[status]}
+      {t(`kitchenStatus.${status}`)}
     </Badge>
   )
 }

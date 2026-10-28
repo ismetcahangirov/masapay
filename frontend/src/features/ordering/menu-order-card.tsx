@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BookOpen, CircleCheckBig, Plus, ShoppingBasket, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -34,6 +35,7 @@ export function MenuOrderCard({
   qrToken: string
   currency: string
 }) {
+  const { t } = useTranslation('customer')
   const menu = useCustomerMenuQuery(qrToken)
   const basket = useBasket(qrToken)
   const { syncWithMenu } = basket
@@ -112,24 +114,21 @@ export function MenuOrderCard({
   const orderError = !placeState.isError
     ? null
     : isRestaurantClosed(placeState.error)
-      ? 'Restoran hazırda onlayn sifariş qəbul etmir. Zəhmət olmasa ofisianta müraciət edin.'
+      ? t('menuOrder.restaurantClosed')
       : conflict
-        ? 'Bəzi məhsullar artıq mövcud deyil. Menyu yeniləndi, səbəti yoxlayın.'
-        : 'Sifarişi göndərmək alınmadı. Yenidən cəhd edin.'
+        ? t('menuOrder.conflict')
+        : t('menuOrder.failed')
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="flex-col items-stretch gap-3 space-y-0 min-[420px]:flex-row min-[420px]:items-start min-[420px]:justify-between">
         <div className="space-y-1">
           <CardTitle className="text-xl">
-            <h2>Menyu və sifariş</h2>
+            <h2>{t('menuOrder.title')}</h2>
           </CardTitle>
-          <CardDescription>
-            Seçin, yoxlayın və təsdiqləyin. Sifariş masanın hesabına düşür.
-          </CardDescription>
+          <CardDescription>{t('menuOrder.description')}</CardDescription>
           <p className="text-xs text-muted-foreground">
-            Təsdiqlənmiş sifarişi ləğv etmək üçün restoran menecerinə müraciət
-            edin.
+            {t('menuOrder.cancelHint')}
           </p>
         </div>
         <Button
@@ -139,7 +138,7 @@ export function MenuOrderCard({
           onClick={startNewRound}
         >
           <Plus aria-hidden />
-          Əlavə sifariş
+          {t('menuOrder.newRound')}
         </Button>
       </CardHeader>
 
@@ -150,7 +149,7 @@ export function MenuOrderCard({
             className="flex items-center gap-3 rounded-lg bg-success/10 px-4 py-3 text-sm font-medium text-success"
           >
             <CircleCheckBig className="size-5 shrink-0" aria-hidden />
-            Sifarişiniz masanın hesabına əlavə olundu.
+            {t('menuOrder.ordered')}
           </div>
         )}
 
@@ -160,7 +159,7 @@ export function MenuOrderCard({
           onClick={() => setBrowsing(true)}
         >
           <BookOpen aria-hidden />
-          Menyu
+          {t('menuOrder.menu')}
         </Button>
       </CardContent>
 
@@ -168,9 +167,9 @@ export function MenuOrderCard({
         <CardFooter className="flex-col items-stretch gap-3 border-t pt-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             <ShoppingBasket className="size-4" aria-hidden />
-            Səbət
+            {t('menuOrder.basket')}
           </h3>
-          <ul className="space-y-1 text-sm" aria-label="Səbət">
+          <ul className="space-y-1 text-sm" aria-label={t('menuOrder.basket')}>
             {basket.entries.map(({ dish, quantity }) => (
               <li
                 key={dish.id}
@@ -188,7 +187,7 @@ export function MenuOrderCard({
                     size="icon"
                     className="size-10"
                     onClick={() => basket.remove(dish.id)}
-                    aria-label={`${dish.name} səbətdən çıxar`}
+                    aria-label={t('menuOrder.removeAria', { name: dish.name })}
                   >
                     <X aria-hidden />
                   </Button>
@@ -201,7 +200,9 @@ export function MenuOrderCard({
             className="h-12 w-full"
             onClick={askToConfirm}
           >
-            Sifarişi təsdiqlə ({formatCurrency(basket.total, currency)})
+            {t('menuOrder.confirm', {
+              amount: formatCurrency(basket.total, currency),
+            })}
           </Button>
         </CardFooter>
       )}

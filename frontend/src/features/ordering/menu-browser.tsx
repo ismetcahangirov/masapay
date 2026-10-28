@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { LoaderCircle, Minus, Plus, ShoppingBasket, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -48,6 +49,7 @@ export function MenuBrowser({
   onConfirm: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('customer')
   const [chosenId, setChosenId] = useState<string | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
   const detail =
@@ -62,33 +64,31 @@ export function MenuBrowser({
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="flex h-[92svh] max-w-6xl flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="border-b px-4 py-3 text-left sm:px-6">
-          <DialogTitle>Menyu</DialogTitle>
-          <DialogDescription>
-            Kateqoriya seçin, yeməkləri əlavə edin, sonra sifarişi təsdiqləyin.
-          </DialogDescription>
+          <DialogTitle>{t('menuBrowser.title')}</DialogTitle>
+          <DialogDescription>{t('menuBrowser.description')}</DialogDescription>
         </DialogHeader>
 
         {loading && (
           <LoaderCircle
             className="mx-auto my-10 size-6 animate-spin text-muted-foreground"
-            aria-label="Yüklənir"
+            aria-label={t('menuBrowser.loading')}
           />
         )}
         {failed && (
           <p className="p-6 text-sm text-destructive">
-            Menyunu yükləmək alınmadı.
+            {t('menuBrowser.failed')}
           </p>
         )}
         {!loading && !failed && categories.length === 0 && (
           <p className="p-6 text-sm text-muted-foreground">
-            Bu gün menyuda sifariş ediləcək məhsul yoxdur.
+            {t('menuBrowser.empty')}
           </p>
         )}
 
         {active && (
           <div className="grid min-h-0 flex-1 grid-rows-[auto_1fr_auto] md:grid-cols-[13rem_1fr_19rem] md:grid-rows-1">
             <nav
-              aria-label="Kateqoriyalar"
+              aria-label={t('menuBrowser.categories')}
               className="flex gap-2 overflow-x-auto border-b p-3 md:flex-col md:overflow-y-auto md:overflow-x-visible md:border-b-0 md:border-r"
             >
               {categories.map((category) => {
@@ -129,17 +129,17 @@ export function MenuBrowser({
             </section>
 
             <aside
-              aria-label="Seçilənlər"
+              aria-label={t('menuBrowser.picked')}
               className="flex max-h-[38svh] flex-col gap-3 border-t bg-background p-3 sm:p-4 md:max-h-none md:border-l md:border-t-0"
             >
               <h3 className="flex items-center gap-2 text-sm font-semibold">
                 <ShoppingBasket className="size-4" aria-hidden />
-                Seçilənlər
+                {t('menuBrowser.picked')}
                 {count > 0 && <Badge variant="secondary">{count}</Badge>}
               </h3>
               {entries.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Hələ heç nə seçilməyib.
+                  {t('menuBrowser.nothingPicked')}
                 </p>
               ) : (
                 <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto text-sm">
@@ -162,7 +162,9 @@ export function MenuBrowser({
                           size="icon"
                           className="size-10"
                           onClick={() => onChange(dish, -1)}
-                          aria-label={`Seçilən ${dish.name} azalt`}
+                          aria-label={t('menuBrowser.decreasePickedAria', {
+                            name: dish.name,
+                          })}
                         >
                           <Minus aria-hidden />
                         </Button>
@@ -172,7 +174,9 @@ export function MenuBrowser({
                           className="size-10"
                           disabled={quantity >= MAX_QUANTITY}
                           onClick={() => onChange(dish, 1)}
-                          aria-label={`Seçilən ${dish.name} artır`}
+                          aria-label={t('menuBrowser.increasePickedAria', {
+                            name: dish.name,
+                          })}
                         >
                           <Plus aria-hidden />
                         </Button>
@@ -181,7 +185,9 @@ export function MenuBrowser({
                           size="icon"
                           className="size-10"
                           onClick={() => onRemove(dish.id)}
-                          aria-label={`${dish.name} səbətdən çıxar`}
+                          aria-label={t('menuBrowser.removeAria', {
+                            name: dish.name,
+                          })}
                         >
                           <X aria-hidden />
                         </Button>
@@ -191,7 +197,7 @@ export function MenuBrowser({
                 </ul>
               )}
               <div className="flex items-center justify-between border-t pt-3 text-sm font-medium">
-                <span>Ara cəm</span>
+                <span>{t('menuBrowser.subtotal')}</span>
                 <span className="tabular-nums">
                   {formatCurrency(total, currency)}
                 </span>
@@ -202,7 +208,9 @@ export function MenuBrowser({
                 disabled={entries.length === 0}
                 onClick={onConfirm}
               >
-                Sifarişi təsdiqlə ({formatCurrency(total, currency)})
+                {t('menuBrowser.confirm', {
+                  amount: formatCurrency(total, currency),
+                })}
               </Button>
             </aside>
           </div>

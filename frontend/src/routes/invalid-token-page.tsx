@@ -1,4 +1,5 @@
 import { TriangleAlert } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { TableTokenInvalidReason } from '@/lib/table-session'
 import {
   Card,
@@ -8,27 +9,27 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-const REASON_COPY: Record<
-  TableTokenInvalidReason,
-  { title: string; description: string }
-> = {
+// Translation keys of the title and text for each reason.
+const REASON_COPY = {
   missing: {
-    title: 'QR kod tanınmadı',
-    description:
-      'Bu keçid masa məlumatını daşımır. Zəhmət olmasa masadakı QR kodu yenidən skan edin.',
+    title: 'invalidToken.missingTitle',
+    description: 'invalidToken.missingDescription',
   },
   malformed: {
-    title: 'Keçid etibarsızdır',
-    description:
-      'QR kod düzgün oxunmadı. Zəhmət olmasa masadakı QR kodu yenidən skan edin.',
+    title: 'invalidToken.malformedTitle',
+    description: 'invalidToken.malformedDescription',
   },
-}
+} as const satisfies Record<
+  TableTokenInvalidReason,
+  { title: string; description: string }
+>
 
 export function InvalidTokenPage({
   reason,
 }: {
   reason: TableTokenInvalidReason
 }) {
+  const { t } = useTranslation('customer')
   const copy = REASON_COPY[reason]
 
   return (
@@ -38,11 +39,11 @@ export function InvalidTokenPage({
           <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <TriangleAlert className="size-6" />
           </div>
-          <CardTitle>{copy.title}</CardTitle>
-          <CardDescription>{copy.description}</CardDescription>
+          <CardTitle>{t(copy.title)}</CardTitle>
+          <CardDescription>{t(copy.description)}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Kömək lazımdırsa restoran işçisi ilə əlaqə saxlayın.
+          {t('invalidToken.help')}
         </CardContent>
       </Card>
     </main>

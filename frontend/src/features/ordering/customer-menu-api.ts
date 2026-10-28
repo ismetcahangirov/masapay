@@ -14,6 +14,8 @@ export interface CustomerDish {
   id: string
   name: string
   description: string | null
+  /** The main ingredients, comma separated, or null. */
+  ingredients: string | null
   /** Minor units (qəpik). */
   price: number
   /** A combo's contents, e.g. "1 x Mərci"; empty for an ordinary dish. */
@@ -39,6 +41,7 @@ interface CategoryDto {
     id: string
     name: string
     description: string | null
+    ingredients?: string | null
     price: number
     components: { name: string; quantity: number }[]
     suggestionIds?: string[]
@@ -67,6 +70,7 @@ export const customerMenuApi = api.injectEndpoints({
             id: item.id,
             name: item.name,
             description: item.description,
+            ingredients: item.ingredients ?? null,
             price: toMinor(item.price),
             components: item.components.map(({ name, quantity }) => ({
               name,

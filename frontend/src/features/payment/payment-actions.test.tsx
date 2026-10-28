@@ -45,6 +45,7 @@ const dish = (id: string, suggestionIds: string[] = []): CustomerDish => ({
   id,
   name: id,
   description: null,
+  ingredients: null,
   price: 150,
   components: [],
   suggestionIds,
